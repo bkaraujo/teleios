@@ -1,0 +1,20 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build and Run",
+            "command": "${workspaceFolder}/build.sh",
+            "linux": {
+                "args": [
+                    "linux",
+                    "build",
+                    "debug"
+                ]
+            },
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": [ "$gcc" ],
+            "group": { "kind": "build", "isDefault": true }
+        },
+    ],
+}
