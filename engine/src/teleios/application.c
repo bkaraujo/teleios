@@ -1,6 +1,7 @@
 #include "teleios/application.h"
 #include "teleios/logger.h"
 #include "teleios/container.h"
+#include "teleios/platform.h"
 
 b8 tl_application_initialize(void) {
     TLTRACE("tl_application_initialize(void)")

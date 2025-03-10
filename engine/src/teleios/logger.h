@@ -14,7 +14,7 @@ typedef enum {
     TL_LOG_LEVEL_VERBOSE = 6
 } TLLogLevel;
 
-void tl_logger_write(TLLogLevel level, const char* filename, u32 lineno, const char* message, ...);
+void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const char *message, ...);
 
 #define TLFATAL(m, ...) { tl_logger_write(TL_LOG_LEVEL_FATAL, __FILE__, __LINE__, m, ##__VA_ARGS__); exit(99); }
 #define TLERROR(m, ...) { tl_logger_write(TL_LOG_LEVEL_ERROR, __FILE__, __LINE__, m, ##__VA_ARGS__); }

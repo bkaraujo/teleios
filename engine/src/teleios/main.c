@@ -1,7 +1,9 @@
+#include "teleios/logger.h"
 #include "teleios/platform.h"
 #include "teleios/application.h"
 
 int main (int argc, char *argv[]) {
+    TLINFO("Initializing")
     if (argc != 2) { TLFATAL("argc != 2"); }
 
     if (!tl_platform_initialize()) {
@@ -21,4 +23,7 @@ int main (int argc, char *argv[]) {
     if (!tl_application_run()) { TLERROR("Application failed to execute"); }
     if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
+
+    TLINFO("Exiting")
+    return 0;
 }

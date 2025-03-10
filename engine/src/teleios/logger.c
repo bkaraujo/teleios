@@ -4,7 +4,7 @@
  * Performs logging into the platform STDOUT. It's expected to be possible to call the logger macros from within 
  * any other compilation unit, and for that the logger must have no dependencies.
  */
-
+#include "teleios/platform_detector.h"
 #include "teleios/logger.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -15,10 +15,10 @@
 #   include <time.h>
 #endif
 
-static void tl_logger_forward(TLLogLevel level, const char* filename, u32 lineno, const char* message) {
-    static const char* strings[] = {"FATAL   ", "ERROR  ", "WARN   ", "INFO   ", "DEBUG  ", "TRACE  ", "VERBOSE"};
+static void tl_logger_forward(TLLogLevel level, const char *filename, u32 lineno, const char *message) {
+    static const char *strings[] = {"FATAL   ", "ERROR  ", "WARN   ", "INFO   ", "DEBUG  ", "TRACE  ", "VERBOSE"};
 
-    void* output = __builtin_alloca(4096);
+    void *output = __builtin_alloca(4096);
     __builtin_memset(output, 0, sizeof(output));
     
     TLClock clock = { 0 }; 
@@ -47,13 +47,13 @@ static void tl_logger_forward(TLLogLevel level, const char* filename, u32 lineno
     );
 
     #ifdef TLPLATFORM_LINUX
-        static const char* colors[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30", "1;29"};
+        static const char *colors[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;22", "1;30"};
         fprintf(stdout, "\033[%sm%s\033[0m", colors[level], output);
     #endif
 }
 
-void tl_logger_write(TLLogLevel level, const char* filename, u32 lineno, const char* message, ...) {
-    void* output = __builtin_alloca(4061);
+void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const char *message, ...) {
+    void *output = __builtin_alloca(4061);
     __builtin_memset(output, 0, sizeof(output));
 
     __builtin_va_list arg_ptr;
