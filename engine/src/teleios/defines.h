@@ -68,6 +68,8 @@ static_assert(sizeof(i64) == 8, "Expected i64 to be 8 bytes.");
 
 static_assert(sizeof(f32) == 4, "Expected f32 to be 4 bytes.");
 static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
+
+#include "cglm/types-struct.h"
 // ---------------------------------
 // DLL Exports
 // ---------------------------------
@@ -124,6 +126,7 @@ typedef enum {
     TL_MEMORY_BLOCK,
     TL_MEMORY_CONTAINER_LIST,
     TL_MEMORY_CONTAINER_NODE,
+    TL_MEMORY_WINDOW,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
 

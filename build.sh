@@ -17,7 +17,7 @@ assembly="teleios"
 
 CFlags="-std=c11 -g -fPIC"
 IFlags="-I$ROOTFS/engine/src"
-LFlags="-lwayland-client"
+LFlags="-L/usr/X11R6/lib -lxcb -lX11 -lX11-xcb -lxkbcommon"
 DFlags="-DTELEIOS_EXPORT"
 
 $CMD $cFilenames $CFlags $IFlags $LFlags $DFlags -o $ROOTFS/bin/$assembly

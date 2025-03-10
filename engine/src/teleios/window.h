@@ -3,11 +3,9 @@
 
 #include "teleios/defines.h"
 
-typedef struct {
-    b8 minimized;
-    b8 maximized;
-    b8 focused;
-    b8 hovered;
-} TLWindow;
+typedef struct TLWindow TLWindow;
+
+TLWindow* tl_window_create(u32 width, u32 heigth, const char *title);
+void tl_window_destroy(TLWindow *window);
 
 #endif // __TELEIOS_WINDOW__
