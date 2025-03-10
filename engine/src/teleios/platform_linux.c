@@ -120,19 +120,22 @@ void tl_memory_free(void *address) {
     TLVERBOSE("  TL_MEMORY_SIZE    %p", (u64*)address - TL_MEMORY_SIZE);
     TLVERBOSE("  TL_MEMORY_PAYLOAD %p", (u64*)address);
     // -------------------------------------------
-    // Free the actual block content
+    // Adjust memory counters for the payload
     // -------------------------------------------
     m_memory_registry->allocated -= *(block + TL_MEMORY_SIZE);
     m_memory_registry->tagged_count[*(block + TL_MEMORY_TAG)] -= 1;
     m_memory_registry->tagged_size[*(block + TL_MEMORY_TAG)] -= *(block + TL_MEMORY_SIZE);
     // -------------------------------------------
-    // Free the block structure
+    // Adjust memory counters for the block 
     // -------------------------------------------
-    __builtin_free((void*) block);
     static u64 block_size = TL_MEMORY_LENGTH * sizeof(u64);
     m_memory_registry->allocated -= block_size;
     m_memory_registry->tagged_count[TL_MEMORY_BLOCK] -= 1;
     m_memory_registry->tagged_size[TL_MEMORY_BLOCK] -= block_size;
+    // -------------------------------------------
+    // Free the memory
+    // -------------------------------------------
+    __builtin_free((void*) block);
     TLTRACE("<< tl_memory_free(0x%p)", address);
 }
 
@@ -220,7 +223,7 @@ TLWindow* tl_window_create(u32 width, u32 height, const char *title) {
     window->handle = xcb_create_window(
         window->xcb_connection,
         XCB_COPY_FROM_PARENT,               // depth
-        window->xcb_window,                 // parent
+        window->xcb_window,                 // generated ID
         window->xcb_screen->root,           // parent
         0,                                  //x
         0,                                  //y
@@ -232,7 +235,7 @@ TLWindow* tl_window_create(u32 width, u32 height, const char *title) {
         event_mask,
         value_list);
 
-    TLVERBOSE("  created %d", window->handle);
+    TLVERBOSE("  Window id: %d", window->xcb_window);
     window->xcb_delete_win = xcb_intern_atom_reply(
         window->xcb_connection, 
         xcb_intern_atom(window->xcb_connection, 0, __builtin_strlen("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW"), 
@@ -256,17 +259,19 @@ TLWindow* tl_window_create(u32 width, u32 height, const char *title) {
         return NULL;
     }
 
-
     TLTRACE("<< tl_window_create(%u, %u, %s)", width, height, title)
     return window;
 }
 
 void tl_window_destroy(TLWindow *window) {
     TLTRACE(">> tl_window_destroy(%p)", window)
+    
     TLVERBOSE("  Auto Repeat: on")
     XAutoRepeatOn(x_display);
+    
     xcb_destroy_window(window->xcb_connection, window->xcb_window);
     // XCloseDisplay(x_display);
+    
     tl_memory_free(window);
     TLTRACE("<< tl_window_destroy(%p)", window)
 }
@@ -274,17 +279,17 @@ void tl_window_destroy(TLWindow *window) {
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
 b8 tl_platform_initialize(void) {
-    TLTRACE("tl_platform_initialize(void)")
+    TLTRACE(">> tl_platform_initialize(void)")
     m_memory_registry = (TLMemoryRegistry*) __builtin_malloc(sizeof(TLMemoryRegistry));
     __builtin_memset((void*) m_memory_registry, 0, sizeof(TLMemoryRegistry));
 
+    TLTRACE("<< tl_platform_initialize(void)")
     return TRUE;
 }
 
 b8 tl_platform_terminate(void) {
-    TLTRACE("tl_platform_terminate(void)")
+    TLTRACE(">> tl_platform_terminate(void)")
     if (m_memory_registry->allocated != 0) {
-        TLWARN("Leaked %llu bytes", m_memory_registry->allocated);
         for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
             if (m_memory_registry->tagged_size[i] != 0) {
                 TLWARN("  at %-30s: %llu bytes", tl_memory_name(i), m_memory_registry->tagged_size[i]);
@@ -293,6 +298,8 @@ b8 tl_platform_terminate(void) {
     }
 
     __builtin_free(m_memory_registry);
+
+    TLTRACE("<< tl_platform_terminate(void)")
     return TRUE;
 }
 
