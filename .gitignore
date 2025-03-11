@@ -1,2 +1,5 @@
 bin/
+engine/libs/cglm/
+engine/libs/glfw/
+cmake-ninja-files
 .vscode/settings.json

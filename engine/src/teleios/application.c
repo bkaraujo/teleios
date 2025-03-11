@@ -2,17 +2,12 @@
 #include "teleios/logger.h"
 #include "teleios/container.h"
 #include "teleios/platform.h"
-#include "teleios/window.h"
-
-static TLWindow *window;
+#include "GLFW/glfw3.h"
 
 b8 tl_application_initialize(void) {
     TLTRACE(">> tl_application_initialize(void)")
-
-    window = tl_window_create(1024, 768, "Teleios Application");
-    if (window == NULL) {
-        TLERROR("Failed to create window")
-        TLTRACE("<< tl_application_initialize(void)")
+    if (!glfwInit()) {
+        TLERROR("Failed to initialize GLFW")
         return FALSE;
     }
 
@@ -32,7 +27,7 @@ b8 tl_application_run(void) {
 
 b8 tl_application_terminate(void) {
     TLTRACE(">> tl_application_terminate(void)")
-    tl_window_destroy(window);
+    glfwTerminate();
     TLTRACE("<< tl_application_terminate(void)")
     return TRUE;
 }

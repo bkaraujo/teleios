@@ -9,9 +9,9 @@
             "type": "cppdbg",
             "request": "launch",
             "stopAtEntry": true,
-            "cwd": "${workspaceFolder}/bin/",
+            "cwd": "${workspaceFolder}/cmake-ninja-files/",
             "environment": [],
-            "program": "${workspaceFolder}/bin/teleios",
+            "program": "${workspaceFolder}/cmake-ninja-files/teleios",
             "miDebuggerPath": "/usr/bin/gdb",
             "args": [
                 "./sandbox/applicatio.yml"

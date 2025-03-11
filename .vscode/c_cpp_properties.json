@@ -4,12 +4,15 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/engine/src/**"
+                "${workspaceFolder}/engine/src/**",
+                "${workspaceFolder}/engine/libs/glfw/include/**",
+                "${workspaceFolder}/engine/libs/cglm/include/**"
             ],
             "defines": [
                 "__USE_POSIX",
                 "__USE_POSIX199309",
-                "TELEIOS_EXPORT"
+                "TELEIOS_EXPORT",
+                "_GLFW_X11"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
