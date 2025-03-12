@@ -1,4 +1,5 @@
 bin/
+build/
 engine/libs/cglm/
 engine/libs/glfw/
 cmake-ninja-files

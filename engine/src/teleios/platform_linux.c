@@ -39,26 +39,21 @@ void tl_time_clock(TLClock* clock) {
 }
 // ########################################################
 //                    MEMORY FUNCTIONS
-// 
-// __builtin_malloc - GCC is free to eliminate calls if its result is never used, because there are no additional side-effects.
-// __builtin_free   - GCC is free to eliminate calls if its result is never used, because there are no additional side-effects.
 // ########################################################
 #include "teleios/memory.h"
 
 typedef struct {
+    u64 index;
+    char *payload;
+} TLMemoryPage;
+
+struct TLMemoryArena {
     u64 allocated;
     u64 tagged_count[TL_MEMORY_MAXIMUM];
     u64 tagged_size[TL_MEMORY_MAXIMUM];
-} TLMemoryRegistry;
-enum {
-
-    TL_MEMORY_TAG,
-    TL_MEMORY_SIZE,
-    TL_MEMORY_PAYLOAD,
-    TL_MEMORY_LENGTH
-} TLMemoryBLock;
-
-static TLMemoryRegistry* m_memory_registry;
+    u64 page_size;
+    TLMemoryPage page[U8_MAX];
+};
 
 static const char *tl_memory_name(TLMemoryTag tag) {
     switch (tag) {
@@ -72,110 +67,170 @@ static const char *tl_memory_name(TLMemoryTag tag) {
     return "???";
 }
 
-void *tl_memory_alloc(u64 size, TLMemoryTag tag) {
-    TLTRACE(">> tl_memory_alloc(%d, %s)", size, tl_memory_name(tag))
-    static u64 block_size = TL_MEMORY_LENGTH * sizeof(u64);
-    // -------------------------------------------
-    // Allocate the block structure
-    // -------------------------------------------
-    u64* block = (u64*) __builtin_malloc(block_size);
-    if (block == NULL) { return NULL; }
-    __builtin_memset((void*) block, 0, block_size);
-    
-    *(block + TL_MEMORY_TAG) = tag;
-    *(block + TL_MEMORY_SIZE) = size;
+static TLMemoryArena* arenas[U8_MAX] = { 0 };
 
-    TLVERBOSE("  TL_MEMORY_TAG     %p", block + TL_MEMORY_TAG);
-    TLVERBOSE("  TL_MEMORY_SIZE    %p", block + TL_MEMORY_SIZE);
-    TLVERBOSE("  TL_MEMORY_PAYLOAD %p", block + TL_MEMORY_PAYLOAD);
-
-    m_memory_registry->allocated += block_size;
-    m_memory_registry->tagged_count[TL_MEMORY_BLOCK] += 1;
-    m_memory_registry->tagged_size[TL_MEMORY_BLOCK] += block_size;
-    // -------------------------------------------
-    // Allocate the actual block content
-    // -------------------------------------------
-    *(block + TL_MEMORY_PAYLOAD) = (u64) __builtin_malloc(size);
-    if ((block + TL_MEMORY_PAYLOAD) == NULL) {
-        tl_memory_free( (void*) (block + TL_MEMORY_PAYLOAD));
-        return NULL;
+TLMemoryArena* tl_memory_arena_create(u64 size) {
+    TLVERBOSE(">> tl_memory_arena_create(%d)", size)
+    // ----------------------------------------------------------
+    // Create the memory arena
+    // ----------------------------------------------------------
+    TLMemoryArena* arena = __builtin_malloc(sizeof(TLMemoryArena));
+    if (arena == NULL) TLFATAL("Failed to allocate TLMemoryArena");
+    __builtin_memset(arena, 0, sizeof(TLMemoryArena));
+    arena->page_size = size;
+    // ----------------------------------------------------------
+    // Keep track of the created arena
+    // ----------------------------------------------------------
+    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+        if (arenas[i] == NULL) {
+            arenas[i] = arena;
+            break;
+        }
     }
-    
-    __builtin_memset((void*) *(block + TL_MEMORY_PAYLOAD), 0, size);
 
-    m_memory_registry->allocated += size;
-    m_memory_registry->tagged_count[tag] += 1;
-    m_memory_registry->tagged_size[tag] += size;
-    // -------------------------------------------
-    // Return the pointer to the block content
-    // -------------------------------------------
-    TLTRACE("<< tl_memory_alloc(%d, %s)", size, tl_memory_name(tag))
-    return (void*) (block + TL_MEMORY_PAYLOAD);
+    TLTRACE("Created TLMemoryArena 0x%p", arena)
+    TLVERBOSE("TLMemoryArena 0x%p page size: %d bytes", arena, arena->page_size)
+    
+    TLVERBOSE("<< tl_memory_arena_create(%d)", size)
+    return arena;
 }
 
-void tl_memory_free(void *address) {
-    TLTRACE(">> tl_memory_free(0x%p)", address);
-    u64* block = (u64*)address - TL_MEMORY_PAYLOAD;
-    TLVERBOSE("  TL_MEMORY_TAG     %p", (u64*)address - TL_MEMORY_PAYLOAD);
-    TLVERBOSE("  TL_MEMORY_SIZE    %p", (u64*)address - TL_MEMORY_SIZE);
-    TLVERBOSE("  TL_MEMORY_PAYLOAD %p", (u64*)address);
-    // -------------------------------------------
-    // Adjust memory counters for the payload
-    // -------------------------------------------
-    m_memory_registry->allocated -= *(block + TL_MEMORY_SIZE);
-    m_memory_registry->tagged_count[*(block + TL_MEMORY_TAG)] -= 1;
-    m_memory_registry->tagged_size[*(block + TL_MEMORY_TAG)] -= *(block + TL_MEMORY_SIZE);
-    // -------------------------------------------
-    // Adjust memory counters for the block 
-    // -------------------------------------------
-    static u64 block_size = TL_MEMORY_LENGTH * sizeof(u64);
-    m_memory_registry->allocated -= block_size;
-    m_memory_registry->tagged_count[TL_MEMORY_BLOCK] -= 1;
-    m_memory_registry->tagged_size[TL_MEMORY_BLOCK] -= block_size;
-    // -------------------------------------------
-    // Free the memory
-    // -------------------------------------------
-    __builtin_free((void*) block);
-    TLTRACE("<< tl_memory_free(0x%p)", address);
+void tl_memory_arena_destroy(TLMemoryArena* arena) {
+    TLVERBOSE(">> tl_memory_arena_destroy(0x%p)", arena)
+    TLTRACE("Destroying TLMemoryArena 0x%p", arena)
+
+    if (arena == NULL) {
+        TLWARN("Trying to destroy NULL arena")
+        TLVERBOSE("<< tl_memory_arena_destroy(0x%p)", arena)
+        return;
+    }
+
+    b8 found = FALSE;
+    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+        if (arenas[i] == arena) {
+            found = TRUE;
+            arenas[i] = NULL;
+        }
+    }
+
+    if (!found) TLFATAL("Trying to destroy untracked TLMemoryArena 0x%p", arena)
+
+    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+        if (arena->page[i].payload != NULL) {
+            TLVERBOSE("Releasing page %d", i)
+            __builtin_free(arena->page[i].payload);
+            arena->page[i].payload = NULL;
+        }
+    }
+
+    for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
+        if (arena->tagged_size[i] != 0) {
+            TLVERBOSE("TLMemoryArena 0x%p at %-30s: [%03d] %llu bytes", arena, tl_memory_name(i), arena->tagged_count[i], arena->tagged_size[i]);
+        }
+    }
+
+    __builtin_free(arena);
+    TLVERBOSE("<< tl_memory_arena_destroy(0x%p)", arena)
+    arena = NULL;
+}
+
+void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
+    TLVERBOSE(">> tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+    // -------------------------------------------------
+    // Ensure that the Arena can hold the desired size
+    // -------------------------------------------------
+    if (arena == NULL) {
+        TLERROR("TLMemoryArena is NULL")
+        TLVERBOSE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+        return NULL;
+    }
+
+    if (size > arena->page_size) {
+        TLWARN("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena->page_size, size)
+        TLVERBOSE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+        return NULL;
+    }
+    // -------------------------------------------------
+    // Find a suitable TLMemoryPage within the arena
+    // -------------------------------------------------
+    TLMemoryPage* pool = NULL;
+    void* address = NULL;
+    u8 found = U8_MAX;
+    for (u8 i = 0; i < U8_MAX ; ++i) {
+        // Initialize a new TLMemoryPage
+        if (arena->page[i].payload == NULL) {
+            TLVERBOSE("Initializing page %d", i)
+            arena->page[i].payload = __builtin_malloc(arena->page_size);
+            
+            found = i;
+            break;
+        }
+        
+        // Utilize the available TLMemoryPage
+        if (arena->page[i].index + size <= arena->page_size) {
+            TLVERBOSE("Using page %d", i)
+            
+            found = i;
+            break;
+        }
+    }
+    
+    if (found == U8_MAX) {
+        TLWARN("No suitable TLMemoryPage within the arena")
+        return NULL;
+    }
+
+    // -------------------------------------------------
+    // Adjust the TLMemoryArena internal state
+    // -------------------------------------------------
+    arena->allocated += size;
+    arena->tagged_count[tag] += 1;
+    arena->tagged_size[tag] += size;
+    // -------------------------------------------------
+    // Adjust the TLMemoryPage internal state
+    // -------------------------------------------------
+    address = arena->page[found].payload + arena->page[found].index;
+    arena->page[found].index += size;
+    TLVERBOSE("Page %d has %d bytes available", found, (arena->page_size - arena->page[found].index))
+    // -------------------------------------------------
+    // Hand out the memory pointer
+    // -------------------------------------------------
+    TLVERBOSE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+    return address;
 }
 
 void tl_memory_set(void *block, i32 value, u64 size) {
-    TLTRACE(">> tl_memory_set(0x%p, %d, %llu)", block, value, size);
+    TLVERBOSE(">> tl_memory_set(0x%p, %d, %llu)", block, value, size);
     __builtin_memset(block, value, size);
-    TLTRACE("<< tl_memory_set(0x%p, %d, %llu)", block, value, size);
+    TLVERBOSE("<< tl_memory_set(0x%p, %d, %llu)", block, value, size);
 }
 
 void tl_memory_copy(void *target, void *source, u64 size) {
-    TLTRACE(">> tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
+    TLVERBOSE(">> tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
     __builtin_memcpy(target, source, size);
-    TLTRACE("<< tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
+    TLVERBOSE("<< tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
 }
-
 // ########################################################
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
 b8 tl_platform_initialize(void) {
-    TLTRACE(">> tl_platform_initialize(void)")
-    m_memory_registry = (TLMemoryRegistry*) __builtin_malloc(sizeof(TLMemoryRegistry));
-    __builtin_memset((void*) m_memory_registry, 0, sizeof(TLMemoryRegistry));
+    TLVERBOSE(">> tl_platform_initialize(void)")
 
-    TLTRACE("<< tl_platform_initialize(void)")
+    TLVERBOSE("<< tl_platform_initialize(void)")
     return TRUE;
 }
 
 b8 tl_platform_terminate(void) {
-    TLTRACE(">> tl_platform_terminate(void)")
-    if (m_memory_registry->allocated != 0) {
-        for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
-            if (m_memory_registry->tagged_size[i] != 0) {
-                TLWARN("  at %-30s: %llu bytes", tl_memory_name(i), m_memory_registry->tagged_size[i]);
-            }
+    TLVERBOSE(">> tl_platform_terminate(void)")
+    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+        if (arenas[i] != NULL) {
+            TLWARN("Removing dangling TLMemoryArena 0x%p", arenas[i])
+
+            tl_memory_arena_destroy(arenas[i]);
         }
     }
 
-    __builtin_free(m_memory_registry);
-
-    TLTRACE("<< tl_platform_terminate(void)")
+    TLVERBOSE("<< tl_platform_terminate(void)")
     return TRUE;
 }
 

@@ -1,5 +1,8 @@
 #ifndef __TELEIOS_DEFINES__
 #define __TELEIOS_DEFINES__
+
+#include <stddef.h>
+
 // ---------------------------------
 // Unsigned int types.
 // ---------------------------------
@@ -112,16 +115,19 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 // Helper Functions
 // ---------------------------------
-#define GIBIBYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
-#define MEBIBYTES(amount) ((amount) * 1024ULL * 1024ULL)
-#define KIBIBYTES(amount) ((amount) * 1024ULL)
+#define TLGIBIBYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
+#define TLMEBIBYTES(amount) ((amount) * 1024ULL * 1024ULL)
+#define TLKIBIBYTES(amount) ((amount) * 1024ULL)
 
-#define GIGABYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
-#define MEGABYTES(amount) ((amount) * 1000ULL * 1000ULL)
-#define KILOBYTES(amount) ((amount) * 1000ULL)
+#define TLGIGABYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
+#define TLMEGABYTES(amount) ((amount) * 1000ULL * 1000ULL)
+#define TLKILOBYTES(amount) ((amount) * 1000ULL)
 // ---------------------------------
 // Memmory Tags
 // ---------------------------------
+
+typedef struct TLMemoryArena TLMemoryArena;
+
 typedef enum {
     TL_MEMORY_BLOCK,
     TL_MEMORY_CONTAINER_LIST,

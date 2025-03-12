@@ -12,10 +12,10 @@ typedef struct TLNode {
 typedef struct {
     u64 length;
     TLNode* payload;
+    TLMemoryArena* arena;
 } TLList;
 
-TLList* tl_list_create(void);
-void tl_list_destroy(TLList* list);
+TLList* tl_list_create(TLMemoryArena* arena);
 void tl_list_clear(TLList* list, void (*PFN_dealocator)(void *pointer));
 void *tl_list_search(TLList* list, b8 (PFN_filter)(void *pointer));
 void tl_list_remove(TLList* list, void *pointer);

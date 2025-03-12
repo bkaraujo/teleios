@@ -36,6 +36,7 @@ add_executable(${PROJECT_NAME}
     engine/src/teleios/container_list.c
     engine/src/teleios/logger.c
     engine/src/teleios/platform_linux.c
+    engine/src/teleios/string.c
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)

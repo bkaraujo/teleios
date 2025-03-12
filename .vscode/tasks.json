@@ -3,7 +3,7 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "Build and Run",
+            "label": "Teleios Build",
             "command": "${workspaceFolder}/build.sh",
             "linux": {
                 "args": [
@@ -16,5 +16,19 @@
             "problemMatcher": [ "$gcc" ],
             "group": { "kind": "build", "isDefault": true }
         },
+        {
+            "type": "shell",
+            "label": "Teleios Run",
+            "command": "${workspaceFolder}/cmake-ninja-files/teleios",
+            "linux": {
+                "args": [
+                    "${workspaceFolder}/sandbox/application.yml"
+                ]
+            },
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": [ "$gcc" ],
+            "group": { "kind": "build", "isDefault": true },
+            "dependsOn": [ "Teleios Build" ],
+        }
     ],
 }

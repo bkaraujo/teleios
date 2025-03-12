@@ -35,5 +35,4 @@ if [[ $RESULT -ne 0 ]]; then
    exit $RESULT
 fi
 
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./bin"
-./teleios "./sandbox/application.yml"
+# ./teleios "./sandbox/application.yml"
