@@ -127,6 +127,7 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 
 typedef struct TLMemoryArena TLMemoryArena;
+typedef struct TLList TLList;
 
 typedef enum {
     TL_MEMORY_BLOCK,

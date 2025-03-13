@@ -38,7 +38,7 @@ static void tl_logger_forward(TLLogLevel level, const char *filename, u32 lineno
         clock.millis = now.tv_nsec / 1000;
     #endif
 
-    sprintf(output, "%d-%02d-%02d %02d:%02d:%02d,%d %20s:%03d %s %s\n", 
+    sprintf(output, "%d-%02d-%02d %02d:%02d:%02d,%05d %20s:%03d %s %s\n", 
         clock.year, clock.month, clock.day,
         clock.hour, clock.minute, clock.second, clock.millis,
         filename, lineno,

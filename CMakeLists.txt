@@ -25,20 +25,28 @@ add_subdirectory(engine/libs/cglm)
 include_directories(engine/libs/cglm/include)
 # ==========================================
 #
+#                   LIBYAML
+#
+# ==========================================
+add_subdirectory(engine/libs/libyaml)
+include_directories(engine/libs/libyaml/include)
+# ==========================================
+#
 #                   TELIOS
 #
 # ==========================================
-include_directories("engine/src")
+include_directories("engine/src/main")
 add_executable(${PROJECT_NAME}
-    engine/src/main.c
-    engine/src/stb/stb_image.h
-    engine/src/teleios/application.c
-    engine/src/teleios/container_list.c
-    engine/src/teleios/logger.c
-    engine/src/teleios/platform_linux.c
-    engine/src/teleios/string.c
+    engine/src/main/main.c
+    engine/src/main/stb/stb_image.h
+    engine/src/main/teleios/application.c
+    engine/src/main/teleios/container_list.c
+    engine/src/main/teleios/logger.c
+    engine/src/main/teleios/platform_linux.c
+    engine/src/main/teleios/string.c
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} cglm)
+target_link_libraries(${PROJECT_NAME} yaml)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "teleios")

@@ -17,7 +17,6 @@ int main (int argc, char *argv[]) {
         if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
         if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
         exit(99);
-
     }
     
     if (!tl_application_run()) { TLERROR("Application failed to execute"); }

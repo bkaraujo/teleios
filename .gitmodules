@@ -4,3 +4,6 @@
 [submodule "engine/libs/glfw"]
 	path = engine/libs/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "engine/libs/libyaml"]
+	path = engine/libs/libyaml
+	url = https://github.com/yaml/libyaml
