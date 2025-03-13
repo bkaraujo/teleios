@@ -74,43 +74,35 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 
 #include "cglm/types-struct.h"
 // ---------------------------------
-// DLL Exports
-// ---------------------------------
-#ifdef TELEIOS_EXPORT
-#   ifdef _MSC_VER
-#       define TLAPI __declspec(dllexport)
-#   else
-#       define TLAPI __attribute__((visibility("default")))
-#   endif
-#else
-#   ifdef _MSC_VER
-#       define TLAPI __declspec(dllimport)
-#   else
-#       define TLAPI
-#   endif
-#endif
-// ---------------------------------
-// Inlining
+// Compiler specifics
 // ---------------------------------
 #if defined(__clang__) || defined(__GNUC__)
-#    define TLINLINE __attribute__((always_inline)) inline
-#    define TLNOINLINE __attribute__((noinline))
+#   define TLINLINE __attribute__((always_inline)) inline
+#   define TLNOINLINE __attribute__((noinline))
+#   define TLDEPRECATED(message) __attribute__((deprecated(message)))
 #elif defined(_MSC_VER)
-#    define TLINLINE __forceinline
-#    define TLNOINLINE __declspec(noinline)
+#   define TLINLINE __forceinline
+#   define TLNOINLINE __declspec(noinline)
+#   define TLDEPRECATED(message) __declspec(deprecated(message))
 #else
-#    define TLINLINE static inline
-#    define TLNOINLINE
+#   define TLINLINE static inline
+#   define TLNOINLINE
 #endif
-// ---------------------------------
-// Deprecation
-// ---------------------------------
-#if defined(__clang__) || defined(__GNUC__)
-#    define TLDEPRECATED(message) __attribute__((deprecated(message)))
+
+#if defined(__GNUC__)
+#   define TLALLOCA(s) __builtin_alloca(s)
+#   define TLMALLOC(s) __builtin_malloc(s)
+#   define TLFREE(p) __builtin_free(p)
+#   define TLMEMSET(p,v,s) __builtin_memset(p, v, s)
+#   define TLMEMCPY(p,s,sx) __builtin_memcpy(p, s, sx)
 #elif defined(_MSC_VER)
-#    define TLDEPRECATED(message) __declspec(deprecated(message))
+#   define TLALLOCA(s) alloca(s)
+#   define TLMALLOC(s) malloc(s)
+#   define TLFREE(p) free(p)
+#   define TLMEMSET(p,v,s) memset(p, v, s)
+#   define TLMEMCPY(p,s,sx) memcpy(p, s, sx)
 #else
-#    error "Don't know how to define deprecations!"
+#   error "Unknown compiler!"
 #endif
 // ---------------------------------
 // Helper Functions
@@ -128,11 +120,14 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 
 typedef struct TLMemoryArena TLMemoryArena;
 typedef struct TLList TLList;
+typedef struct TLIterator TLIterator;
+
 
 typedef enum {
     TL_MEMORY_BLOCK,
     TL_MEMORY_CONTAINER_LIST,
     TL_MEMORY_CONTAINER_NODE,
+    TL_MEMORY_CONTAINER_ITERATOR,
     TL_MEMORY_WINDOW,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;

@@ -4,8 +4,8 @@
  * Performs logging into the platform STDOUT. It's expected to be possible to call the logger macros from within 
  * any other compilation unit, and for that the logger must have no dependencies.
  */
-#include "teleios/platform_detector.h"
-#include "teleios/logger.h"
+#include "teleios/core/platform_detector.h"
+#include "teleios/core/logger.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -18,8 +18,8 @@
 static void tl_logger_forward(TLLogLevel level, const char *filename, u32 lineno, const char *message) {
     static const char *strings[] = {"FATAL   ", "ERROR  ", "WARN   ", "INFO   ", "DEBUG  ", "TRACE  ", "VERBOSE"};
 
-    void *output = __builtin_alloca(4096);
-    __builtin_memset(output, 0, sizeof(output));
+    void *output = TLALLOCA(4096);
+    TLMEMSET(output, 0, sizeof(output));
     
     TLClock clock = { 0 }; 
     #ifdef TLPLATFORM_LINUX
@@ -53,8 +53,8 @@ static void tl_logger_forward(TLLogLevel level, const char *filename, u32 lineno
 }
 
 void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const char *message, ...) {
-    void *output = __builtin_alloca(4061);
-    __builtin_memset(output, 0, sizeof(output));
+    void *output = TLALLOCA(4061);
+    TLMEMSET(output, 0, sizeof(output));
 
     __builtin_va_list arg_ptr;
     va_start(arg_ptr, message);

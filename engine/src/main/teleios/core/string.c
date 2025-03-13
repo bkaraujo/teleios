@@ -1,5 +1,5 @@
-#include "teleios/string.h"
-#include "teleios/memory.h"
+#include "teleios/core/string.h"
+#include "teleios/core/memory.h"
 
 struct TLString {
     u64 length;

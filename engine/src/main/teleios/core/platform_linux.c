@@ -1,26 +1,16 @@
-#include "teleios/platform_detector.h"
+#include "teleios/core/platform_detector.h"
 #ifdef TLPLATFORM_LINUX
-
-#include <stdio.h>
-#include <malloc.h>
+#include "teleios/core/logger.h"
+#include "teleios/core/platform.h"
 
 #define SECS_IN_DAY (24 * 60 * 60)
-// ########################################################
-//                     CONSOLE FUNCTIONS
-// ########################################################
-#include "teleios/console.h"
-void tl_console_stdout(TLLogLevel level, const char *message) {
-    // FATAL, ERROR, WARN, INFO, DEBUG, TRACE, VERBOSE
-    static const char *strings[] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30", "1;29"};
-    fprintf(stdout, "\033[%sm%s\033[0m", strings[level], message);
-}
 // ########################################################
 //                    TIME FUNCTIONS
 // ########################################################
 #define __USE_POSIX 1
 #define __USE_POSIX199309 1
 #include <time.h>
-#include "teleios/time.h"
+#include "teleios/core/time.h"
 
 void tl_time_clock(TLClock* clock) {
     struct timespec now = { 0 };
@@ -40,7 +30,7 @@ void tl_time_clock(TLClock* clock) {
 // ########################################################
 //                    MEMORY FUNCTIONS
 // ########################################################
-#include "teleios/memory.h"
+#include "teleios/core/memory.h"
 
 typedef struct {
     u64 index;
@@ -60,6 +50,7 @@ static const char *tl_memory_name(TLMemoryTag tag) {
         case TL_MEMORY_BLOCK: return "TL_MEMORY_BLOCK";
         case TL_MEMORY_CONTAINER_LIST: return "TL_MEMORY_CONTAINER_LIST";
         case TL_MEMORY_CONTAINER_NODE: return "TL_MEMORY_CONTAINER_NODE";
+        case TL_MEMORY_CONTAINER_ITERATOR: return "TL_MEMORY_CONTAINER_ITERATOR";
         case TL_MEMORY_WINDOW: return "TL_MEMORY_WINDOW";
         case TL_MEMORY_MAXIMUM: return "TL_MEMORY_MAXIMUM";
     }
@@ -74,9 +65,9 @@ TLMemoryArena* tl_memory_arena_create(u64 size) {
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
-    TLMemoryArena* arena = __builtin_malloc(sizeof(TLMemoryArena));
+    TLMemoryArena* arena = TLMALLOC(sizeof(TLMemoryArena));
     if (arena == NULL) TLFATAL("Failed to allocate TLMemoryArena");
-    __builtin_memset(arena, 0, sizeof(TLMemoryArena));
+    TLMEMSET(arena, 0, sizeof(TLMemoryArena));
     arena->page_size = size;
     // ----------------------------------------------------------
     // Keep track of the created arena
@@ -126,7 +117,7 @@ TLINLINE static void __tl_memory_arena_destroy(TLMemoryArena* arena) {
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("Releasing page %d", i)
-            __builtin_free(arena->page[i].payload);
+            TLFREE(arena->page[i].payload);
             arena->page[i].payload = NULL;
         }
     }
@@ -137,7 +128,7 @@ TLINLINE static void __tl_memory_arena_destroy(TLMemoryArena* arena) {
         }
     }
 
-    __builtin_free(arena);
+    TLFREE(arena);
     TLTRACE("<< __tl_memory_arena_destroy(0x%p)", arena)
     arena = NULL;
 }
@@ -184,7 +175,7 @@ void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
         // Initialize a new TLMemoryPage
         if (arena->page[i].payload == NULL) {
             TLVERBOSE("Initializing page %d", i)
-            arena->page[i].payload = __builtin_malloc(arena->page_size);
+            arena->page[i].payload = TLMALLOC(arena->page_size);
             
             found = i;
             break;
@@ -224,20 +215,23 @@ void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
 
 void tl_memory_set(void *block, i32 value, u64 size) {
     TLTRACE(">> tl_memory_set(0x%p, %d, %llu)", block, value, size);
-    __builtin_memset(block, value, size);
+    TLMEMSET(block, value, size);
     TLTRACE("<< tl_memory_set(0x%p, %d, %llu)", block, value, size);
 }
 
 void tl_memory_copy(void *target, void *source, u64 size) {
     TLTRACE(">> tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
-    __builtin_memcpy(target, source, size);
+    TLMEMCPY(target, source, size);
     TLTRACE("<< tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
 }
 // ########################################################
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
+TLMemoryArena* global_arena;
+
 b8 tl_platform_initialize(void) {
     TLTRACE(">> tl_platform_initialize(void)")
+    global_arena = tl_memory_arena_create(TLMEBIBYTES(10));
 
     TLTRACE("<< tl_platform_initialize(void)")
     return TRUE;

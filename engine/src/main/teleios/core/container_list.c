@@ -1,6 +1,6 @@
-#include "teleios/container.h"
-#include "teleios/memory.h"
-#include "teleios/logger.h"
+#include "teleios/core/container.h"
+#include "teleios/core/memory.h"
+#include "teleios/core/logger.h"
 
 struct TLNode {
     void *payload;
@@ -42,6 +42,12 @@ TLList* tl_list_create(TLMemoryArena* arena) {
     return list;
 }
 
+u64 tl_list_length(TLList* list) {
+    TLTRACE(">> tl_list_length(0x%p)", list)
+    return list->length;
+    TLTRACE("<< tl_list_length(0x%p)", list)
+}
+
 void* tl_list_search(TLList* list, b8 (PFN_filter)(void *value)) {
     TLTRACE(">> tl_list_search(0x%p, 0X%p)", list, PFN_filter);
     if (list == NULL) {
@@ -67,6 +73,28 @@ void* tl_list_search(TLList* list, b8 (PFN_filter)(void *value)) {
 
     TLTRACE("<< tl_list_search(0x%p, 0X%p)", list, PFN_filter)
     return NULL;
+}
+
+void tl_list_foreach(TLList* list, void (PFN_handler)(void *value)) {
+    TLTRACE(">> tl_list_foreach(0x%p, 0X%p)", list, PFN_handler);
+    if (list == NULL) {
+        TLERROR("TLList is NULL")
+        TLTRACE("<< tl_list_foreach(0x%p, 0X%p)", list, PFN_handler)
+        return;
+    }
+    if (PFN_handler == NULL) {
+        TLERROR("PFN_handler is NULL")
+        TLTRACE("<< tl_list_foreach(0x%p, 0X%p)", list, PFN_handler)
+        return;
+    }
+
+    struct TLNode* node = list->head;
+    while (node != NULL) {
+        PFN_handler(node->payload);
+        node = node->next;
+    }
+
+    TLTRACE("<< tl_list_foreach(0x%p, 0X%p)", list, PFN_handler)
 }
 
 void tl_list_add(TLList* list, void *value) {
@@ -237,7 +265,7 @@ b8 tl_list_before(TLList* list, void *item, void *value) {
     return FALSE;
 }
 
-b8 lt_list_contains(TLList* list, void *value) {
+b8 tl_list_contains(TLList* list, void *value) {
     TLTRACE(">> lt_list_contains(0x%p, 0X%p)", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
@@ -270,4 +298,30 @@ b8 lt_list_contains(TLList* list, void *value) {
     TLTRACE("<< lt_list_contains(0x%p, 0X%p)", list, value)
     return FALSE;
 
+}
+
+struct TLIterator {
+    u64 length;
+    struct TLNode* node;
+};
+
+TLIterator* tl_list_iterator_create(TLList* list) {
+    TLTRACE(">> tl_list_iterator_create(0x%p)", list)
+    TLIterator* iterator = tl_memory_alloc(list->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
+    iterator->length = list->length;
+    iterator->node = list->head;
+    TLTRACE("<< tl_list_iterator_create(0x%p)", list)
+}
+
+void* tl_list_iterator_next(TLIterator* iterator) {
+    TLTRACE(">> tl_list_iterator_next(0x%p)", iterator)
+    if (iterator == NULL || iterator->node == NULL) {
+        TLTRACE("<< tl_list_iterator_next(0x%p)", iterator)
+        return NULL;
+    }
+
+    void* value = iterator->node->payload;
+    iterator->node = iterator->node->next;
+    TLTRACE("<< tl_list_iterator_next(0x%p)", iterator)
+    return value;
 }

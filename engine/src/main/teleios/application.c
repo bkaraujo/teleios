@@ -1,10 +1,6 @@
+#include "teleios/core.h"
 #include "teleios/application.h"
-#include "teleios/logger.h"
-#include "teleios/container.h"
-#include "teleios/platform.h"
-#include "teleios/memory.h"
 #include "GLFW/glfw3.h"
-#include "teleios/time.h"
 
 static GLFWwindow* window;
 static f64 STEP = 1.0f / 30.0f;

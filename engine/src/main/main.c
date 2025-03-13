@@ -1,5 +1,4 @@
-#include "teleios/logger.h"
-#include "teleios/platform.h"
+#include "teleios/core.h"
 #include "teleios/application.h"
 
 int main (int argc, char *argv[]) {

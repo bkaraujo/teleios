@@ -1,0 +1,6 @@
+#ifndef __TELEIOS_RUNTIME_SHARED__
+#define __TELEIOS_RUNTIME_SHARED__
+
+
+
+#endif // __TELEIOS_RUNTIME_SHARED__
