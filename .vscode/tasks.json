@@ -3,13 +3,11 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "Teleios Build",
+            "label": "cmake clean build",
             "command": "${workspaceFolder}/build/build.sh",
             "linux": {
                 "args": [
-                    "linux",
-                    "build",
-                    "debug"
+                    "clean",
                 ]
             },
             "options": { "cwd": "${workspaceFolder}" },
@@ -18,7 +16,15 @@
         },
         {
             "type": "shell",
-            "label": "Teleios Run",
+            "label": "cmake build",
+            "command": "${workspaceFolder}/build/build.sh",
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": [ "$gcc" ],
+            "group": { "kind": "build", "isDefault": true }
+        },
+        {
+            "type": "shell",
+            "label": "cmake run",
             "dependsOn": [ "Teleios Build" ],
             "command": "${workspaceFolder}/build/run.sh",
             "linux": {
