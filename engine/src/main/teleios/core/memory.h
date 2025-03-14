@@ -5,6 +5,7 @@
 
 TLMemoryArena* tl_memory_arena_create(u64 size);
 void tl_memory_arena_destroy(TLMemoryArena* arena);
+void tl_memory_arena_reset(TLMemoryArena* arena);
 
 void* tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag);
 void tl_memory_set(void *block, i32 value, u64 size);

@@ -1,4 +1,5 @@
 #include "teleios/core/logger.h"
+#include "teleios/core/string.h"
 
 // ########################################################
 //                    MEMORY FUNCTIONS
@@ -24,6 +25,7 @@ static const char *tl_memory_name(TLMemoryTag tag) {
         case TL_MEMORY_CONTAINER_LIST: return "TL_MEMORY_CONTAINER_LIST";
         case TL_MEMORY_CONTAINER_NODE: return "TL_MEMORY_CONTAINER_NODE";
         case TL_MEMORY_CONTAINER_ITERATOR: return "TL_MEMORY_CONTAINER_ITERATOR";
+        case TL_MEMORY_STRING: return "TL_MEMORY_STRING";
         case TL_MEMORY_WINDOW: return "TL_MEMORY_WINDOW";
         case TL_MEMORY_MAXIMUM: return "TL_MEMORY_MAXIMUM";
     }
@@ -101,6 +103,15 @@ TLINLINE static void __tl_memory_arena_destroy(TLMemoryArena* arena) {
     TLFREE(arena);
     TLTRACE("<< __tl_memory_arena_destroy(0x%p)", arena)
     arena = NULL;
+}
+
+void tl_memory_arena_reset(TLMemoryArena* arena) {
+    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+        if (arena->page[i].payload == NULL) continue;
+        
+        arena->page[i].index = 0;
+        tl_memory_set(arena->page[i].payload, 0, arena->page_size);
+    }
 }
 
 void tl_memory_arena_destroy(TLMemoryArena* arena) {
@@ -204,8 +215,6 @@ void tl_memory_copy(void *target, void *source, u64 size) {
 
 b8 tl_platform_initialize(void) {
     TLTRACE(">> tl_platform_initialize(void)")
-    runtime->arena_frame = tl_memory_arena_create(TLMEBIBYTES(10));
-    runtime->arena_persistent = tl_memory_arena_create(TLMEBIBYTES(32));
 
     TLVERBOSE("Initializing GLFW");
     if (!glfwInit()) {
@@ -224,7 +233,7 @@ b8 tl_platform_initialize(void) {
     runtime->platform.window.handle = glfwCreateWindow(
         runtime->platform.window.width, 
         runtime->platform.window.height, 
-        runtime->platform.window.title, 
+        tl_string_text(runtime->platform.window.title), 
         NULL, NULL
     );
     

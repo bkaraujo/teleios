@@ -6,8 +6,6 @@
 b8 tl_application_initialize(void) {
     TLTRACE(">> tl_application_initialize(void)")
 
-    runtime->simulation.step = 1.0f / 30.0f;
-
     TLTRACE("<< tl_application_initialize(void)")
     return TRUE;
 }
@@ -26,6 +24,8 @@ b8 tl_application_run(void) {
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
     glfwShowWindow(runtime->platform.window.handle);
+
+    runtime->arena_frame = tl_memory_arena_create(TLMEBIBYTES(10));
     while (!glfwWindowShouldClose(runtime->platform.window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
@@ -49,6 +49,7 @@ b8 tl_application_run(void) {
         }
 
         glfwPollEvents();
+        tl_memory_arena_reset(runtime->arena_frame);
     }
 
     glfwHideWindow(runtime->platform.window.handle);

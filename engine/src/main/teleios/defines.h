@@ -122,6 +122,7 @@ typedef enum {
     TL_MEMORY_CONTAINER_LIST,
     TL_MEMORY_CONTAINER_NODE,
     TL_MEMORY_CONTAINER_ITERATOR,
+    TL_MEMORY_STRING,
     TL_MEMORY_WINDOW,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
@@ -136,10 +137,21 @@ typedef struct {
     u8 hour; u8 minute; u8 second;
 } TLClock;
 // ---------------------------------
+// Graphics
+// ---------------------------------
+typedef enum {
+    TL_VIDEO_RESOLUTION_SD  = 480,
+    TL_VIDEO_RESOLUTION_HD  = 720,
+    TL_VIDEO_RESOLUTION_FHD = 1080,
+    TL_VIDEO_RESOLUTION_QHD = 1440,
+    TL_VIDEO_RESOLUTION_UHD = 2160
+} TLVideoResolution;
+// ---------------------------------
 // Container
 // ---------------------------------
 typedef struct TLList TLList;
 typedef struct TLIterator TLIterator;
+typedef struct TLString TLString;
 // ---------------------------------
 // Scene
 // ---------------------------------
@@ -155,10 +167,21 @@ typedef struct {
 // ---------------------------------
 typedef struct {
     struct {
+        TLVideoResolution resolution;
+        const char *title;
+    } window;
+
+    struct {
+        u8 step;
+    } simulation;
+} TLApplication;
+
+typedef struct {
+    struct {
         struct {
             u32 width;
             u32 height;
-            const char *title;
+            TLString *title;
             void* handle;
             b8 maximized;
             b8 minimized;
