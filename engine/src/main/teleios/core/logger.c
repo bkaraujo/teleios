@@ -4,10 +4,11 @@
  * Performs logging into the platform STDOUT. It's expected to be possible to call the logger macros from within 
  * any other compilation unit, and for that the logger must have no dependencies.
  */
-#include "teleios/core/platform_detector.h"
-#include "teleios/core/logger.h"
 #include <stdio.h>
 #include <stdarg.h>
+
+#include "teleios/core/platform_detector.h"
+#include "teleios/core/logger.h"
 
 #ifdef TLPLATFORM_LINUX
 #   define __USE_POSIX 1

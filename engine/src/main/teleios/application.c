@@ -3,39 +3,10 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
-static GLFWwindow* window;
-static f64 STEP = 1.0f / 30.0f;
-
 b8 tl_application_initialize(void) {
     TLTRACE(">> tl_application_initialize(void)")
 
-    TLVERBOSE("Initializing GLFW");
-    if (!glfwInit()) {
-        TLERROR("Failed to initialize GLFW")
-        return FALSE;
-    }
-    
-    TLVERBOSE("Creating window");
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef TLPLATFORM_APPLE
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    window = glfwCreateWindow(640, 480, "Teleios APP", NULL, NULL);
-    if (window == NULL) {
-        TLERROR("Failed to create GLFW window");
-        return FALSE;       
-    }
-
-    glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        TLERROR("Failed to initialize GLAD")
-        return FALSE;
-    }
-
-    glfwSwapInterval(0);
+    runtime->simulation.step = 1.0f / 30.0f;
 
     TLTRACE("<< tl_application_initialize(void)")
     return TRUE;
@@ -54,8 +25,8 @@ b8 tl_application_run(void) {
     f64 lastTime = glfwGetTime();
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
-    glfwShowWindow(window);
-    while (!glfwWindowShouldClose(window)) {
+    glfwShowWindow(runtime->platform.window.handle);
+    while (!glfwWindowShouldClose(runtime->platform.window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
 
@@ -63,12 +34,12 @@ b8 tl_application_run(void) {
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         accumulator += deltaTime;
-        while (accumulator >= STEP) {
-            accumulator -= STEP;
+        while (accumulator >= runtime->simulation.step) {
+            accumulator -= runtime->simulation.step;
             UPS++;
         }
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(runtime->platform.window.handle);
         
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
@@ -80,7 +51,7 @@ b8 tl_application_run(void) {
         glfwPollEvents();
     }
 
-    glfwHideWindow(window);
+    glfwHideWindow(runtime->platform.window.handle);
 
     TLTRACE("<< tl_application_run(void)")
     return TRUE;
@@ -88,9 +59,6 @@ b8 tl_application_run(void) {
 
 b8 tl_application_terminate(void) {
     TLTRACE(">> tl_application_terminate(void)")
-
-    TLVERBOSE("Terminating GLFW");
-    glfwTerminate();
 
     TLTRACE("<< tl_application_terminate(void)")
     return TRUE;

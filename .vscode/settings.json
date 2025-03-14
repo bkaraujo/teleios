@@ -67,6 +67,10 @@
         "iterator": "c",
         "console.h": "c",
         "event.h": "c",
-        "shared.h": "c"
+        "shared.h": "c",
+        "graphics.h": "c",
+        "glad.h": "c",
+        "core.h": "c",
+        "dependencies.h": "c"
     }
 }

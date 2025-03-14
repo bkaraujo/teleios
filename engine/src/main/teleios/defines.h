@@ -117,12 +117,6 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 // Memmory Tags
 // ---------------------------------
-
-typedef struct TLMemoryArena TLMemoryArena;
-typedef struct TLList TLList;
-typedef struct TLIterator TLIterator;
-
-
 typedef enum {
     TL_MEMORY_BLOCK,
     TL_MEMORY_CONTAINER_LIST,
@@ -137,5 +131,59 @@ typedef struct {
     u16 year; u8 month; u8 day;
     u8 hour; u8 minute; u8 second;
 } TLClock;
+
+typedef struct TLMemoryArena TLMemoryArena;
+typedef struct TLList TLList;
+typedef struct TLIterator TLIterator;
+
+typedef struct {
+    struct {
+        vec4s clear_color;
+    } graphics;
+
+    TLList *entities;
+} TLScene;
+
+typedef struct {
+    struct {
+        struct {
+            u32 width;
+            u32 height;
+            const char *title;
+            void* handle;
+            b8 maximized;
+            b8 minimized;
+            b8 focused;
+            b8 hovered;
+        } window;
+
+        struct {
+            u64 allocated;
+            u64 tagged_count[TL_MEMORY_MAXIMUM];
+            u64 tagged_size[TL_MEMORY_MAXIMUM];
+            TLMemoryArena* arenas[U8_MAX];
+        } memory;
+    } platform;
+
+    struct {
+        b8 vsync;
+        b8 wireframe;
+    } graphics;
+
+    struct {
+        TLList *entities;
+        TLList *components;
+    } ecs; 
+    
+    struct {
+        f64 step;
+    } simulation;
+
+    TLScene* scene;
+    TLMemoryArena* arena_frame;
+    TLMemoryArena* arena_persistent;
+} TLRuntime;
+
+extern TLRuntime *runtime;
 
 #endif // __TELEIOS_DEFINES__
