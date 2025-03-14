@@ -1,6 +1,4 @@
-bin/
-build/
+build/cmake-build-files
 engine/libs/cglm/
 engine/libs/glfw/
-cmake-ninja-files
-.vscode/settings.json
+engine/libs/libyaml/
