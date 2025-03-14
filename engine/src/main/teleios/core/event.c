@@ -24,7 +24,6 @@ static void tl_event_process(void *data) {
 }
 
 void tl_event_submmit(u16 event, void* data) {
-    TLTRACE(">> tl_event_submmit(%u, ...)", event)
     if (subscribers[event] == NULL) {
         TLVERBOSE("No listener available for event %u", event)
         return;
@@ -36,6 +35,4 @@ void tl_event_submmit(u16 event, void* data) {
             break;
         }
     }
-
-    TLTRACE("<< tl_event_submmit(%u, ...)", event)
 }

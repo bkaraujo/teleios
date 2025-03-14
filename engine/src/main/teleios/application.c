@@ -1,5 +1,6 @@
 #include "teleios/core.h"
 #include "teleios/application.h"
+#include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
 static GLFWwindow* window;
@@ -15,11 +16,26 @@ b8 tl_application_initialize(void) {
     }
     
     TLVERBOSE("Creating window");
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef TLPLATFORM_APPLE
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
     window = glfwCreateWindow(640, 480, "Teleios APP", NULL, NULL);
     if (window == NULL) {
         TLERROR("Failed to create GLFW window");
         return FALSE;       
     }
+
+    glfwMakeContextCurrent(window);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        TLERROR("Failed to initialize GLAD")
+        return FALSE;
+    }
+
+    glfwSwapInterval(0);
 
     TLTRACE("<< tl_application_initialize(void)")
     return TRUE;
@@ -36,13 +52,15 @@ b8 tl_application_run(void) {
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
-    
+    glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
+
     glfwShowWindow(window);
     while (!glfwWindowShouldClose(window)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
 
         FPS++;
+        glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         accumulator += deltaTime;
         while (accumulator >= STEP) {
@@ -50,6 +68,8 @@ b8 tl_application_run(void) {
             UPS++;
         }
 
+        glfwSwapBuffers(window);
+        
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
             tl_time_clock(&t1);

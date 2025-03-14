@@ -39,7 +39,9 @@ include_directories(engine/libs/libyaml/include)
 include_directories("engine/src/main")
 add_executable(${PROJECT_NAME}
     engine/src/main/main.c
-    engine/src/main/stb/stb_image.h
+
+    engine/src/main/glad/glad.c
+
     engine/src/main/teleios/application.c
     engine/src/main/teleios/core/container_list.c
     engine/src/main/teleios/core/logger.c
