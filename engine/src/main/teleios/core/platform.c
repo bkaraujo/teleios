@@ -106,12 +106,15 @@ TLINLINE static void __tl_memory_arena_destroy(TLMemoryArena* arena) {
 }
 
 void tl_memory_arena_reset(TLMemoryArena* arena) {
+    // TLTRACE(">> tl_memory_arena_reset(0x%p)", arena)
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
-        if (arena->page[i].payload == NULL) continue;
-        
+        if (arena->page[i].payload == NULL) break;
+
         arena->page[i].index = 0;
+        TLVERBOSE("Zeroing memory page %u", i)
         tl_memory_set(arena->page[i].payload, 0, arena->page_size);
     }
+    // TLTRACE("<< tl_memory_arena_reset(0x%p)", arena)
 }
 
 void tl_memory_arena_destroy(TLMemoryArena* arena) {
@@ -230,6 +233,8 @@ b8 tl_platform_initialize(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    TLDEBUG("Window size (%u x %u)", runtime->platform.window.width, runtime->platform.window.height)
+    TLDEBUG("Window title: %s", tl_string_text(runtime->platform.window.title))
     runtime->platform.window.handle = glfwCreateWindow(
         runtime->platform.window.width, 
         runtime->platform.window.height, 

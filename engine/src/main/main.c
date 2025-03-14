@@ -13,7 +13,7 @@ int main (int argc, char *argv[]) {
     }
 
     TLApplication app = {
-        .window.resolution = TL_VIDEO_RESOLUTION_SD,
+        .window.resolution = TL_VIDEO_RESOLUTION_HD,
         .window.title = "Teleios APP",
         .simulation.step = 30
     };

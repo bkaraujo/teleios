@@ -29,16 +29,22 @@ b8 tl_application_run(void) {
     while (!glfwWindowShouldClose(runtime->platform.window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
-
-        FPS++;
-        glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        // =========================================================
+        // Simulation Pass
+        // =========================================================
         accumulator += deltaTime;
         while (accumulator >= runtime->simulation.step) {
             accumulator -= runtime->simulation.step;
             UPS++;
         }
-
+        // =========================================================
+        // Graphics Pass
+        // =========================================================
+        FPS++;
+        glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // =========================================================
+        // Presenting Pass
+        // =========================================================
         glfwSwapBuffers(runtime->platform.window.handle);
         
         tl_time_clock(&t2);
@@ -47,7 +53,9 @@ b8 tl_application_run(void) {
             TLDEBUG("FPS %llu, UPS %llu", FPS, UPS);
             FPS = UPS = 0;
         }
-
+        // =========================================================
+        // Cleanup Pass
+        // =========================================================
         glfwPollEvents();
         tl_memory_arena_reset(runtime->arena_frame);
     }
