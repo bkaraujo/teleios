@@ -115,7 +115,7 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define TLMEGABYTES(amount) ((amount) * 1000ULL * 1000ULL)
 #define TLKILOBYTES(amount) ((amount) * 1000ULL)
 // ---------------------------------
-// Memmory Tags
+// Memmory
 // ---------------------------------
 typedef enum {
     TL_MEMORY_BLOCK,
@@ -126,16 +126,23 @@ typedef enum {
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
 
+typedef struct TLMemoryArena TLMemoryArena;
+// ---------------------------------
+// Time
+// ---------------------------------
 typedef struct {
     u16 millis;
     u16 year; u8 month; u8 day;
     u8 hour; u8 minute; u8 second;
 } TLClock;
-
-typedef struct TLMemoryArena TLMemoryArena;
+// ---------------------------------
+// Container
+// ---------------------------------
 typedef struct TLList TLList;
 typedef struct TLIterator TLIterator;
-
+// ---------------------------------
+// Scene
+// ---------------------------------
 typedef struct {
     struct {
         vec4s clear_color;
@@ -143,7 +150,9 @@ typedef struct {
 
     TLList *entities;
 } TLScene;
-
+// ---------------------------------
+// Globals
+// ---------------------------------
 typedef struct {
     struct {
         struct {
@@ -174,7 +183,7 @@ typedef struct {
         TLList *entities;
         TLList *components;
     } ecs; 
-    
+
     struct {
         f64 step;
     } simulation;
