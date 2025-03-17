@@ -71,6 +71,7 @@
         "graphics.h": "c",
         "glad.h": "c",
         "core.h": "c",
-        "dependencies.h": "c"
+        "dependencies.h": "c",
+        "serializer.h": "c"
     }
 }
