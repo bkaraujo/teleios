@@ -26,7 +26,7 @@ TLApplication* tl_serializer_read(const char *file_name) {
     }
 
     yaml_parser_set_input_file(&parser, file);
-    TLApplication* yaml = tl_memory_alloc(runtime->arena_persistent, sizeof(TLApplication), TL_MEMORY_SERIALIZER);
+    TLApplication* yaml = tl_memory_alloc(runtime->arenas.permanent, sizeof(TLApplication), TL_MEMORY_SERIALIZER);
 
     u8 block_index;
     void* block = TLALLOCA(U8_MAX);
@@ -118,7 +118,11 @@ TLApplication* tl_serializer_read(const char *file_name) {
 
                 if (TLPROPERTY("application.simulation.")) {
                     if (TLBLOCK("step")) {
-                        yaml->simulation.step = atoi(token.data.scalar.value);
+                        yaml->simulation.step = strtol(token.data.scalar.value, (void*)(token.data.scalar.value + token.data.scalar.length), 10);
+                        if (yaml->simulation.step == 0) {
+                            TLWARN("Failed to read [%s%s] assuming 24", property, block);
+                            yaml->simulation.step = 24;
+                        }
                         continue;
                     }
                 }

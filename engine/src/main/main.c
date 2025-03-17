@@ -18,7 +18,7 @@ int main (int argc, char *argv[]) {
     TLRuntime rt = {0};
     runtime = &rt;
 
-    runtime->arena_persistent = tl_memory_arena_create(TLMEBIBYTES(32));
+    runtime->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
     TLApplication* app = tl_serializer_read(argv[1]);
 
     runtime->platform.window.hovered = FALSE;
@@ -26,7 +26,7 @@ int main (int argc, char *argv[]) {
     runtime->platform.window.minimized = FALSE;
     runtime->platform.window.width = app->window.resolution;
     runtime->platform.window.height = (app->window.resolution * 9) / 16;
-    runtime->platform.window.title = tl_string_wrap(runtime->arena_persistent, app->window.title);
+    runtime->platform.window.title = tl_string_wrap(runtime->arenas.permanent, app->window.title);
     
     runtime->graphics.vsync = FALSE;
     runtime->graphics.wireframe = FALSE;
@@ -39,8 +39,8 @@ int main (int argc, char *argv[]) {
         exit(99);
     }
 
-    runtime->ecs.entities = tl_list_create(runtime->arena_persistent);
-    runtime->ecs.components = tl_list_create(runtime->arena_persistent);
+    runtime->ecs.entities = tl_list_create(runtime->arenas.permanent);
+    runtime->ecs.components = tl_list_create(runtime->arenas.permanent);
 
     if (!tl_application_initialize()) {
         TLERROR("Application failed to intialize");

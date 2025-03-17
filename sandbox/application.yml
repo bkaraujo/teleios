@@ -11,7 +11,7 @@ application:
       size: HD
       title: "LearnOpenGL"
     simulation:
-      step: 30
+      step: xx
     scenes:
       - name: "default"
         clear_color: .7, .2, .7, 1

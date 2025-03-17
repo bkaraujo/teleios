@@ -7,7 +7,7 @@ void tl_event_subscribe(u16 event, PFN_handler handler) {
 
     if (subscribers[event] == NULL) {
         TLVERBOSE("Creating subscriber list for event %u", event)
-        subscribers[event] = tl_list_create(runtime->arena_persistent);
+        subscribers[event] = tl_list_create(runtime->arenas.permanent);
     }
     
     tl_list_add(subscribers[event], handler);

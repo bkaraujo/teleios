@@ -215,8 +215,10 @@ typedef struct {
     } simulation;
 
     TLScene* scene;
-    TLMemoryArena* arena_frame;
-    TLMemoryArena* arena_persistent;
+    struct {
+        TLMemoryArena* frame;
+        TLMemoryArena* permanent;
+    } arenas;
 } TLRuntime;
 
 extern TLRuntime *runtime;

@@ -25,7 +25,8 @@ b8 tl_application_run(void) {
 
     glfwShowWindow(runtime->platform.window.handle);
 
-    runtime->arena_frame = tl_memory_arena_create(TLMEBIBYTES(10));
+    runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
+    
     while (!glfwWindowShouldClose(runtime->platform.window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
@@ -57,7 +58,7 @@ b8 tl_application_run(void) {
         // Cleanup Pass
         // =========================================================
         glfwPollEvents();
-        tl_memory_arena_reset(runtime->arena_frame);
+        tl_memory_arena_reset(runtime->arenas.frame);
     }
 
     glfwHideWindow(runtime->platform.window.handle);

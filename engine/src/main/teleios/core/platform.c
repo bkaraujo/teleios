@@ -19,7 +19,9 @@ struct TLMemoryArena {
 static const char *tl_memory_name(TLMemoryTag tag) {
     switch (tag) {
         case TL_MEMORY_BLOCK: return "TL_MEMORY_BLOCK";
+        case TL_MEMORY_SERIALIZER: return "TL_MEMORY_SERIALIZER";
         case TL_MEMORY_CONTAINER_LIST: return "TL_MEMORY_CONTAINER_LIST";
+        case TL_MEMORY_CONTAINER_STACK: return "TL_MEMORY_CONTAINER_STACK";
         case TL_MEMORY_CONTAINER_NODE: return "TL_MEMORY_CONTAINER_NODE";
         case TL_MEMORY_CONTAINER_ITERATOR: return "TL_MEMORY_CONTAINER_ITERATOR";
         case TL_MEMORY_STRING: return "TL_MEMORY_STRING";
@@ -31,7 +33,7 @@ static const char *tl_memory_name(TLMemoryTag tag) {
 }
 
 TLMemoryArena* tl_memory_arena_create(u64 size) {
-    TLTRACE(">> tl_memory_arena_create(%d)", size)
+    // TLTRACE(">> tl_memory_arena_create(%d)", size)
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
@@ -52,16 +54,16 @@ TLMemoryArena* tl_memory_arena_create(u64 size) {
     TLTRACE("Created TLMemoryArena 0x%p", arena)
     TLVERBOSE("TLMemoryArena 0x%p page size: %d bytes", arena, arena->page_size)
     
-    TLTRACE("<< tl_memory_arena_create(%d)", size)
+    // TLTRACE("<< tl_memory_arena_create(%d)", size)
     return arena;
 }
 
 TLINLINE static b8 __tl_memory_arena_is_valid(TLMemoryArena* arena) {
-    TLTRACE(">> __tl_memory_arena_is_valid(0x%p)", arena)
+    // TLTRACE(">> __tl_memory_arena_is_valid(0x%p)", arena)
 
     if (arena == NULL) {
         TLWARN("TLMemoryArena is NULL")
-        TLTRACE("<< __tl_memory_arena_is_valid(0x%p)", arena)
+        // TLTRACE("<< __tl_memory_arena_is_valid(0x%p)", arena)
         return FALSE;
     }
 
@@ -76,16 +78,16 @@ TLINLINE static b8 __tl_memory_arena_is_valid(TLMemoryArena* arena) {
         TLWARN("Illegal TLMemoryArena 0x%p", arena)
     }
 
-    TLTRACE("<< __tl_memory_arena_is_valid(0x%p)", arena)
+    // TLTRACE("<< __tl_memory_arena_is_valid(0x%p)", arena)
     return found;
 }
 
 
 TLINLINE static void __tl_memory_arena_destroy(TLMemoryArena* arena) {
-    TLTRACE(">> __tl_memory_arena_destroy(0x%p)", arena)
+    // TLTRACE(">> __tl_memory_arena_destroy(0x%p)", arena)
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arena->page[i].payload != NULL) {
-            TLVERBOSE("Releasing page %d", i)
+            TLVERBOSE("TLMemoryArena 0x%p Releasing page %d", arena, i)
             TLFREE(arena->page[i].payload);
             arena->page[i].payload = NULL;
         }
@@ -98,7 +100,7 @@ TLINLINE static void __tl_memory_arena_destroy(TLMemoryArena* arena) {
     }
 
     TLFREE(arena);
-    TLTRACE("<< __tl_memory_arena_destroy(0x%p)", arena)
+    // TLTRACE("<< __tl_memory_arena_destroy(0x%p)", arena)
     arena = NULL;
 }
 
@@ -108,44 +110,44 @@ void tl_memory_arena_reset(TLMemoryArena* arena) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
-        TLVERBOSE("Zeroing memory page %u", i)
+        TLVERBOSE("TLMemoryArena 0x%p zeroing memory page %u", arena, i)
         tl_memory_set(arena->page[i].payload, 0, arena->page_size);
     }
     // TLTRACE("<< tl_memory_arena_reset(0x%p)", arena)
 }
 
 void tl_memory_arena_destroy(TLMemoryArena* arena) {
-    TLTRACE(">> tl_memory_arena_destroy(0x%p)", arena)
+    // TLTRACE(">> tl_memory_arena_destroy(0x%p)", arena)
     TLTRACE("Destroying TLMemoryArena 0x%p", arena)
     
     if (!__tl_memory_arena_is_valid(arena)) {
-        TLTRACE("<< tl_memory_arena_destroy(0x%p)", arena)
+        // TLTRACE("<< tl_memory_arena_destroy(0x%p)", arena)
         return;
     }
 
     __tl_memory_arena_destroy(arena);
-    TLTRACE("<< tl_memory_arena_destroy(0x%p)", arena)
+    // TLTRACE("<< tl_memory_arena_destroy(0x%p)", arena)
 }
 
 void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
-    TLTRACE(">> tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+    // TLTRACE(">> tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
     // -------------------------------------------------
     // Ensure that the Arena can hold the desired size
     // -------------------------------------------------
     if (!__tl_memory_arena_is_valid(arena)) {
-        TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+        // TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
         return NULL;
     }
 
     if (size == 0) {
-        TLWARN("Allocation size must be greater then 0")
-        TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+        TLWARN("TLMemoryArena 0x%p allocation size must be greater then 0", arena)
+        // TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
         return NULL;
     }
 
     if (size > arena->page_size) {
-        TLWARN("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena->page_size, size)
-        TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+        TLWARN("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
+        // TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
         return NULL;
     }
     // -------------------------------------------------
@@ -155,7 +157,7 @@ void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
     for (u8 i = 0; i < U8_MAX ; ++i) {
         // Initialize a new TLMemoryPage
         if (arena->page[i].payload == NULL) {
-            TLVERBOSE("Initializing page %d", i)
+            TLVERBOSE("TLMemoryArena 0x%p initializing page %d", arena, i)
             arena->page[i].payload = TLMALLOC(arena->page_size);
             
             found = i;
@@ -164,15 +166,13 @@ void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
         
         // Utilize the available TLMemoryPage
         if (arena->page[i].index + size <= arena->page_size) {
-            TLVERBOSE("Using page %d", i)
-            
             found = i;
             break;
         }
     }
     
     if (found == U8_MAX) {
-        TLWARN("No suitable TLMemoryPage within the arena")
+        TLWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
         return NULL;
     }
     // -------------------------------------------------
@@ -186,24 +186,24 @@ void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
     // -------------------------------------------------
     void* address = arena->page[found].payload + arena->page[found].index;
     arena->page[found].index += size;
-    TLVERBOSE("Page %d has %d bytes available", found, (arena->page_size - arena->page[found].index))
+    TLVERBOSE("TLMemoryArena 0x%p page %d has %d bytes available", arena, found, (arena->page_size - arena->page[found].index))
     // -------------------------------------------------
     // Hand out the memory pointer
     // -------------------------------------------------
-    TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
+    // TLTRACE("<< tl_memory_alloc(0x%p, %d, %s)", arena, size, tl_memory_name(tag))
     return address;
 }
 
 void tl_memory_set(void *block, i32 value, u64 size) {
-    TLTRACE(">> tl_memory_set(0x%p, %d, %llu)", block, value, size);
+    // TLTRACE(">> tl_memory_set(0x%p, %d, %llu)", block, value, size);
     TLMEMSET(block, value, size);
-    TLTRACE("<< tl_memory_set(0x%p, %d, %llu)", block, value, size);
+    // TLTRACE("<< tl_memory_set(0x%p, %d, %llu)", block, value, size);
 }
 
 void tl_memory_copy(void *target, void *source, u64 size) {
-    TLTRACE(">> tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
+    // TLTRACE(">> tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
     TLMEMCPY(target, source, size);
-    TLTRACE("<< tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
+    // TLTRACE("<< tl_memory_copy(0x%p, 0x%p, %d)", target, source, size);
 }
 // ########################################################
 //                  LIFECYCLE FUNCTIONS
@@ -259,8 +259,8 @@ b8 tl_platform_terminate(void) {
     TLVERBOSE("Terminating GLFW");
     glfwTerminate();
 
-    __tl_memory_arena_destroy(runtime->arena_frame);
-    __tl_memory_arena_destroy(runtime->arena_persistent);
+    __tl_memory_arena_destroy(runtime->arenas.frame);
+    __tl_memory_arena_destroy(runtime->arenas.permanent);
 
     for (u8 i = 2 ; i < U8_MAX ; ++i) {
         TLMemoryArena* arena = runtime->platform.memory.arenas[i];
