@@ -4,6 +4,7 @@
 #include "teleios/defines.h"
 
 #include "teleios/core/logger.h"
+#include "teleios/core/ulid.h"
 #include "teleios/core/string.h"
 #include "teleios/core/event.h"
 #include "teleios/core/container.h"

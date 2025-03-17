@@ -220,6 +220,8 @@ b8 tl_platform_initialize(void) {
         return FALSE;
     }
     
+    runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
+    
     TLVERBOSE("Creating window");
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);

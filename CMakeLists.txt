@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME}
     engine/src/main/teleios/core/event.c
     engine/src/main/teleios/core/graphics.c
     engine/src/main/teleios/core/serializer.c
+    engine/src/main/teleios/core/ulid.c
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)
