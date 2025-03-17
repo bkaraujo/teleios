@@ -1,7 +1,4 @@
-#include "teleios/core/event.h"
-#include "teleios/core/memory.h"
-#include "teleios/core/logger.h"
-#include "teleios/core/container.h"
+#include "teleios/core.h"
 
 static TLList* subscribers[U16_MAX] = { 0 };
 

@@ -2,6 +2,7 @@
 #define __TELEIOS_GRAPHICS__
 
 #include "teleios/defines.h"
+#include "glad/glad.h"
 
 b8 tl_graphics_initialize(void);
 b8 tl_graphics_terminate(void);

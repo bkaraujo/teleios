@@ -1,5 +1,7 @@
 #include "teleios/core.h"
+#include "teleios/core/platform.h"
 #include "teleios/application.h"
+#include "teleios/core/serializer.h"
 
 TLRuntime *runtime;
 
@@ -12,28 +14,24 @@ int main (int argc, char *argv[]) {
         TLFATAL("argc != 2")
     }
 
-    TLApplication app = {
-        .window.resolution = TL_VIDEO_RESOLUTION_HD,
-        .window.title = "Teleios APP",
-        .simulation.step = 30
-    };
 
     TLRuntime rt = {0};
     runtime = &rt;
 
     runtime->arena_persistent = tl_memory_arena_create(TLMEBIBYTES(32));
+    TLApplication* app = tl_serializer_read(argv[1]);
 
     runtime->platform.window.hovered = FALSE;
     runtime->platform.window.maximized = FALSE;
     runtime->platform.window.minimized = FALSE;
-    runtime->platform.window.width = app.window.resolution;
-    runtime->platform.window.height = (app.window.resolution * 9) / 16;
-    runtime->platform.window.title = tl_string_wrap(runtime->arena_persistent, app.window.title);
+    runtime->platform.window.width = app->window.resolution;
+    runtime->platform.window.height = (app->window.resolution * 9) / 16;
+    runtime->platform.window.title = tl_string_wrap(runtime->arena_persistent, app->window.title);
     
     runtime->graphics.vsync = FALSE;
     runtime->graphics.wireframe = FALSE;
 
-    runtime->simulation.step = 1.0f / app.simulation.step;
+    runtime->simulation.step = 1.0f / app->simulation.step;
 
     if (!tl_platform_initialize()) {
         TLERROR("Platform failed to intialize");

@@ -1,6 +1,6 @@
 #include "teleios/core/platform_detector.h"
 #ifdef TLPLATFORM_LINUX
-#include "teleios/core/logger.h"
+#include "teleios/core.h"
 
 // ########################################################
 //                    TIME FUNCTIONS

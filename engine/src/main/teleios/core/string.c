@@ -1,6 +1,4 @@
-#include "teleios/core/string.h"
-#include "teleios/core/memory.h"
-#include "teleios/core/logger.h"
+#include "teleios/core.h"
 
 struct TLString {
     u64 length;

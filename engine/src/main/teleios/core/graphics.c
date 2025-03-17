@@ -1,7 +1,4 @@
-#include "teleios/core/graphics.h"
-#include "teleios/core/memory.h"
-#include "teleios/core/logger.h"
-#include "glad/glad.h"
+#include "teleios/core.h"
 #include "GLFW/glfw3.h"
 
 b8 tl_graphics_initialize(void) {

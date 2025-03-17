@@ -119,6 +119,8 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 typedef enum {
     TL_MEMORY_BLOCK,
+    TL_MEMORY_SERIALIZER,
+    TL_MEMORY_CONTAINER_STACK,
     TL_MEMORY_CONTAINER_LIST,
     TL_MEMORY_CONTAINER_NODE,
     TL_MEMORY_CONTAINER_ITERATOR,
@@ -149,6 +151,7 @@ typedef enum {
 // ---------------------------------
 // Container
 // ---------------------------------
+typedef struct TLStack TLStack;
 typedef struct TLList TLList;
 typedef struct TLIterator TLIterator;
 typedef struct TLString TLString;

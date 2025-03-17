@@ -8,8 +8,10 @@ engine:
 application:
     version: 0.1.0
     window:
-      size: qHD
+      size: HD
       title: "LearnOpenGL"
+    simulation:
+      step: 30
     scenes:
       - name: "default"
         clear_color: .7, .2, .7, 1

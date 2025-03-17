@@ -1,11 +1,8 @@
-#include "teleios/core/logger.h"
-#include "teleios/core/string.h"
+#include "teleios/core.h"
 
 // ########################################################
 //                    MEMORY FUNCTIONS
 // ########################################################
-#include "teleios/core/memory.h"
-
 typedef struct {
     u64 index;
     char *payload;
@@ -212,8 +209,6 @@ void tl_memory_copy(void *target, void *source, u64 size) {
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
 #include "teleios/core/platform.h"
-#include "teleios/core/graphics.h"
-#include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
 b8 tl_platform_initialize(void) {
