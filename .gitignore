@@ -2,3 +2,6 @@ build/cmake-build-files
 engine/libs/cglm/
 engine/libs/glfw/
 engine/libs/libyaml/
+cmake-build-debug/
+
+.idea/

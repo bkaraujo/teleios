@@ -3,6 +3,8 @@
 // ########################################################
 //                    MEMORY FUNCTIONS
 // ########################################################
+
+
 typedef struct {
     u64 index;
     char *payload;
@@ -32,7 +34,7 @@ static const char *tl_memory_name(TLMemoryTag tag) {
     return "???";
 }
 
-TLMemoryArena* tl_memory_arena_create(u64 size) {
+TLMemoryArena* tl_memory_arena_create(const u64 size) {
     // TLTRACE(">> tl_memory_arena_create(%d)", size)
     // ----------------------------------------------------------
     // Create the memory arena
@@ -159,7 +161,8 @@ void *tl_memory_alloc(TLMemoryArena* arena, u64 size, TLMemoryTag tag) {
         if (arena->page[i].payload == NULL) {
             TLVERBOSE("TLMemoryArena 0x%p initializing page %d", arena, i)
             arena->page[i].payload = TLMALLOC(arena->page_size);
-            
+            TLMEMSET(arena->page[i].payload, 0, arena->page_size);
+
             found = i;
             break;
         }
@@ -213,14 +216,13 @@ void tl_memory_copy(void *target, void *source, u64 size) {
 
 b8 tl_platform_initialize(void) {
     TLTRACE(">> tl_platform_initialize(void)")
+    tl_profiler_begin("tl_platform_initialize");
 
     TLVERBOSE("Initializing GLFW");
     if (!glfwInit()) {
         TLERROR("Failed to initialize GLFW")
         return FALSE;
     }
-    
-    runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     
     TLVERBOSE("Creating window");
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -248,6 +250,8 @@ b8 tl_platform_initialize(void) {
         return FALSE;
     }
 
+    TLDEBUG("Platform initialized in %llu micros", tl_profiler_time("tl_platform_initialize"));
+    tl_profiler_end("tl_platform_initialize");
     TLTRACE("<< tl_platform_initialize(void)")
     return TRUE;
 }
@@ -260,9 +264,6 @@ b8 tl_platform_terminate(void) {
 
     TLVERBOSE("Terminating GLFW");
     glfwTerminate();
-
-    __tl_memory_arena_destroy(runtime->arenas.frame);
-    __tl_memory_arena_destroy(runtime->arenas.permanent);
 
     for (u8 i = 2 ; i < U8_MAX ; ++i) {
         TLMemoryArena* arena = runtime->platform.memory.arenas[i];

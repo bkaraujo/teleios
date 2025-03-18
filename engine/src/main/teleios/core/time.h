@@ -5,4 +5,6 @@
 
 void tl_time_clock(TLClock* clock);
 
+u64 tl_time_epoch(void);
+
 #endif // __TELEIOS_PLATFORM__TIME__

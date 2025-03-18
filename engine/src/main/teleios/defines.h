@@ -126,6 +126,7 @@ typedef enum {
     TL_MEMORY_CONTAINER_ITERATOR,
     TL_MEMORY_STRING,
     TL_MEMORY_WINDOW,
+    TL_MEMORY_PROFILER,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
 
@@ -189,7 +190,7 @@ typedef struct {
 typedef struct {
     struct {
         TLVideoResolution resolution;
-        const char *title;
+        TLString *title;
     } window;
 
     struct {

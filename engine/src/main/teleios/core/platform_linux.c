@@ -5,9 +5,8 @@
 // ########################################################
 //                    TIME FUNCTIONS
 // ########################################################
-#define __USE_POSIX 1
-#define __USE_POSIX199309 1
 #include <time.h>
+#include <sys/time.h>
 #include "teleios/core/time.h"
 
 void tl_time_clock(TLClock* clock) {
@@ -24,6 +23,12 @@ void tl_time_clock(TLClock* clock) {
     clock->minute = localtime.tm_min;
     clock->second = localtime.tm_sec;
     clock->millis = now.tv_nsec / 1000;
+}
+
+u64 tl_time_epoch(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
 #endif

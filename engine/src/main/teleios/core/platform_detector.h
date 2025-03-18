@@ -3,6 +3,7 @@
 #   ifndef _WIN64
 #       error "64-bit is required on Windows!"
 #   endif
+#   include <windows.h>
 #elif defined(__linux__) || defined(__gnu_linux__)
 #   define TLPLATFORM_LINUX 1
 #   if defined(__ANDROID__)

@@ -5,13 +5,16 @@
 
 b8 tl_application_initialize(void) {
     TLTRACE(">> tl_application_initialize(void)")
+    tl_profiler_begin("tl_application_initialize");
+    // ------------
+    TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
+    tl_profiler_end("tl_application_initialize");
     TLTRACE("<< tl_application_initialize(void)")
     return TRUE;
 }
 
 b8 tl_application_run(void) {
     TLTRACE(">> tl_application_run(void)")
-
     TLClock t1, t2; 
     tl_time_clock(&t1);
         
@@ -20,6 +23,8 @@ b8 tl_application_run(void) {
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
+
+    //TODO move glClearColor to scene initialization
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
     glfwShowWindow(runtime->platform.window.handle);
@@ -65,6 +70,10 @@ b8 tl_application_run(void) {
 
 b8 tl_application_terminate(void) {
     TLTRACE(">> tl_application_terminate(void)")
+    tl_profiler_begin("tl_application_terminate");
+    //-----
+    TLDEBUG("Application terminated in %llu micros", tl_profiler_time("tl_application_terminate"));
+    tl_profiler_end("tl_application_terminate");
     TLTRACE("<< tl_application_terminate(void)")
     return TRUE;
 }

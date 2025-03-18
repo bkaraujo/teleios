@@ -36,23 +36,30 @@ include_directories(engine/libs/libyaml/include)
 #                   TELIOS
 #
 # ==========================================
+#add_definitions(-DTELEIOS_BUILD_VERBOSE)
+#add_definitions(-DTELEIOS_BUILD_TRACE)
+add_definitions(-DTELEIOS_BUILD_DEBUG)
+add_definitions(-DTELEIOS_BUILD_PROFILE)
+
 include_directories("engine/src/main")
 add_executable(${PROJECT_NAME}
-    engine/src/main/main.c
+        engine/src/main/main.c
+        engine/src/main/glad/glad.c
 
-    engine/src/main/glad/glad.c
-
-    engine/src/main/teleios/application.c
-    engine/src/main/teleios/core/container_list.c
-    engine/src/main/teleios/core/container_stack.c
-    engine/src/main/teleios/core/logger.c
-    engine/src/main/teleios/core/platform.c
-    engine/src/main/teleios/core/platform_linux.c
-    engine/src/main/teleios/core/string.c
-    engine/src/main/teleios/core/event.c
-    engine/src/main/teleios/core/graphics.c
-    engine/src/main/teleios/core/serializer.c
-    engine/src/main/teleios/core/ulid.c
+        engine/src/main/teleios/core/ulid.c
+        engine/src/main/teleios/core/event.c
+        engine/src/main/teleios/application.c
+        engine/src/main/teleios/core/string.c
+        engine/src/main/teleios/core/logger.c
+        engine/src/main/teleios/core/graphics.c
+        engine/src/main/teleios/core/platform.c
+        engine/src/main/teleios/core/serializer.c
+        engine/src/main/teleios/core/container_list.c
+        engine/src/main/teleios/core/container_stack.c
+        engine/src/main/teleios/core/platform_linux.c
+        engine/src/main/teleios/core/platform_windows.c
+        engine/src/main/teleios/core/profiler.c
+        engine/src/main/teleios/core/profiler.h
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)

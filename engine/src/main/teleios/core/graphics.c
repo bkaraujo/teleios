@@ -11,18 +11,18 @@ b8 tl_graphics_initialize(void) {
     }
 
     if (runtime->graphics.vsync) {
-        TLVERBOSE("vsync: on")
+        TLDEBUG("vsync: on")
         glfwSwapInterval(1);
     } else {
-        TLVERBOSE("vsync: off")
+        TLDEBUG("vsync: off")
         glfwSwapInterval(0);
     }
 
     if (runtime->graphics.wireframe) {
-        TLVERBOSE("wireframe: on")
+        TLDEBUG("wireframe: on")
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else {
-        TLVERBOSE("wireframe: off")
+        TLDEBUG("wireframe: off")
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 

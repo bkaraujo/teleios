@@ -13,5 +13,6 @@
 
 #include "teleios/core/time.h"
 #include "teleios/core/memory.h"
+#include "teleios/core/profiler.h"
 
 #endif // __TELEIOS_CORE__

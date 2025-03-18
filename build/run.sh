@@ -2,6 +2,6 @@
 
 clear
 ROOTFS="$(dirname "$(realpath -s "$0")")/.."
-BUILDFS="$ROOTFS/build/cmake-build-files"
+BUILDFS="$ROOTFS/cmake-build-debug"
 
 $BUILDFS/teleios $1

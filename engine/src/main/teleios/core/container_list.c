@@ -114,6 +114,7 @@ void tl_list_add(TLList* list, void *value) {
     struct TLNode* created = tl_list_create_node(list->arena, value);
 
     if (list->head == NULL) {
+        list->length++;
         list->head = created;
         list->tail = created;
         TLTRACE("<< tl_list_add(0x%p, 0X%p)", list, value)
@@ -122,6 +123,7 @@ void tl_list_add(TLList* list, void *value) {
 
 
     if (list->head == list->tail) {
+        list->length++;
         list->tail = created;
         list->tail->previous = list->head;
         list->head->next = list->tail;
@@ -129,6 +131,7 @@ void tl_list_add(TLList* list, void *value) {
         return;
     }
 
+    list->length++;
     created->previous = list->tail;
     list->tail->next = created;
     list->tail = created;
@@ -152,6 +155,28 @@ void tl_list_remove(TLList* list, void *value) {
 
     if (value == NULL) {
         TLERROR("value is NULL")
+        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        return;
+    }
+
+    if (list->length == 1) {
+        if (list->head->payload == value) {
+            list->length--;
+            list->head = NULL;
+            list->tail = NULL;
+        } else {
+            TLWARN("The TLList 0x%p does not contain 0x%p", list, value)
+        }
+
+        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        return;
+    }
+
+    if (list->tail->payload == value) {
+        list->length--;
+        list->tail->previous->next = NULL;
+        list->tail = list->tail->previous;
+
         TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
         return;
     }
@@ -311,6 +336,7 @@ TLIterator* tl_list_iterator_create(TLList* list) {
     iterator->length = list->length;
     iterator->node = list->head;
     TLTRACE("<< tl_list_iterator_create(0x%p)", list)
+    return iterator;
 }
 
 void* tl_list_iterator_next(TLIterator* iterator) {

@@ -3,27 +3,27 @@ engine:
     vsync: false
     wireframe: false
   renderer:
-    modelMatrix: "un_model"
-    viewProjectionMatrix: "un_viewProjection"
+    modelMatrix: un_model
+    viewProjectionMatrix: un_viewProjection
 application:
     version: 0.1.0
     window:
       size: HD
-      title: "LearnOpenGL"
+      title: LearnOpenGL
     simulation:
       step: 60
     scenes:
-      - name: "default"
+      - name: default
         clear_color: .7, .2, .7, 1
         depth:
-          enabled: "true"
-          function: "LEQUAL"
+          enabled: true
+          function: LEQUAL
         blend:
-          enabled: "true"
-          equation: "FUNC_ADD"
+          enabled: true
+          equation: FUNC_ADD
           function:
-            source: "SRC_ALPHA"
-            target: "ONE_MINUS_SRC_ALPHA"
+            source: SRC_ALPHA
+            target: ONE_MINUS_SRC_ALPHA
         camera:
           properties:
           - { name: "depth", value: "-1.0, 1.0" }

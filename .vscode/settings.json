@@ -1,4 +1,7 @@
 {
+    "window.zoomLevel": 1,
+    "window.zoomPerWindow": true,
+    "editor.mouseWheelZoom": false,
     "files.associations": {
         "platform.h": "c",
         "logger.h": "c",

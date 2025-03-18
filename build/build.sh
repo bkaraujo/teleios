@@ -2,7 +2,7 @@
 
 clear
 ROOTFS="$(dirname "$(realpath -s "$0")")/.."
-BUILDFS="$ROOTFS/build/cmake-build-files"
+BUILDFS="$ROOTFS/cmake-build-debug"
 if [[ ! -z $1 && $1 -eq "clean" ]]; then
   rm -rf $BUILDFS
 fi

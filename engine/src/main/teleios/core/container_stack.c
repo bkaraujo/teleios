@@ -6,8 +6,8 @@ struct TLStack {
 
 TLStack* tl_stack_create(TLMemoryArena* arena)  {
     TLTRACE(">> tl_stack_create(0x%p)", arena)
-    TLList* list = tl_list_create(arena);
     TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
+    stack->list = tl_list_create(arena);
     TLTRACE("<< tl_stack_create(0x%p)", arena)
     return stack;
 }
