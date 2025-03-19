@@ -5,6 +5,11 @@
 
 TLRuntime *runtime;
 
+static TLEventStatus event_echo(TLEvent *event) {
+    TLINFO("Processando evento 0x%p", event)
+    return TL_EVENT_NOT_CONSUMED;
+}
+
 int main (const int argc, const char *argv[]) {
     TLINFO("Initializing")
 
@@ -19,8 +24,10 @@ int main (const int argc, const char *argv[]) {
     runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     tl_serializer_read(argv[1]);
 
-    runtime->ecs.entities = tl_list_create(runtime->arenas.permanent);
-    runtime->ecs.components = tl_list_create(runtime->arenas.permanent);
+    runtime->engine.ecs.entities = tl_list_create(runtime->arenas.permanent);
+    runtime->engine.ecs.components = tl_list_create(runtime->arenas.permanent);
+
+    tl_event_subscribe(TL_EVENT_WINDOW_CREATED, event_echo);
 
     if (!tl_platform_initialize()) {
         TLERROR("Platform failed to initialize");

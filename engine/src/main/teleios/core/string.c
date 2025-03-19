@@ -110,7 +110,7 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
     return wrap;
 }
 
-const char * tl_string_text(TLString *string) {
+TLINLINE const char * tl_string(TLString *string) {
     TLSTACKPUSHA("0x%p", string)
     const char *text = string->text;
     TLSTACKPOP
@@ -135,10 +135,10 @@ TLString* tl_string_view(TLString* string) {
 
 u32 tl_string_length(TLString *string) {
     TLSTACKPUSHA("0x%p", string)
-    //TODO implement tl_string_length
-    TLFATAL("Implementation missing")
+    if (string == NULL) return -1;
+    u32 length = string->length;
     TLSTACKPOP
-    return FALSE;
+    return length;
 }
 
 u32 tl_string_index_of(TLString* string, char token) {

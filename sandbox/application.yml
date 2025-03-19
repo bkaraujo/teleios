@@ -2,6 +2,8 @@ engine:
   graphics:
     vsync: false
     wireframe: false
+  simulation:
+      step: 60
   renderer:
     modelMatrix: un_model
     viewProjectionMatrix: un_viewProjection
@@ -10,8 +12,6 @@ application:
     window:
       size: HD
       title: LearnOpenGL
-    simulation:
-      step: 60
     scenes:
       - name: default
         clear_color: .7, .2, .7, 1
@@ -42,5 +42,4 @@ application:
                   - { name: "geometry.primitive", value: "quadrilateral" }
           - name: "Ball"
           - name: "Paddle Left"
-          - name: "Pallde Right"
-
+          - name: "Paddle Right"

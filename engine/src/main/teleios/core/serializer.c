@@ -88,13 +88,28 @@ void tl_serializer_read(const char *file_name) {
                 // -------------------------------------------------------------------------
                 if (TLPROPERTY("engine.graphics.")) {
                     if (TLBLOCK("vsync")) {
-                        runtime->graphics.vsync = tl_char_equals((char*) token.data.scalar.value, "true");
+                        runtime->engine.graphics.vsync = tl_char_equals((char*) token.data.scalar.value, "true");
                     }
                     if (TLBLOCK("wireframe")) {
-                        runtime->graphics.wireframe = tl_char_equals((char*) token.data.scalar.value, "true");
+                        runtime->engine.graphics.wireframe = tl_char_equals((char*) token.data.scalar.value, "true");
                     }
 
+
                     //TODO parse [engine.renderer]
+                }
+
+                if (TLPROPERTY("engine.simulation.")) {
+                    if (TLBLOCK("step")) {
+                        u8 step = strtol((char*) token.data.scalar.value, (void*)(token.data.scalar.value + token.data.scalar.length), 10);
+                        if (step == 0) {
+                            TLWARN("Failed to read [%s%s] assuming 24", property, block);
+                            runtime->engine.simulation.step = 1.0f / 24.0;
+                        } else {
+                            runtime->engine.simulation.step = 1.0f / (f64) step;
+                        }
+
+                        continue;
+                    }
                 }
                 // -------------------------------------------------------------------------
                 //
@@ -108,31 +123,16 @@ void tl_serializer_read(const char *file_name) {
                     }
 
                     if (TLBLOCK("size")) {
-                        if (TLTOKEN( "SD")) { runtime->platform.window.width = TL_VIDEO_RESOLUTION_SD; }
-                        if (TLTOKEN( "HD")) { runtime->platform.window.width = TL_VIDEO_RESOLUTION_HD; }
-                        if (TLTOKEN("FHD")) { runtime->platform.window.width = TL_VIDEO_RESOLUTION_FHD; }
-                        if (TLTOKEN("QHD")) { runtime->platform.window.width = TL_VIDEO_RESOLUTION_QHD; }
-                        if (TLTOKEN("UHD")) { runtime->platform.window.width = TL_VIDEO_RESOLUTION_UHD; }
+                        if (TLTOKEN( "SD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
+                        if (TLTOKEN( "HD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
+                        if (TLTOKEN("FHD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
+                        if (TLTOKEN("QHD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
+                        if (TLTOKEN("UHD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
 
-                        runtime->platform.window.height = (runtime->platform.window.width * 9) / 16;
+                        runtime->platform.window.size.y = (runtime->platform.window.size.x * 9) / 16;
                         continue;
                     }
                 }
-
-                if (TLPROPERTY("application.simulation.")) {
-                    if (TLBLOCK("step")) {
-                        u8 step = strtol((char*) token.data.scalar.value, (void*)(token.data.scalar.value + token.data.scalar.length), 10);
-                        if (step == 0) {
-                            TLWARN("Failed to read [%s%s] assuming 24", property, block);
-                            runtime->simulation.step = 1.0f / 24.0;
-                        } else {
-                            runtime->simulation.step = 1.0f / (f64) step;
-                        }
-
-                        continue;
-                    }
-                }
-
 
                 //TODO parse [application.scenes]
 

@@ -228,19 +228,29 @@ b8 tl_platform_initialize(void) {
     }
     
     TLVERBOSE("Creating window");
+    glfwDefaultWindowHints();
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_RELEASE_BEHAVIOR_FLUSH);
 #ifdef TLPLATFORM_APPLE
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    TLDEBUG("Window size (%u x %u)", runtime->platform.window.width, runtime->platform.window.height)
-    TLDEBUG("Window title: %s", tl_string_text(runtime->platform.window.title))
+    // Disable window framebuffer bits we don't need, because we render into offscreen FBO and blit to window.
+
+    glfwWindowHint(GLFW_DEPTH_BITS, 0);
+    glfwWindowHint(GLFW_STENCIL_BITS, 0);
+    glfwWindowHint(GLFW_ALPHA_BITS, 0);
+
+    TLDEBUG("Window size (%u x %u)", runtime->platform.window.size.x, runtime->platform.window.size.y)
+    TLDEBUG("Window title: %s", tl_string(runtime->platform.window.title))
     runtime->platform.window.handle = glfwCreateWindow(
-        runtime->platform.window.width,
-        runtime->platform.window.height,
-        tl_string_text(runtime->platform.window.title), 
+        runtime->platform.window.size.x,
+        runtime->platform.window.size.y,
+        tl_string(runtime->platform.window.title),
         NULL, NULL
     );
     
@@ -248,6 +258,22 @@ b8 tl_platform_initialize(void) {
         TLERROR("Failed to create GLFW window");
         return FALSE;       
     }
+
+    runtime->platform.window.visible = FALSE;
+    runtime->platform.window.focused = glfwGetWindowAttrib(runtime->platform.window.handle, GLFW_FOCUSED) == GLFW_TRUE;
+    runtime->platform.window.maximized = glfwGetWindowAttrib(runtime->platform.window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
+    runtime->platform.window.minimized = glfwGetWindowAttrib(runtime->platform.window.handle, GLFW_ICONIFIED) == GLFW_TRUE;
+
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    if (mode != NULL) {
+        runtime->platform.window.position.x = (mode->width - runtime->platform.window.size.x) / 2;
+        runtime->platform.window.position.y = (mode->height - runtime->platform.window.size.y) / 2;
+    }
+
+    glfwSetWindowPos(runtime->platform.window.handle, runtime->platform.window.position.x, runtime->platform.window.position.y);
+
+    TLEvent event = {0};
+    tl_event_submit(TL_EVENT_WINDOW_CREATED, &event);
 
     if (!tl_graphics_initialize()) {
         return FALSE;

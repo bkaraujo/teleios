@@ -26,6 +26,7 @@ b8 tl_application_run(void) {
     //TODO move glClearColor to scene initialization
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
+    char title[60] = { 0 };
     glfwShowWindow(runtime->platform.window.handle);
     while (!glfwWindowShouldClose(runtime->platform.window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
@@ -34,14 +35,14 @@ b8 tl_application_run(void) {
         // Simulation Pass
         // =========================================================
         accumulator += deltaTime;
-        while (accumulator >= runtime->simulation.step) {
-            accumulator -= runtime->simulation.step;
-            UPS++;
+        while (accumulator >= runtime->engine.simulation.step) {
+            accumulator -= runtime->engine.simulation.step;
+            ++UPS;
         }
         // =========================================================
         // Graphics Pass
         // =========================================================
-        FPS++;
+        ++FPS;
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // =========================================================
         // Presenting Pass
@@ -50,7 +51,7 @@ b8 tl_application_run(void) {
         
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
-            tl_time_clock(&t1);
+            TLMEMCPY(&t1, &t2, sizeof(TLClock));
             TLDEBUG("FPS %llu, UPS %llu", FPS, UPS);
             FPS = UPS = 0;
         }

@@ -6,8 +6,8 @@
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string);
 TLString* tl_string_slice(TLMemoryArena *arena, TLString *string, u64 offset, u64 length);
 TLString* tl_string_view(TLString *string);
-const char * tl_string_text(TLString *string);
 
+const char * tl_string(TLString *string);
 u32 tl_string_length(TLString *string);
 u32 tl_string_index_of(TLString *string, char token);
 u32 tl_string_last_index_of(TLString *string, char token);

@@ -43,8 +43,8 @@ typedef double              f64;
 // ---------------------------------
 // Boolean types
 // ---------------------------------
-typedef int                 b32;
-typedef char                b8;
+typedef i32                 b32;
+typedef i8                  b8;
 
 #define TRUE                1
 #define FALSE               0
@@ -186,6 +186,40 @@ typedef struct {
 // ---------------------------------
 // Globals
 // ---------------------------------
+typedef enum {
+    TL_EVENT_WINDOW_CREATED,
+    TL_EVENT_WINDOW_RESIZED,
+    TL_EVENT_WINDOW_DESTROYED,
+    TL_EVENT_WINDOW_MOVED,
+    TL_EVENT_WINDOW_MINIMIZED,
+    TL_EVENT_WINDOW_MAXIMIZED,
+    TL_EVENT_WINDOW_RESTORED,
+    TL_EVENT_WINDOW_FOCUS_GAINED,
+    TL_EVENT_WINDOW_FOCUS_LOST,
+
+    TL_EVENT_MAXIMUM
+} TLEventCodes;
+
+typedef union {
+    i64 i64[2];
+    u64 u64[2];
+    f64 f64[2];
+
+    i32 i32[4];
+    u32 u32[4];
+    f32 f32[4];
+
+    i16 i16[8];
+    u16 u16[8];
+
+    i8 i8[16];
+    u8 u8[16];
+} TLEvent;
+
+typedef enum {
+    TL_EVENT_CONSUMED       = 10,
+    TL_EVENT_NOT_CONSUMED   = 11,
+} TLEventStatus;
 
 #ifndef TELEIOS_BUILD_RELEASE
 typedef struct {
@@ -208,20 +242,28 @@ typedef struct {
     } simulation;
 } TLApplication;
 
-typedef struct {
-    struct {
-        struct {
-            u32 width;
-            u32 height;
+typedef struct TLRuntime {
+    struct TLGlobals {
+        TLMemoryArena* frame;
+        TLMemoryArena* permanent;
+    } arenas;
+
+    // Platform specifics
+    struct TLPlatform {
+        // Platform window state
+        struct TLWindow {
             TLString *title;
             void* handle;
+            ivec2s size;
+            ivec2s position;
+            b8 visible;
             b8 maximized;
             b8 minimized;
             b8 focused;
             b8 hovered;
         } window;
-
-        struct {
+        // Platform allocated memory
+        struct TLMemory {
             u64 allocated;
             u64 tagged_count[TL_MEMORY_MAXIMUM];
             u64 tagged_size[TL_MEMORY_MAXIMUM];
@@ -230,24 +272,26 @@ typedef struct {
     } platform;
 
     struct {
-        b8 vsync;
-        b8 wireframe;
-    } graphics;
+        struct TLGraphics {
+            b8 vsync;
+            b8 wireframe;
+        } graphics;
+
+        struct TLSimulation {
+            f64 step;
+        } simulation;
+
+        struct TLEcs {
+            TLList *entities;
+            TLList *components;
+        } ecs;
+    } engine;
 
     struct {
-        TLList *entities;
-        TLList *components;
-    } ecs; 
 
-    struct {
-        f64 step;
-    } simulation;
+        TLScene* scene;
+    } application;
 
-    TLScene* scene;
-    struct {
-        TLMemoryArena* frame;
-        TLMemoryArena* permanent;
-    } arenas;
 #ifndef TELEIOS_BUILD_RELEASE
     u8 stack_size;
     u8 stack_maximum;
