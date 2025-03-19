@@ -6,20 +6,17 @@
 TLRuntime *runtime;
 
 int main (const int argc, const char *argv[]) {
-    TLTRACE(">> main(...)")
     TLINFO("Initializing")
 
     if (argc != 2) {
-        TLTRACE("<< main(...)")
         TLFATAL("argc != 2")
     }
 
-    TLRuntime rt = {0};
+    runtime = TLMALLOC(sizeof(TLRuntime));
+    TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
-    runtime = &rt;
     runtime->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
     runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
-
     tl_serializer_read(argv[1]);
 
     runtime->ecs.entities = tl_list_create(runtime->arenas.permanent);
@@ -48,6 +45,6 @@ int main (const int argc, const char *argv[]) {
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
 
     TLINFO("Exiting")
-    TLTRACE("<< main(...)")
+    TLSTACKPOP
     return 0;
 }

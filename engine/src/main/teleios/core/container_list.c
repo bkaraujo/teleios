@@ -1,6 +1,4 @@
-#include "teleios/core/container.h"
-#include "teleios/core/memory.h"
-#include "teleios/core/logger.h"
+#include "teleios/core.h"
 
 struct TLNode {
     void *payload;
@@ -16,49 +14,50 @@ struct TLList {
 } ;
 
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
-    TLTRACE(">> tl_list_create_node(0x%p, 0X%p)", arena, value);
+    TLSTACKPUSHA("0x%p, 0X%p", arena, value)
     
     struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
     if (created == NULL) TLFATAL("Failed to allocate struct TLNode")
     created->payload = value;
     
-    TLTRACE("<< tl_list_create_node(0x%p, 0X%p)", arena, value);
+    TLSTACKPOP
     return created;
 }
 
 TLList* tl_list_create(TLMemoryArena* arena) {
-    TLTRACE(">> tl_list_create(void)")
+    TLSTACKPUSHA("0x%p", arena)
     TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
     if (list == NULL) {
         TLERROR("Failed to allocate TLList")
-        TLTRACE("<< tl_list_create(void)")
+        TLSTACKPOP
         return NULL;
     }
 
     list->arena = arena;
     list->length = 0;
 
-    TLTRACE("<< tl_list_create(void)")
+    TLSTACKPOP
     return list;
 }
 
 u64 tl_list_length(TLList* list) {
-    TLTRACE(">> tl_list_length(0x%p)", list)
-    return list->length;
-    TLTRACE("<< tl_list_length(0x%p)", list)
+    TLSTACKPUSHA("0x%p", list)
+    const u64 length = list->length;
+    TLSTACKPOP
+    return length;
 }
 
-void* tl_list_search(TLList* list, b8 (PFN_filter)(void *value)) {
-    TLTRACE(">> tl_list_search(0x%p, 0X%p)", list, PFN_filter);
+void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value)) {
+    TLSTACKPUSHA("0x%p, 0x%p", list, PFN_filter)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< tl_list_search(0x%p, 0X%p)", list, PFN_filter)
+        TLSTACKPOP
         return NULL;
     }
 
     if (PFN_filter == NULL) {
         TLERROR("PFN_filter is null")
-        TLTRACE("<< tl_list_search(0x%p, 0X%p)", list, PFN_filter)
+        TLSTACKPOP
         return NULL;
     } 
 
@@ -71,20 +70,20 @@ void* tl_list_search(TLList* list, b8 (PFN_filter)(void *value)) {
         node = node->next;
     }
 
-    TLTRACE("<< tl_list_search(0x%p, 0X%p)", list, PFN_filter)
+    TLSTACKPOP
     return NULL;
 }
 
-void tl_list_foreach(TLList* list, void (PFN_handler)(void *value)) {
-    TLTRACE(">> tl_list_foreach(0x%p, 0X%p)", list, PFN_handler);
+void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
+    TLSTACKPUSHA("0x%p, 0x%p", list, PFN_handler)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< tl_list_foreach(0x%p, 0X%p)", list, PFN_handler)
+        TLSTACKPOP
         return;
     }
     if (PFN_handler == NULL) {
         TLERROR("PFN_handler is NULL")
-        TLTRACE("<< tl_list_foreach(0x%p, 0X%p)", list, PFN_handler)
+        TLSTACKPOP
         return;
     }
 
@@ -94,20 +93,20 @@ void tl_list_foreach(TLList* list, void (PFN_handler)(void *value)) {
         node = node->next;
     }
 
-    TLTRACE("<< tl_list_foreach(0x%p, 0X%p)", list, PFN_handler)
+    TLSTACKPOP
 }
 
 void tl_list_add(TLList* list, void *value) {
-    TLTRACE(">> tl_list_add(0x%p, 0X%p)", list, value);
+    TLSTACKPUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< tl_list_add(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLTRACE("<< tl_list_add(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
@@ -117,7 +116,7 @@ void tl_list_add(TLList* list, void *value) {
         list->length++;
         list->head = created;
         list->tail = created;
-        TLTRACE("<< tl_list_add(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
@@ -127,7 +126,7 @@ void tl_list_add(TLList* list, void *value) {
         list->tail = created;
         list->tail->previous = list->head;
         list->head->next = list->tail;
-        TLTRACE("<< tl_list_add(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
@@ -136,26 +135,26 @@ void tl_list_add(TLList* list, void *value) {
     list->tail->next = created;
     list->tail = created;
 
-    TLTRACE("<< tl_list_add(0x%p, 0X%p)", list, value)
+    TLSTACKPOP
 }
 
 void tl_list_remove(TLList* list, void *value) {
-    TLTRACE(">> tl_list_remove(0x%p, 0X%p)", list, value)
+    TLSTACKPUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
@@ -168,7 +167,7 @@ void tl_list_remove(TLList* list, void *value) {
             TLWARN("The TLList 0x%p does not contain 0x%p", list, value)
         }
 
-        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
@@ -177,7 +176,7 @@ void tl_list_remove(TLList* list, void *value) {
         list->tail->previous->next = NULL;
         list->tail = list->tail->previous;
 
-        TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return;
     }
 
@@ -195,32 +194,32 @@ void tl_list_remove(TLList* list, void *value) {
         node = node->next;
     }
 
-    TLTRACE("<< tl_list_remove(0x%p, 0X%p)", list, value)
+    TLSTACKPOP
 }
 
 b8 tl_list_after(TLList* list, void *item, void *value) {
-    TLTRACE(">> tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+    TLSTACKPUSHA("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLTRACE("<< tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (item == NULL) {
         TLERROR("item is NULL")
-        TLTRACE("<< tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLTRACE("<< tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
@@ -232,40 +231,40 @@ b8 tl_list_after(TLList* list, void *item, void *value) {
             created->next = node->next;
             created->previous = node;
             node->next = created;
-            TLTRACE("<< tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+            TLSTACKPOP
             return TRUE;
         }
 
         node = node->next;
     }
 
-    TLTRACE("<< tl_list_after(0x%p, 0x%p, 0X%p)", list, item, value)
+    TLSTACKPOP
     return FALSE;
 }
 
 b8 tl_list_before(TLList* list, void *item, void *value) {
-    TLTRACE(">> tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+    TLSTACKPUSHA("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLTRACE("<< tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (item == NULL) {
         TLERROR("item is NULL")
-        TLTRACE("<< tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLTRACE("<< tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+        TLSTACKPOP
         return FALSE;
     }
 
@@ -279,48 +278,48 @@ b8 tl_list_before(TLList* list, void *item, void *value) {
             node->previous->next = created;
             node->previous = created;
 
-            TLTRACE("<< tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+            TLSTACKPOP
             return TRUE;
         }
 
         node = node->next;
     }
 
-    TLTRACE("<< tl_list_before(0x%p, 0x%p, 0X%p)", list, item, value)
+    TLSTACKPOP
     return FALSE;
 }
 
 b8 tl_list_contains(TLList* list, void *value) {
-    TLTRACE(">> lt_list_contains(0x%p, 0X%p)", list, value)
+    TLSTACKPUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLTRACE("<< lt_list_contains(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLTRACE("<< lt_list_contains(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLTRACE("<< lt_list_contains(0x%p, 0X%p)", list, value)
+        TLSTACKPOP
         return FALSE;
     }
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == value) {
-            TLTRACE("<< lt_list_contains(0x%p, 0X%p)", list, value)
+            TLSTACKPOP
             return TRUE;
         }
 
         node = node->next;
     }
 
-    TLTRACE("<< lt_list_contains(0x%p, 0X%p)", list, value)
+    TLSTACKPOP
     return FALSE;
 
 }
@@ -331,23 +330,23 @@ struct TLIterator {
 };
 
 TLIterator* tl_list_iterator_create(TLList* list) {
-    TLTRACE(">> tl_list_iterator_create(0x%p)", list)
+    TLSTACKPUSHA("0x%p", list)
     TLIterator* iterator = tl_memory_alloc(list->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = list->length;
     iterator->node = list->head;
-    TLTRACE("<< tl_list_iterator_create(0x%p)", list)
+    TLSTACKPOP
     return iterator;
 }
 
 void* tl_list_iterator_next(TLIterator* iterator) {
-    TLTRACE(">> tl_list_iterator_next(0x%p)", iterator)
+    TLSTACKPUSHA("0x%p", iterator)
     if (iterator == NULL || iterator->node == NULL) {
-        TLTRACE("<< tl_list_iterator_next(0x%p)", iterator)
+        TLSTACKPOP
         return NULL;
     }
 
     void* value = iterator->node->payload;
     iterator->node = iterator->node->next;
-    TLTRACE("<< tl_list_iterator_next(0x%p)", iterator)
+    TLSTACKPOP
     return value;
 }

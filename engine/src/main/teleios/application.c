@@ -4,17 +4,16 @@
 #include "GLFW/glfw3.h"
 
 b8 tl_application_initialize(void) {
-    TLTRACE(">> tl_application_initialize(void)")
+    TLSTACKPUSH
     tl_profiler_begin("tl_application_initialize");
-    // ------------
     TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
     tl_profiler_end("tl_application_initialize");
-    TLTRACE("<< tl_application_initialize(void)")
+    TLSTACKPOP
     return TRUE;
 }
 
 b8 tl_application_run(void) {
-    TLTRACE(">> tl_application_run(void)")
+    TLSTACKPUSH
     TLClock t1, t2; 
     tl_time_clock(&t1);
         
@@ -64,16 +63,16 @@ b8 tl_application_run(void) {
 
     glfwHideWindow(runtime->platform.window.handle);
 
-    TLTRACE("<< tl_application_run(void)")
+    TLSTACKPOP
     return TRUE;
 }
 
 b8 tl_application_terminate(void) {
-    TLTRACE(">> tl_application_terminate(void)")
+    TLSTACKPUSH
     tl_profiler_begin("tl_application_terminate");
     //-----
     TLDEBUG("Application terminated in %llu micros", tl_profiler_time("tl_application_terminate"));
     tl_profiler_end("tl_application_terminate");
-    TLTRACE("<< tl_application_terminate(void)")
+    TLSTACKPOP
     return TRUE;
 }

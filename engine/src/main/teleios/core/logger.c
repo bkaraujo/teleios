@@ -15,7 +15,7 @@
 
 #ifdef TLPLATFORM_LINUX
 #   include <time.h>
-#   define ANSI_COLOR_FATAL   "\033[0;41m"
+#   define ANSI_COLOR_FATAL   "\033[1;31m"
 #   define ANSI_COLOR_ERROR   "\033[1;31m"
 #   define ANSI_COLOR_WARN    "\033[1;33m"
 #   define ANSI_COLOR_INFO    "\033[1;32m"
@@ -64,7 +64,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     struct tm localtime = { 0 };
     if (localtime_r(&now.tv_sec, &localtime) == NULL) return;
 
-    fprintf(stdout, "%s %d-%02d-%02d %02d:%02d:%02d,%05ld %20s:%03d %s %s\n\033[1;30m",
+    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06ld %20s:%03d %s %s\n\033[1;30m",
         colors[level],
         localtime.tm_year + 1900, localtime.tm_mon + 1, localtime.tm_mday,
         localtime.tm_hour, localtime.tm_min, localtime.tm_sec, now.tv_nsec / 1000,
@@ -75,4 +75,15 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
 #endif
 
     fflush(stdout);
+#ifndef TELEIOS_BUILD_RELEASE
+    if (level == TL_LOG_LEVEL_FATAL) {
+        const char *format = "%68s   at %s(%s)\n\033[1;30m";
+
+        fprintf(stdout, "\n");
+        for (u8 i = runtime->stack_size ; i > 0 ; --i) {
+            fprintf(stdout, format, colors[level], runtime->stack[i].function, runtime->stack[i].arguments);
+        }
+        fprintf(stdout, format, colors[level], runtime->stack[0].function, runtime->stack[0].arguments);
+    }
+#endif
 }

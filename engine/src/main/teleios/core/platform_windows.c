@@ -6,6 +6,8 @@
 //                    TIME FUNCTIONS
 // ########################################################
 u64 tl_time_epoch(void) {
+    TLSTACKPUSH
+    
     FILETIME ft;
     ULARGE_INTEGER uli;
     uint64_t epoch_microseconds;
@@ -21,6 +23,7 @@ u64 tl_time_epoch(void) {
     // The value is 116444736000000000 (obtained from various sources).
     epoch_microseconds = (uli.QuadPart - 116444736000000000ULL) / 10; // Convert to microseconds
 
+    TLSTACKPOP
     return epoch_microseconds;
 }
 

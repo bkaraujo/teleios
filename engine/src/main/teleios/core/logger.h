@@ -18,12 +18,12 @@ void tl_logger_loglevel(const TLLogLevel desired);
 
 void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lineno, const char *message, ...);
 
-#define   TLFATAL(m, ...) { tl_logger_write(TL_LOG_LEVEL_FATAL  , __FILE__, __LINE__, m, ##__VA_ARGS__); exit(99); }
-#define   TLERROR(m, ...) { tl_logger_write(TL_LOG_LEVEL_ERROR  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
-#define    TLWARN(m, ...) { tl_logger_write(TL_LOG_LEVEL_WARN   , __FILE__, __LINE__, m, ##__VA_ARGS__); }
-#define    TLINFO(m, ...) { tl_logger_write(TL_LOG_LEVEL_INFO   , __FILE__, __LINE__, m, ##__VA_ARGS__); }
-#define   TLDEBUG(m, ...) { tl_logger_write(TL_LOG_LEVEL_DEBUG  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
-#define   TLTRACE(m, ...) { tl_logger_write(TL_LOG_LEVEL_TRACE  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #define TLVERBOSE(m, ...) { tl_logger_write(TL_LOG_LEVEL_VERBOSE, __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define   TLTRACE(m, ...) { tl_logger_write(TL_LOG_LEVEL_TRACE  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define   TLDEBUG(m, ...) { tl_logger_write(TL_LOG_LEVEL_DEBUG  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define    TLINFO(m, ...) { tl_logger_write(TL_LOG_LEVEL_INFO   , __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define    TLWARN(m, ...) { tl_logger_write(TL_LOG_LEVEL_WARN   , __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define   TLERROR(m, ...) { tl_logger_write(TL_LOG_LEVEL_ERROR  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define   TLFATAL(m, ...) { tl_logger_write(TL_LOG_LEVEL_FATAL  , __FILE__, __LINE__, m, ##__VA_ARGS__); exit(99); }
 
 #endif // __TELEIOS_LOGGER__

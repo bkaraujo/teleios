@@ -2,8 +2,8 @@
 
 static TLList* subscribers[U16_MAX] = { 0 };
 
-void tl_event_subscribe(u16 event, PFN_handler handler) {
-    TLTRACE(">> tl_event_subscribe(%u, ...)", event)
+void tl_event_subscribe(const u16 event, const PFN_handler handler) {
+    TLSTACKPUSHA("%u, 0x%p", event, handler)
 
     if (subscribers[event] == NULL) {
         TLVERBOSE("Creating subscriber list for event %u", event)
@@ -13,7 +13,7 @@ void tl_event_subscribe(u16 event, PFN_handler handler) {
     tl_list_add(subscribers[event], handler);
     TLVERBOSE("Event %u has %u subscribers", event, tl_list_length(subscribers[event]));
     
-    TLTRACE("<< tl_event_subscribe(%u, ...)", event)
+    TLSTACKPOP
 }
 
 static void tl_event_process(void *data) {
@@ -21,8 +21,10 @@ static void tl_event_process(void *data) {
 }
 
 void tl_event_submmit(u16 event, void* data) {
+    TLSTACKPUSHA("%u, 0x%p", event, data)
     if (subscribers[event] == NULL) {
         TLVERBOSE("No listener available for event %u", event)
+        TLSTACKPOP
         return;
     }
     
@@ -32,4 +34,6 @@ void tl_event_submmit(u16 event, void* data) {
             break;
         }
     }
+
+    TLSTACKPOP
 }

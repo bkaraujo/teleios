@@ -9,7 +9,7 @@
 #define TLTOKEN(s) strcmp(token.data.scalar.value, s) == 0
 
 void tl_serializer_read(const char *file_name) {
-    TLTRACE(">> tl_serializer_read(%s)", file_name)
+    TLSTACKPUSHA("%s", file_name)
 
     TLINFO("Loading %s", file_name)
     FILE* file = fopen(file_name, "r");
@@ -147,5 +147,5 @@ void tl_serializer_read(const char *file_name) {
     yaml_token_delete(&token);
     yaml_parser_delete(&parser);
 
-    TLTRACE("<< tl_serializer_read(%s)", file_name)
+    TLSTACKPOP
 }

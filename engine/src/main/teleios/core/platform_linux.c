@@ -28,7 +28,9 @@ void tl_time_clock(TLClock* clock) {
 u64 tl_time_epoch(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
+    const u64 micros = (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
+
+    return micros;
 }
 
 #endif

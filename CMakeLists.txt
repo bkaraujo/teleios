@@ -36,10 +36,10 @@ include_directories(engine/libs/libyaml/include)
 #                   TELIOS
 #
 # ==========================================
-#add_definitions(-DTELEIOS_BUILD_VERBOSE)
-#add_definitions(-DTELEIOS_BUILD_TRACE)
+#add_definitions(-DTELEIOS_BUILD_RELEASE)
+add_definitions(-DTELEIOS_BUILD_VERBOSE)
+add_definitions(-DTELEIOS_BUILD_TRACE)
 add_definitions(-DTELEIOS_BUILD_DEBUG)
-add_definitions(-DTELEIOS_BUILD_PROFILE)
 
 include_directories("engine/src/main")
 add_executable(${PROJECT_NAME}
@@ -60,6 +60,8 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/core/platform_windows.c
         engine/src/main/teleios/core/profiler.c
         engine/src/main/teleios/core/profiler.h
+        engine/src/main/teleios/core/meta.c
+        engine/src/main/teleios/core/meta.h
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)

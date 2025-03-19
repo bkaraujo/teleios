@@ -125,7 +125,6 @@ typedef enum {
     TL_MEMORY_CONTAINER_NODE,
     TL_MEMORY_CONTAINER_ITERATOR,
     TL_MEMORY_STRING,
-    TL_MEMORY_WINDOW,
     TL_MEMORY_PROFILER,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
@@ -187,6 +186,17 @@ typedef struct {
 // ---------------------------------
 // Globals
 // ---------------------------------
+
+#ifndef TELEIOS_BUILD_RELEASE
+typedef struct {
+    u64 timestamp;
+    char filename[100];
+    char function[100];
+    char arguments[1024];
+    u32 lineno;
+} TLStackFrame;
+#endif
+
 typedef struct {
     struct {
         TLVideoResolution resolution;
@@ -238,6 +248,11 @@ typedef struct {
         TLMemoryArena* frame;
         TLMemoryArena* permanent;
     } arenas;
+#ifndef TELEIOS_BUILD_RELEASE
+    u8 stack_size;
+    u8 stack_maximum;
+    TLStackFrame stack[U8_MAX];
+#endif
 } TLRuntime;
 
 extern TLRuntime *runtime;
