@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_BUILD_TYPE debug)
 
 project(teleios C)

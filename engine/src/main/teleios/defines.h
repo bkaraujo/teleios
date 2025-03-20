@@ -1,40 +1,41 @@
 #ifndef __TELEIOS_DEFINES__
 #define __TELEIOS_DEFINES__
 
-#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 // ---------------------------------
 // Unsigned int types.
 // ---------------------------------
-typedef unsigned char       u8;
-typedef unsigned short      u16;
-typedef unsigned int        u32;
-typedef unsigned long long  u64;
+typedef uint8_t     u8;
+typedef uint16_t    u16;
+typedef uint32_t    u32;
+typedef uint64_t    u64;
 
-#define U64_MAX 18446744073709551615UL
-#define U32_MAX 4294967295U
-#define U16_MAX 65535U
-#define  U8_MAX 255U
-#define U64_MIN 0UL
-#define U32_MIN 0U
-#define U16_MIN 0U
-#define  U8_MIN 0U
+#define U64_MAX     UINT64_MAX
+#define U32_MAX     UINT32_MAX
+#define U16_MAX     UINT16_MAX
+#define  U8_MAX     UINT8_MAX
+#define U64_MIN     0UL
+#define U32_MIN     0U
+#define U16_MIN     0U
+#define  U8_MIN     0U
 // ---------------------------------
 // Signed int types.
 // ---------------------------------
-typedef signed char         i8;
-typedef signed short        i16;
-typedef signed int          i32;
-typedef signed long long    i64;
+typedef int8_t      i8;
+typedef int16_t     i16;
+typedef int32_t     i32;
+typedef int64_t     i64;
 
-#define  I8_MAX             127
-#define I16_MAX             32767
-#define I32_MAX             2147483647
-#define I64_MAX             9223372036854775807L
-#define  I8_MIN             (-I8_MAX - 1)
-#define I16_MIN             (-I16_MAX - 1)
-#define I32_MIN             (-I32_MAX - 1)
-#define I64_MIN             (-I64_MAX - 1)
+#define  I8_MAX     INT8_MAX
+#define I16_MAX     INT16_MAX
+#define I32_MAX     INT32_MAX
+#define I64_MAX     INT64_MAX
+#define  I8_MIN     INT8_MIN
+#define I16_MIN     INT16_MIN
+#define I32_MIN     INT32_MIN
+#define I64_MIN     INT64_MIN
 // ---------------------------------
 // Floating point types
 // ---------------------------------
@@ -43,34 +44,33 @@ typedef double              f64;
 // ---------------------------------
 // Boolean types
 // ---------------------------------
-typedef i32                 b32;
-typedef i8                  b8;
+typedef _Bool               b8;
 
-#define TRUE                1
-#define FALSE               0
+#define TRUE                true
+#define FALSE               false
 // ---------------------------------
 // Static assertions.
 // ---------------------------------
-#if defined(__clang__) 
-#   define static_assert _Static_assert
-#elif defined(__GNUC__)
-#   include <assert.h>
-#else
-#   define STATIC_ASSERT static_assert
-#endif
-
-static_assert(sizeof( u8) == 1, "Expected  u8 to be 1 byte.");
-static_assert(sizeof(u16) == 2, "Expected u16 to be 2 bytes.");
-static_assert(sizeof(u32) == 4, "Expected u32 to be 4 bytes.");
-static_assert(sizeof(u64) == 8, "Expected u64 to be 8 bytes.");
-
-static_assert(sizeof( i8) == 1, "Expected  i8 to be 1 byte.");
-static_assert(sizeof(i16) == 2, "Expected i16 to be 2 bytes.");
-static_assert(sizeof(i32) == 4, "Expected i32 to be 4 bytes.");
-static_assert(sizeof(i64) == 8, "Expected i64 to be 8 bytes.");
-
-static_assert(sizeof(f32) == 4, "Expected f32 to be 4 bytes.");
-static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
+// #if defined(__clang__)
+// #   define static_assert _Static_assert
+// #elif defined(__GNUC__)
+// #   include <assert.h>
+// #else
+// #   define STATIC_ASSERT static_assert
+// #endif
+// #define static_assert(pred) switch(0){case 0:case pred:;}
+// static_assert(sizeof( u8) == 1, "Expected  u8 to be 1 byte.");
+// static_assert(sizeof(u16) == 2, "Expected u16 to be 2 bytes.");
+// static_assert(sizeof(u32) == 4, "Expected u32 to be 4 bytes.");
+// static_assert(sizeof(u64) == 8, "Expected u64 to be 8 bytes.");
+//
+// static_assert(sizeof( i8) == 1, "Expected  i8 to be 1 byte.");
+// static_assert(sizeof(i16) == 2, "Expected i16 to be 2 bytes.");
+// static_assert(sizeof(i32) == 4, "Expected i32 to be 4 bytes.");
+// static_assert(sizeof(i64) == 8, "Expected i64 to be 8 bytes.");
+//
+// static_assert(sizeof(f32) == 4, "Expected f32 to be 4 bytes.");
+// static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 
 #include "cglm/types-struct.h"
 // ---------------------------------
