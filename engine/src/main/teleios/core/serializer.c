@@ -2,7 +2,6 @@
 #include "teleios/core/serializer.h"
 #include <string.h>
 #include <stdio.h>
-#include <yaml.h>
 
 #define TLBLOCK(s) strcmp(block, s) == 0
 #define TLPROPERTY(s) strcmp(property, s) == 0

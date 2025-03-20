@@ -1,4 +1,3 @@
-#include "teleios/core/platform_detector.h"
 #include "teleios/core.h"
 
 /* ULID generation and parsing library (implementation)

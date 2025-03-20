@@ -196,12 +196,12 @@ void tl_memory_copy(void *target, void *source, const u64 size) {
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
 #include "teleios/core/platform.h"
-#include "GLFW/glfw3.h"
 
 b8 tl_platform_initialize(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_platform_initialize");
 
+    TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
     TLVERBOSE("Initializing GLFW");
     if (!glfwInit()) {
         TLERROR("Failed to initialize GLFW")
@@ -226,8 +226,13 @@ b8 tl_platform_initialize(void) {
     glfwWindowHint(GLFW_STENCIL_BITS, 0);
     glfwWindowHint(GLFW_ALPHA_BITS, 0);
 
-    TLDEBUG("Window size (%u x %u)", runtime->platform.window.size.x, runtime->platform.window.size.y)
-    TLDEBUG("Window title: %s", tl_string(runtime->platform.window.title))
+    TLDEBUG(
+        "Window (%u x %u) :: %s",
+        runtime->platform.window.size.x,
+        runtime->platform.window.size.y,
+        tl_string(runtime->platform.window.title)
+    )
+
     runtime->platform.window.handle = glfwCreateWindow(
         runtime->platform.window.size.x,
         runtime->platform.window.size.y,

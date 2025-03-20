@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include "teleios/core/platform_detector.h"
 #include "teleios/core/logger.h"
 
 #ifdef TLPLATFORM_WINDOWS

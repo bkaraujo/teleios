@@ -1,5 +1,4 @@
 #include "teleios/core.h"
-#include "teleios/core/meta.h"
 
 #include <stdio.h>
 #include <stdarg.h>

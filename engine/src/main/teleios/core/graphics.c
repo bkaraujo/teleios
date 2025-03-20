@@ -1,5 +1,4 @@
 #include "teleios/core.h"
-#include "GLFW/glfw3.h"
 
 b8 tl_graphics_initialize(void) {
     TLSTACKPUSH
@@ -9,6 +8,9 @@ b8 tl_graphics_initialize(void) {
         TLERROR("Failed to initialize GLAD")
         TLSTACKPOPV(FALSE)
     }
+
+    TLDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
+    TLDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
     if (runtime->engine.graphics.vsync) {
         TLDEBUG("vsync: on")

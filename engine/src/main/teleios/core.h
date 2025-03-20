@@ -16,4 +16,6 @@
 #include "teleios/core/profiler.h"
 #include "teleios/core/meta.h"
 
+#include "teleios/core/libs.h"
+
 #endif // __TELEIOS_CORE__

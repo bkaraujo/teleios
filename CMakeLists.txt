@@ -37,7 +37,7 @@ include_directories(engine/libs/libyaml/include)
 #                   TELIOS
 #
 # ==========================================
-#add_definitions(-DTELEIOS_BUILD_RELEASE)
+add_definitions(-DTELEIOS_BUILD_RELEASE)
 
 include_directories("engine/src/main")
 add_executable(${PROJECT_NAME}

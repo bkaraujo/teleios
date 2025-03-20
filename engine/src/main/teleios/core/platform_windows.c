@@ -1,4 +1,4 @@
-#include "teleios/core/platform_detector.h"
+#include "teleios/defines.h"
 #ifdef TLPLATFORM_WINDOWS
 #include "teleios/core.h"
 

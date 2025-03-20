@@ -21,6 +21,7 @@ int main (const int argc, const char *argv[]) {
     runtime->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
     tl_serializer_read(argv[1]);
 
+
     runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     runtime->engine.ecs.entities = tl_list_create(runtime->arenas.permanent);
     runtime->engine.ecs.components = tl_list_create(runtime->arenas.permanent);
