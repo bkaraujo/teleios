@@ -86,6 +86,45 @@ void tl_serializer_read(const char *file_name) {
                 // Parse the [engine] properties
                 //
                 // -------------------------------------------------------------------------
+                if (TLPROPERTY("engine.logging.")) {
+                    if (TLBLOCK("level")) {
+                        if (tl_char_equals((char*) token.data.scalar.value, "verbose")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE);
+                            continue;
+                        }
+
+                        if (tl_char_equals((char*) token.data.scalar.value, "trace")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_TRACE);
+                            continue;
+                        }
+
+                        if (tl_char_equals((char*) token.data.scalar.value, "debug")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_DEBUG);
+                            continue;
+                        }
+
+                        if (tl_char_equals((char*) token.data.scalar.value, "info")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_INFO);
+                            continue;
+                        }
+
+                        if (tl_char_equals((char*) token.data.scalar.value, "warn")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_WARN);
+                            continue;
+                        }
+
+                        if (tl_char_equals((char*) token.data.scalar.value, "error")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_ERROR);
+                            continue;
+                        }
+
+                        if (tl_char_equals((char*) token.data.scalar.value, "fatal")) {
+                            tl_logger_loglevel(TL_LOG_LEVEL_FATAL);
+                            continue;
+                        }
+
+                    }
+                }
                 if (TLPROPERTY("engine.graphics.")) {
                     if (TLBLOCK("vsync")) {
                         runtime->engine.graphics.vsync = tl_char_equals((char*) token.data.scalar.value, "true");

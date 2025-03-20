@@ -11,8 +11,6 @@ static TLEventStatus event_echo(TLEvent *event) {
 }
 
 int main (const int argc, const char *argv[]) {
-    TLINFO("Initializing")
-
     if (argc != 2) {
         TLFATAL("argc != 2")
     }
@@ -21,9 +19,9 @@ int main (const int argc, const char *argv[]) {
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
     runtime->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
-    runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     tl_serializer_read(argv[1]);
 
+    runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     runtime->engine.ecs.entities = tl_list_create(runtime->arenas.permanent);
     runtime->engine.ecs.components = tl_list_create(runtime->arenas.permanent);
 
@@ -51,7 +49,5 @@ int main (const int argc, const char *argv[]) {
 
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
 
-    TLINFO("Exiting")
-    TLSTACKPOP
-    return 0;
+    TLSTACKPOPV(0)
 }

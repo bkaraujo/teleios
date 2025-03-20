@@ -19,9 +19,8 @@ static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
     struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
     if (created == NULL) TLFATAL("Failed to allocate struct TLNode")
     created->payload = value;
-    
-    TLSTACKPOP
-    return created;
+
+    TLSTACKPOPV(created)
 }
 
 TLList* tl_list_create(TLMemoryArena* arena) {
@@ -29,49 +28,42 @@ TLList* tl_list_create(TLMemoryArena* arena) {
     TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
     if (list == NULL) {
         TLERROR("Failed to allocate TLList")
-        TLSTACKPOP
-        return NULL;
+        TLSTACKPOPV(NULL)
     }
 
     list->arena = arena;
     list->length = 0;
 
-    TLSTACKPOP
-    return list;
+    TLSTACKPOPV(list)
 }
 
 u64 tl_list_length(TLList* list) {
     TLSTACKPUSHA("0x%p", list)
-    const u64 length = list->length;
-    TLSTACKPOP
-    return length;
+    TLSTACKPOPV(list->length)
 }
 
 void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value)) {
     TLSTACKPUSHA("0x%p, 0x%p", list, PFN_filter)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
-        return NULL;
+        TLSTACKPOPV(NULL)
     }
 
     if (PFN_filter == NULL) {
         TLERROR("PFN_filter is null")
-        TLSTACKPOP
-        return NULL;
+        TLSTACKPOPV(NULL)
     } 
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (PFN_filter(node->payload)) {
-            return node->payload;
+            TLSTACKPOPV(node->payload);
         }
 
         node = node->next;
     }
 
-    TLSTACKPOP
-    return NULL;
+    TLSTACKPOPV(NULL)
 }
 
 void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
@@ -79,15 +71,13 @@ void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
     if (list == NULL) {
         TLERROR("TLList is NULL")
         TLSTACKPOP
-        return;
     }
     if (PFN_handler == NULL) {
         TLERROR("PFN_handler is NULL")
         TLSTACKPOP
-        return;
     }
 
-    struct TLNode* node = list->head;
+    const struct TLNode* node = list->head;
     while (node != NULL) {
         PFN_handler(node->payload);
         node = node->next;
@@ -101,13 +91,11 @@ void tl_list_add(TLList* list, void *value) {
     if (list == NULL) {
         TLERROR("TLList is NULL")
         TLSTACKPOP
-        return;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
         TLSTACKPOP
-        return;
     }
 
     struct TLNode* created = tl_list_create_node(list->arena, value);
@@ -117,7 +105,6 @@ void tl_list_add(TLList* list, void *value) {
         list->head = created;
         list->tail = created;
         TLSTACKPOP
-        return;
     }
 
 
@@ -127,7 +114,6 @@ void tl_list_add(TLList* list, void *value) {
         list->tail->previous = list->head;
         list->head->next = list->tail;
         TLSTACKPOP
-        return;
     }
 
     list->length++;
@@ -143,19 +129,16 @@ void tl_list_remove(TLList* list, void *value) {
     if (list == NULL) {
         TLERROR("TLList is NULL")
         TLSTACKPOP
-        return;
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
         TLSTACKPOP
-        return;
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
         TLSTACKPOP
-        return;
     }
 
     if (list->length == 1) {
@@ -168,7 +151,6 @@ void tl_list_remove(TLList* list, void *value) {
         }
 
         TLSTACKPOP
-        return;
     }
 
     if (list->tail->payload == value) {
@@ -177,10 +159,9 @@ void tl_list_remove(TLList* list, void *value) {
         list->tail = list->tail->previous;
 
         TLSTACKPOP
-        return;
     }
 
-    struct TLNode* node = list->head;
+    const struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == value) {
             struct TLNode* previous = node->previous;
@@ -201,26 +182,22 @@ b8 tl_list_after(TLList* list, void *item, void *value) {
     TLSTACKPUSHA("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (item == NULL) {
         TLERROR("item is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     struct TLNode* node = list->head;
@@ -231,41 +208,35 @@ b8 tl_list_after(TLList* list, void *item, void *value) {
             created->next = node->next;
             created->previous = node;
             node->next = created;
-            TLSTACKPOP
-            return TRUE;
+            TLSTACKPOPV(TRUE)
         }
 
         node = node->next;
     }
 
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
 
 b8 tl_list_before(TLList* list, void *item, void *value) {
     TLSTACKPUSHA("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (item == NULL) {
         TLERROR("item is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     struct TLNode* node = list->head;
@@ -277,50 +248,42 @@ b8 tl_list_before(TLList* list, void *item, void *value) {
             created->previous = node->previous;
             node->previous->next = created;
             node->previous = created;
-
-            TLSTACKPOP
-            return TRUE;
+            TLSTACKPOPV(TRUE)
         }
 
         node = node->next;
     }
 
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
 
 b8 tl_list_contains(TLList* list, void *value) {
     TLSTACKPUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == value) {
-            TLSTACKPOP
-            return TRUE;
+            TLSTACKPOPV(TRUE)
         }
 
         node = node->next;
     }
 
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 
 }
 
@@ -334,19 +297,16 @@ TLIterator* tl_list_iterator_create(TLList* list) {
     TLIterator* iterator = tl_memory_alloc(list->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = list->length;
     iterator->node = list->head;
-    TLSTACKPOP
-    return iterator;
+    TLSTACKPOPV(iterator)
 }
 
 void* tl_list_iterator_next(TLIterator* iterator) {
     TLSTACKPUSHA("0x%p", iterator)
     if (iterator == NULL || iterator->node == NULL) {
-        TLSTACKPOP
-        return NULL;
+        TLSTACKPOPV(NULL)
     }
 
     void* value = iterator->node->payload;
     iterator->node = iterator->node->next;
-    TLSTACKPOP
-    return value;
+    TLSTACKPOPV(value)
 }

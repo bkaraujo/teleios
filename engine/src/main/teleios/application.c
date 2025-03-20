@@ -8,8 +8,7 @@ b8 tl_application_initialize(void) {
     tl_profiler_begin("tl_application_initialize");
     TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
     tl_profiler_end("tl_application_initialize");
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }
 
 b8 tl_application_run(void) {
@@ -63,9 +62,7 @@ b8 tl_application_run(void) {
     }
 
     glfwHideWindow(runtime->platform.window.handle);
-
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }
 
 b8 tl_application_terminate(void) {
@@ -74,6 +71,5 @@ b8 tl_application_terminate(void) {
     //-----
     TLDEBUG("Application terminated in %llu micros", tl_profiler_time("tl_application_terminate"));
     tl_profiler_end("tl_application_terminate");
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }

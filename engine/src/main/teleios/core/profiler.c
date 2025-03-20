@@ -30,13 +30,11 @@ TLProfile* tl_profiler_current(const char *name) {
     TLProfile* profile = NULL;
     for (profile = tl_list_iterator_next(it) ; profile != NULL ; profile = tl_list_iterator_next(it)) {
         if (tl_string_equals(profile->name, name)) {
-            TLSTACKPOP
-            return profile;
+            TLSTACKPOPV(profile)
         }
     }
 
-    TLSTACKPOP
-    return NULL;
+    TLSTACKPOPV(NULL)
 }
 
 void tl_profiler_tick(const char *name) {
@@ -53,12 +51,10 @@ u64 tl_profiler_time(const char *name) {
 #ifndef TELEIOS_BUILD_RELEASE
     const TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) {
-        TLSTACKPOP
-        return tl_time_epoch() - profile->timestamp;
+        TLSTACKPOPV(tl_time_epoch() - profile->timestamp)
     }
 #endif
-    TLSTACKPOP
-    return U64_MAX;
+    TLSTACKPOPV(U64_MAX)
 }
 
 u64 tl_profiler_count(const char *name) {
@@ -66,12 +62,10 @@ u64 tl_profiler_count(const char *name) {
 #ifndef TELEIOS_BUILD_RELEASE
     const TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) {
-        TLSTACKPOP
-        return profile->ticks;
+        TLSTACKPOPV(profile->ticks)
     }
 #endif
-    TLSTACKPOP
-    return U64_MAX;
+    TLSTACKPOPV(U64_MAX)
 }
 
 void tl_profiler_end(const char *name) {

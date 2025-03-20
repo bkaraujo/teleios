@@ -7,8 +7,7 @@ b8 tl_graphics_initialize(void) {
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         TLERROR("Failed to initialize GLAD")
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (runtime->engine.graphics.vsync) {
@@ -27,13 +26,11 @@ b8 tl_graphics_initialize(void) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }
 
 b8 tl_graphics_terminate(void) {
     TLSTACKPUSH
     tl_memory_set(&runtime->engine.graphics, 0, sizeof(runtime->engine.graphics));
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }

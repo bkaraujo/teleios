@@ -7,14 +7,12 @@ b8 tl_event_subscribe(const u16 event, const PFN_handler handler) {
 
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     if (subscribers[event][U8_MAX - 1] != NULL) {
         TLWARN("Event %u reached maximum of %d handlers", event, U8_MAX - 1);
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     for (u8 i = 0; i < U8_MAX; ++i) {
@@ -24,8 +22,7 @@ b8 tl_event_subscribe(const u16 event, const PFN_handler handler) {
         }
     }
 
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }
 
 void tl_event_submit(const u16 event, TLEvent* data) {
@@ -34,7 +31,6 @@ void tl_event_submit(const u16 event, TLEvent* data) {
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
         TLSTACKPOP
-        return;
     }
 
     for (u8 i = 0; i < U8_MAX; ++i) {

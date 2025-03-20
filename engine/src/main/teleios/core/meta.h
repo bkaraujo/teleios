@@ -8,6 +8,7 @@ void tl_meta_frame_pop();
 
 #define TLSTACKPUSHA(args, ...) tl_meta_frame_push(__FILE__, __LINE__, __func__, args, ##__VA_ARGS__);
 #define TLSTACKPUSH tl_meta_frame_push(__FILE__, __LINE__, __func__, NULL);
-#define TLSTACKPOP tl_meta_frame_pop();
+#define TLSTACKPOP do { tl_meta_frame_pop(); return; } while (FALSE);
+#define TLSTACKPOPV(v) do { tl_meta_frame_pop(); return v; } while (FALSE);
 
 #endif //__TELEIOS_META__

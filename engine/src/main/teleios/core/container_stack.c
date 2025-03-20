@@ -8,8 +8,7 @@ TLStack* tl_stack_create(TLMemoryArena* arena)  {
     TLSTACKPUSHA("0x%p", arena)
     TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
     stack->list = tl_list_create(arena);
-    TLSTACKPOP
-    return stack;
+    TLSTACKPOPV(stack)
 }
 
 void tl_stack_push(TLStack* stack, void* value) {
@@ -22,8 +21,7 @@ void* tl_stack_pop(TLStack* stack) {
     TLSTACKPUSHA("0x%p", stack)
     void* value = tl_stack_peek(stack);
     tl_list_remove(stack->list, value);
-    TLSTACKPOP
-    return value;
+    TLSTACKPOPV(value)
 }
 
 void* tl_stack_peek(TLStack* stack) {
@@ -32,13 +30,10 @@ void* tl_stack_peek(TLStack* stack) {
     TLIterator* iterator = tl_list_iterator_create(stack->list);
     void* next = tl_list_iterator_next(iterator);
     while (next != NULL) { value = next; next = tl_list_iterator_next(iterator); }
-    TLSTACKPOP
-    return value;
+    TLSTACKPOPV(value)
 }
 
 u64 tl_stack_length(TLStack* stack) {
     TLSTACKPUSHA("0x%p", stack)
-    u64 length = tl_list_length(stack->list);
-    TLSTACKPOP
-    return length;
+    TLSTACKPOPV(tl_list_length(stack->list))
 }

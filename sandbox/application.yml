@@ -1,4 +1,6 @@
 engine:
+  logging:
+    level: verbose
   graphics:
     vsync: false
     wireframe: false

@@ -15,8 +15,7 @@ TLINLINE u32 tl_char_length(const char *string) {
         }
     }
 
-    TLSTACKPOP
-    return index;
+    TLSTACKPOPV(index)
 }
 
 TLINLINE u32 tl_char_last_index(const char *string, const char token) {
@@ -34,46 +33,39 @@ TLINLINE u32 tl_char_last_index(const char *string, const char token) {
         }
     }
 
-    TLSTACKPOP
-    return index;
+    TLSTACKPOPV(index)
 }
 
 b8 tl_char_equals(const char *string, const char *guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     const u64 length = tl_char_length(string);
     if (tl_char_length(guess) != length) {
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
     for (u64 i = 0; i < length; i++) {
         if (string[i] != guess[i]) {
-            TLSTACKPOP
-            return FALSE;
+            TLSTACKPOPV(FALSE)
         }
     }
 
-    TLSTACKPOP
-    return TRUE;
+    TLSTACKPOPV(TRUE)
 }
 
 u32 tl_char_copy(char *target, const char *source) {
     TLSTACKPUSHA("0x%p, 0x%p", target, source)
     const u32 target_length = tl_char_length(target);
     if (target_length == 0 || target_length == U32_MAX) {
-        TLSTACKPOP
-        return 0;
+        TLSTACKPOPV(0)
     }
 
     const u32 source_length = tl_char_length(source);
     if (source_length == 0 || source_length == U32_MAX) {
-        TLSTACKPOP
-        return 0;
+        TLSTACKPOPV(0)
     }
 
     const char *s = source;
@@ -86,8 +78,7 @@ u32 tl_char_copy(char *target, const char *source) {
         copied++;
     }
 
-    TLSTACKPOP
-    return copied;
+    TLSTACKPOPV(copied)
 }
 
 struct TLString {
@@ -106,100 +97,84 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
     wrap->text = tl_memory_alloc(arena, wrap->length, TL_MEMORY_STRING);
     tl_memory_copy((void*)wrap->text, (void*)string, wrap->length);
 
-    TLSTACKPOP
-    return wrap;
+    TLSTACKPOPV(wrap)
 }
 
 TLINLINE const char * tl_string(TLString *string) {
     TLSTACKPUSHA("0x%p", string)
-    const char *text = string->text;
-    TLSTACKPOP
-    return text;
+    TLSTACKPOPV(string->text)
 }
 
 TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offset, const u64 length) {
     TLSTACKPUSHA("0x%p, 0x%p, %d, %d", arena, string, offset, length)
     //TODO implement tl_string_slice
     TLFATAL("Implementation missing")
-    TLSTACKPOP
-    return NULL;
+    TLSTACKPOPV(NULL)
 }
 
 TLString* tl_string_view(TLString* string) {
     TLSTACKPUSHA("0x%p", string)
     //TODO implement tl_string_view
     TLFATAL("Implementation missing")
-    TLSTACKPOP
-    return NULL;
+    TLSTACKPOPV(NULL)
 }
 
 u32 tl_string_length(TLString *string) {
     TLSTACKPUSHA("0x%p", string)
-    if (string == NULL) return -1;
-    u32 length = string->length;
-    TLSTACKPOP
-    return length;
+    if (string == NULL) {
+        TLSTACKPOPV(-1)
+    }
+    TLSTACKPOPV(string->length)
 }
 
 u32 tl_string_index_of(TLString* string, char token) {
     TLSTACKPUSHA("0x%p, %s", string, token)
     //TODO implement tl_string_index_of
     TLFATAL("Implementation missing")
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
 
 u32 tl_string_last_index_of(TLString* string, char token) {
     TLSTACKPUSHA("0x%p, %s", string, token)
     //TODO implement tl_string_last_index_of
     TLFATAL("Implementation missing")
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
 
 b8 tl_string_start_with(TLString* string, const char* guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
     //TODO implement tl_string_start_with
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
 
 b8 tl_string_ends_with(TLString* string, const char* guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
     //TODO implement tl_string_ends_with
     TLFATAL("Implementation missing")
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
 
 b8 tl_string_is_view(const TLString* string) {
     TLSTACKPUSHA("0x%p", string)
     if (string == NULL) {
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
-    const b8 is_view = string->is_view;
-    TLSTACKPOP
-    return is_view;
+    TLSTACKPOPV(string->is_view)
 }
 
 b8 tl_string_equals(const TLString* string, const char* guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        TLSTACKPOP
-        return FALSE;
+        TLSTACKPOPV(FALSE)
     }
 
-    const b8 is_equals = tl_char_equals(string->text, guess);
-    TLSTACKPOP
-    return is_equals;
+    TLSTACKPOPV(tl_char_equals(string->text, guess))
 }
 
 b8 tl_string_contains(TLString* string, const char* guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
     //TODO implement tl_string_contains
     TLFATAL("Implementation missing")
-    TLSTACKPOP
-    return FALSE;
+    TLSTACKPOPV(FALSE)
 }
