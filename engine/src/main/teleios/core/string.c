@@ -88,15 +88,28 @@ struct TLString {
     b8 is_view;
 };
 
-TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
-    TLSTACKPUSHA("0x%p, 0x%p", arena, string)
+TLINLINE static TLString* tl_string_create(TLMemoryArena* arena) {
+    TLSTACKPUSHA("0x%p", arena)
     TLString *wrap = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
     wrap->arena = arena;
     wrap->is_view = FALSE;
+    TLSTACKPOPV(wrap)
+}
+
+TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
+    TLSTACKPUSHA("0x%p, 0x%p", arena, string)
+    TLString *wrap = tl_string_create(arena);
     wrap->length = tl_char_length(string);
     wrap->text = tl_memory_alloc(arena, wrap->length, TL_MEMORY_STRING);
     tl_memory_copy((void*)wrap->text, (void*)string, wrap->length);
+    TLSTACKPOPV(wrap)
+}
 
+TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
+    TLSTACKPUSHA("0x%p, 0x%p", arena, string)
+    TLString *wrap = tl_string_create(arena);
+    wrap->length = tl_char_length(string);
+    wrap->text = string;
     TLSTACKPOPV(wrap)
 }
 

@@ -4,23 +4,20 @@
  *
  * This is free and unencumbered software released into the public domain.
  */
-#ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
+#if defined(TLPLATFORM_WINDOWS)
 #  pragma comment(lib, "advapi32.lib")
-#elif __linux__
-#  define _GNU_SOURCE
-#  include <unistd.h>
-#  include <sys/time.h>
-#  include <sys/syscall.h>
-#else
+#endif
+
+#if defined(TLPLATFORM_POSIX)
 #  define _POSIX_C_SOURCE 200112L
 #  include <sys/time.h>
 #endif
 
-#ifdef TLPLATFORM_LINUX
-#   define __USE_POSIX 1
-#   define __USE_POSIX199309 1
+#if defined(TLPLATFORM_LINUX)
+#  define _GNU_SOURCE
+#  include <unistd.h>
+#  include <sys/time.h>
+#  include <sys/syscall.h>
 #endif
 
 #include <time.h>

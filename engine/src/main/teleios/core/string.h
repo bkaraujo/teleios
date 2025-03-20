@@ -3,6 +3,7 @@
 
 #include "teleios/defines.h"
 
+TLString* tl_string_clone(TLMemoryArena *arena, const char *string);
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string);
 TLString* tl_string_slice(TLMemoryArena *arena, TLString *string, u64 offset, u64 length);
 TLString* tl_string_view(TLString *string);

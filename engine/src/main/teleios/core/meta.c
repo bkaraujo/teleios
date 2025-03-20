@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 void tl_meta_frame_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
-#ifndef TELEIOS_BUILD_RELEASE
+#if defined(TELEIOS_BUILD_RELEASE)
     if (runtime->stack_size >= U8_MAX) {
         TLFATAL("runtime->stack_size exceeded")
     }
@@ -62,7 +62,7 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
 }
 
 void tl_meta_frame_pop() {
-#ifndef TELEIOS_BUILD_RELEASE
+#if defined(TELEIOS_BUILD_RELEASE)
     if (runtime->stack_size == 0) TLWARN("runtime->stack_size is zero");
     runtime->stack_size--;
 #endif

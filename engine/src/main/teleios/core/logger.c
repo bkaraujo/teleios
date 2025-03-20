@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include "teleios/core/logger.h"
 
-#ifdef TLPLATFORM_WINDOWS
+#if defined(TLPLATFORM_WINDOWS)
 #   define ANSI_COLOR_FATAL   ""
 #   define ANSI_COLOR_ERROR   ""
 #   define ANSI_COLOR_WARN    ""
@@ -12,7 +12,7 @@
 #   define ANSI_COLOR_VERBOSE ""
 #endif
 
-#ifdef TLPLATFORM_LINUX
+#if defined(TLPLATFORM_LINUX)
 #   include <time.h>
 #   define ANSI_COLOR_FATAL   "\033[1;31m"
 #   define ANSI_COLOR_ERROR   "\033[1;31m"
@@ -65,7 +65,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
 #endif
 
     fflush(stdout);
-#ifndef TELEIOS_BUILD_RELEASE
+#if defined(TELEIOS_BUILD_RELEASE)
     if (level == TL_LOG_LEVEL_FATAL) {
         const char *format = "%68s   at %s(%s)\n\033[1;30m";
 
