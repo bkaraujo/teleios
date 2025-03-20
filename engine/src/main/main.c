@@ -34,7 +34,7 @@ int main (const int argc, const char *argv[]) {
     }
 
     if (!tl_application_initialize()) {
-        TLERROR("Application failed to intialize");
+        TLERROR("Application failed to initialize");
         if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
         if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
         exit(99);
