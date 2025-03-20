@@ -202,13 +202,12 @@ b8 tl_platform_initialize(void) {
     tl_profiler_begin("tl_platform_initialize");
 
     TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
-    TLVERBOSE("Initializing GLFW");
+    TLTRACE("Initializing GLFW");
     if (!glfwInit()) {
         TLERROR("Failed to initialize GLFW")
         TLSTACKPOPV(FALSE)
     }
-    
-    TLVERBOSE("Creating GLFWWindow");
+
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -233,6 +232,7 @@ b8 tl_platform_initialize(void) {
         tl_string(runtime->platform.window.title)
     )
 
+    TLTRACE("GLFW creating window");
     runtime->platform.window.handle = glfwCreateWindow(
         runtime->platform.window.size.x,
         runtime->platform.window.size.y,
@@ -258,6 +258,7 @@ b8 tl_platform_initialize(void) {
 
     glfwSetWindowPos(runtime->platform.window.handle, runtime->platform.window.position.x, runtime->platform.window.position.y);
 
+    TLTRACE("GLFW creating window callbacks");
     TLEvent event = {0};
     tl_event_submit(TL_EVENT_WINDOW_CREATED, &event);
 

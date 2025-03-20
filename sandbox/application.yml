@@ -1,6 +1,6 @@
 engine:
   logging:
-    level: debug
+    level: verbose
   graphics:
     vsync: false
     wireframe: false

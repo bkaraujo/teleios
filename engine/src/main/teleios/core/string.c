@@ -56,6 +56,26 @@ b8 tl_char_equals(const char *string, const char *guess) {
     TLSTACKPOPV(TRUE)
 }
 
+b8 tl_char_start_with(const char *string, const char *guess) {
+    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
+    if (string == NULL || guess == NULL) {
+        TLSTACKPOPV(FALSE)
+    }
+
+    const u64 length = tl_char_length(guess);
+    if (length > tl_char_length(string)) {
+        TLSTACKPOPV(FALSE)
+    }
+
+    for (u64 i = 0; i < length; i++) {
+        if (string[i] != guess[i]) {
+            TLSTACKPOPV(FALSE)
+        }
+    }
+
+    TLSTACKPOPV(TRUE)
+}
+
 u32 tl_char_copy(char *target, const char *source) {
     TLSTACKPUSHA("0x%p, 0x%p", target, source)
     const u32 target_length = tl_char_length(target);
