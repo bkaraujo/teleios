@@ -5,43 +5,43 @@ engine:
     vsync: false
     wireframe: false
   simulation:
-      step: 60
+    step: 60
   renderer:
     modelMatrix: un_model
     viewProjectionMatrix: un_viewProjection
 application:
-    version: 0.1.0
-    window:
-      size: HD
-      title: LearnOpenGL
-    scenes:
-      - name: default
-        clear_color: .7, .2, .7, 1
-        depth:
-          enabled: true
-          function: LEQUAL
-        blend:
-          enabled: true
-          equation: FUNC_ADD
-          function:
-            source: SRC_ALPHA
-            target: ONE_MINUS_SRC_ALPHA
-        camera:
-          properties:
+  version: 0.1.0
+  window:
+    size: HD
+    title: LearnOpenGL
+  scenes:
+    - name: default
+      clear_color: .7, .2, .7, 1
+      depth:
+        enabled: true
+        function: LEQUAL
+      blend:
+        enabled: true
+        equation: FUNC_ADD
+        function:
+          source: SRC_ALPHA
+          target: ONE_MINUS_SRC_ALPHA
+      camera:
+        properties:
           - { name: "depth", value: "-1.0, 1.0" }
           - { name: "rectangle", value: "-21.0, 21.0, -21.0, 21.0" }
-        actors:
-          - name: "Environment"
-            components:
-              - name: "COMPONENT_MESH"
-                properties:
-                  - { name: "shader.asset", value: "xxx" }
-                  - { name: "texture.0.asset", value: "xxx" }
-                  - { name: "texture.0.storage_format", value: "RGBA8" }
-                  - { name: "texture.0.format", value: "RGBA" }
-                  - { name: "texture.0.mips", value: "1" }
-                  - { name: "texture.0.data_type", value: "u8" }
-                  - { name: "geometry.primitive", value: "quadrilateral" }
-          - name: "Ball"
-          - name: "Paddle Left"
-          - name: "Paddle Right"
+      actors:
+        - name: "Environment"
+          components:
+            - name: "COMPONENT_MESH"
+              properties:
+                - { name: "shader.asset", value: "xxx" }
+                - { name: "texture.0.asset", value: "xxx" }
+                - { name: "texture.0.storage_format", value: "RGBA8" }
+                - { name: "texture.0.format", value: "RGBA" }
+                - { name: "texture.0.mips", value: "1" }
+                - { name: "texture.0.data_type", value: "u8" }
+                - { name: "geometry.primitive", value: "quadrilateral" }
+        - name: "Ball"
+        - name: "Paddle Left"
+        - name: "Paddle Right"

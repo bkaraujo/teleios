@@ -1,11 +1,13 @@
 #include "teleios/core.h"
 
+#if ! defined(TELEIOS_BUILD_RELEASE)
 #include <stdio.h>
 #include <stdarg.h>
+#endif
 
 void tl_meta_frame_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
-#if defined(TELEIOS_BUILD_RELEASE)
-    if (runtime->stack_size >= U8_MAX) {
+#if ! defined(TELEIOS_BUILD_RELEASE)
+    if (runtime->stack_size >= sizeof(runtime->stack) / sizeof(TLStackFrame)) {
         TLFATAL("runtime->stack_size exceeded")
     }
 
@@ -27,7 +29,7 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
     // ----------------------------------------------------------------
-        TLMEMSET(runtime->stack[runtime->stack_size].arguments, 0, 1024);
+    TLMEMSET(runtime->stack[runtime->stack_size].arguments, 0, 1024);
     if (arguments != NULL){
         __builtin_va_list arg_ptr;
         va_start(arg_ptr, arguments);
@@ -62,7 +64,7 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
 }
 
 void tl_meta_frame_pop() {
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     if (runtime->stack_size == 0) TLWARN("runtime->stack_size is zero");
     runtime->stack_size--;
 #endif

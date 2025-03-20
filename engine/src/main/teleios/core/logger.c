@@ -24,7 +24,7 @@
 #endif
 
 static TLLogLevel m_level = TL_LOG_LEVEL_INFO;
-static const char *strings[] = {"VERBOSE ", "TRACE  ", "DEBUG  ", "INFO   ", "WARN   ", "ERROR  ", "FATAL   "};
+static const char *strings[] = {"VERBOSE ", "TRACE  ", "DEBUG  ", "INFO   ", "WARN   ", "ERROR  ", "FATAL  "};
 static const char *colors[] = { ANSI_COLOR_VERBOSE , ANSI_COLOR_TRACE, ANSI_COLOR_DEBUG, ANSI_COLOR_INFO, ANSI_COLOR_WARN, ANSI_COLOR_ERROR, ANSI_COLOR_FATAL };
 
 void tl_logger_loglevel(const TLLogLevel desired){
@@ -54,7 +54,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     struct tm localtime = { 0 };
     if (localtime_r(&now.tv_sec, &localtime) == NULL) return;
 
-    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06ld %20s:%03d %s %s\n\033[1;30m",
+    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06ld %20s:%04d %s %s\n\033[1;30m",
         colors[level],
         localtime.tm_year + 1900, localtime.tm_mon + 1, localtime.tm_mday,
         localtime.tm_hour, localtime.tm_min, localtime.tm_sec, now.tv_nsec / 1000,
@@ -65,15 +65,17 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
 #endif
 
     fflush(stdout);
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
+    // Print the stack trace
     if (level == TL_LOG_LEVEL_FATAL) {
-        const char *format = "%68s   at %s(%s)\n\033[1;30m";
+        const char *format = "%66s at %20s:%04d %s(%s)\n\033[1;30m";
 
         fprintf(stdout, "\n");
         for (u8 i = runtime->stack_size ; i > 0 ; --i) {
-            fprintf(stdout, format, colors[level], runtime->stack[i].function, runtime->stack[i].arguments);
+            fprintf(stdout, format, colors[level], runtime->stack[i].filename, runtime->stack[i].lineno, runtime->stack[i].function, runtime->stack[i].arguments);
         }
-        fprintf(stdout, format, colors[level], runtime->stack[0].function, runtime->stack[0].arguments);
+
+        fprintf(stdout, format, colors[level], runtime->stack[0].filename, runtime->stack[0].lineno, runtime->stack[0].function, runtime->stack[0].arguments);
     }
 #endif
 }

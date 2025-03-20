@@ -50,5 +50,8 @@ int main (const int argc, const char *argv[]) {
 
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
 
+    TLDEBUG("runtime->stack used: %u", runtime->stack_maximum);
+    TLDEBUG("runtime->stack reserved: %u", sizeof(runtime->stack) / sizeof(TLStackFrame));
+
     TLSTACKPOPV(0)
 }

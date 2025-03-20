@@ -295,7 +295,7 @@ typedef enum {
     TL_EVENT_NOT_CONSUMED   = 11,
 } TLEventStatus;
 
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
 typedef struct {
     u64 timestamp;
     char filename[100];
@@ -366,10 +366,10 @@ typedef struct TLRuntime {
         TLScene* scene;
     } application;
 
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     u8 stack_size;
     u8 stack_maximum;
-    TLStackFrame stack[U8_MAX];
+    TLStackFrame stack[10];
 #endif
 } TLRuntime;
 

@@ -11,7 +11,7 @@ TLList* profilers = NULL;
 void tl_profiler_begin(const char *name) {
     TLSTACKPUSHA("%s", name)
 
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     if (profilers == NULL) {
         profilers = tl_list_create(runtime->arenas.permanent);
     }
@@ -39,7 +39,7 @@ TLProfile* tl_profiler_current(const char *name) {
 
 void tl_profiler_tick(const char *name) {
     TLSTACKPUSHA("%s", name)
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) { profile->ticks++; }
 #endif
@@ -48,7 +48,7 @@ void tl_profiler_tick(const char *name) {
 
 u64 tl_profiler_time(const char *name) {
     TLSTACKPUSHA("%s", name)
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     const TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) {
         TLSTACKPOPV(tl_time_epoch() - profile->timestamp)
@@ -59,7 +59,7 @@ u64 tl_profiler_time(const char *name) {
 
 u64 tl_profiler_count(const char *name) {
     TLSTACKPUSHA("%s", name)
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     const TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) {
         TLSTACKPOPV(profile->ticks)
@@ -70,7 +70,7 @@ u64 tl_profiler_count(const char *name) {
 
 void tl_profiler_end(const char *name) {
     TLSTACKPUSHA("%s", name)
-#if defined(TELEIOS_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
     TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) { tl_list_remove(profilers, profile); }
 #endif

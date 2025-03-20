@@ -9,6 +9,43 @@
 static b8 tl_serializer_read_engine(char* property, char* block, const yaml_token_t *token);
 static b8 tl_serializer_read_application(char* property, char* block, const yaml_token_t *token);
 
+/**
+ * C++ version 0.4 char* style "itoa":
+ * Written by Lukás Chmela
+ * Released under GPLv3.
+ */
+static void itoa(int value, char* result, const int base) {
+    // check that the base if valid
+    if (base < 2 || base > 36) { *result = '\0'; return; }
+
+    char* ptr = result, *ptr1 = result;
+    int tmp_value;
+
+    do {
+        tmp_value = value;
+        value /= base;
+        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
+    } while ( value );
+
+    // Apply negative sign
+    if (tmp_value < 0) *ptr++ = '-';
+    *ptr-- = '\0';
+
+    // Reverse the string
+    while(ptr1 < ptr) {
+        const char tmp_char = *ptr;
+        *ptr--= *ptr1;
+        *ptr1++ = tmp_char;
+    }
+}
+
+TLINLINE static void tl_serializer_block_fill(char* block, u8 block_index, char* buffer) {
+    tl_memory_copy(block, buffer, sizeof(buffer));
+    if (block_index > sizeof(buffer)) {
+        tl_memory_set(block + sizeof(buffer), 0, block_index - sizeof(buffer));
+    }
+}
+
 void tl_serializer_read(const char *file_name) {
     TLSTACKPUSHA("%s", file_name)
 
@@ -26,11 +63,13 @@ void tl_serializer_read(const char *file_name) {
 
     yaml_parser_set_input_file(&parser, file);
 
+    u16 block_sequence = 0;
+
     u8 block_index;
-    char block[U8_MAX];
+    char block[U8_MAX]; // current YAML_KEY_TOKEN
 
     u16 property_index;
-    char property[U16_MAX];
+    char property[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
     
     yaml_token_t token;
 
@@ -67,6 +106,64 @@ void tl_serializer_read(const char *file_name) {
                 block_index = token.data.scalar.length;
             } break;
 
+            case YAML_BLOCK_SEQUENCE_START_TOKEN: {
+                block_sequence = 0;
+            } break;
+
+            case YAML_BLOCK_ENTRY_TOKEN: {
+                // -----------------------------------------------------------
+                // If it's already inside a block persist into 'property'
+                // -----------------------------------------------------------
+                if (block_index != 0) {
+                    tl_memory_copy(property + property_index, block, block_index);
+                    property_index += block_index;
+
+                    tl_memory_copy(property + property_index, ".", 1);
+                    property_index++;
+                }
+                // -----------------------------------------------------------
+                // Copy the scalar content to the 'block'
+                // -----------------------------------------------------------
+                if (block_sequence <= 9) {
+                    char buffer[1]; itoa(block_sequence, buffer, 10);
+                    tl_serializer_block_fill(block, block_index, buffer);
+                    block_sequence++;
+                    block_index = sizeof(buffer);
+                    continue;
+                }
+
+                if (block_sequence > 10) {
+                    char buffer[2]; itoa(block_sequence, buffer, 10);
+                    tl_serializer_block_fill(block, block_index, buffer);
+                    block_sequence++;
+                    block_index = sizeof(buffer);
+                    continue;
+                }
+
+                if (block_sequence > 100) {
+                    char buffer[3]; itoa(block_sequence, buffer, 10);
+                    tl_serializer_block_fill(block, block_index, buffer);
+                    block_sequence++;
+                    block_index = sizeof(buffer);
+                    continue;
+                }
+
+                if (block_sequence > 1000) {
+                    char buffer[4]; itoa(block_sequence, buffer, 10);
+                    tl_serializer_block_fill(block, block_index, buffer);
+                    block_sequence++;
+                    block_index = sizeof(buffer);
+                    continue;
+                }
+
+                if (block_sequence > 10000) {
+                    char buffer[5]; itoa(block_sequence, buffer, 10);
+                    tl_serializer_block_fill(block, block_index, buffer);
+                    block_sequence++;
+                    block_index = sizeof(buffer);
+                }
+            } continue;
+
             case YAML_KEY_TOKEN: {
                 yaml_token_delete(&token);
                 yaml_parser_scan(&parser, &token);
@@ -87,10 +184,10 @@ void tl_serializer_read(const char *file_name) {
                 if (tl_serializer_read_engine     (property, block, &token)) continue;
                 if (tl_serializer_read_application(property, block, &token)) continue;
 
-                TLWARN("Property [%s%s] not parsed", property, block);
+                TLWARN("Unknown property: %s%s", property, block);
             } break;
 
-            case YAML_BLOCK_END_TOKEN:{
+            case YAML_BLOCK_END_TOKEN: {
                 b8 found = FALSE;
                 for (u16 i = property_index - 2 ; i > 0 ; --i) {
                     if (*(property + i)  == '.') {
@@ -105,6 +202,9 @@ void tl_serializer_read(const char *file_name) {
                     tl_memory_set(property, 0, U16_MAX);
                     property_index = 0;
                 }
+
+                tl_memory_set(block, 0, U8_MAX - block_index);
+                block_index = 0;
             } break;
         }
 
@@ -120,7 +220,7 @@ void tl_serializer_read(const char *file_name) {
 }
 
 static b8 tl_serializer_read_engine(char* property, char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0xTp", property, block, token)
+    TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
     if (IS_PROP_EQ("engine.logging.")) {
         if (IS_BLOCK_EQ("level")) {
             if (IS_TOKEN_EQ("verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); TLSTACKPOPV(TRUE); }
@@ -166,7 +266,7 @@ static b8 tl_serializer_read_engine(char* property, char* block, const yaml_toke
 }
 
 static b8 tl_serializer_read_application(char* property, char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0xTp", property, block, token)
+    TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
     if (IS_PROP_EQ("application.window.")) {
         if (IS_BLOCK_EQ("title")) {
             runtime->platform.window.title = tl_string_wrap(runtime->arenas.permanent, (char*) token->data.scalar.value);
