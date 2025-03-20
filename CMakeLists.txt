@@ -19,6 +19,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 #                   CGLM
 #
 # ==========================================
+set(CGLM_USE_C99 ON CACHE BOOL "" FORCE)
 set(CGLM_STATIC ON CACHE BOOL "Static option" FORCE)
 set(CGLM_SHARED OFF CACHE BOOL "Shared option" FORCE)
 set(CGLM_USE_TEST ON CACHE BOOL "Enable Tests" FORCE)
