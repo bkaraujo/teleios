@@ -1,6 +1,7 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
 #include "teleios/application.h"
+#include "teleios/global.h"
 
 b8 tl_application_initialize(void) {
     TLSTACKPUSH
@@ -25,16 +26,16 @@ b8 tl_application_run(void) {
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
     char title[60] = { 0 };
-    glfwShowWindow(core->platform.window.handle);
-    while (!glfwWindowShouldClose(core->platform.window.handle)) {
+    glfwShowWindow(global->window.handle);
+    while (!glfwWindowShouldClose(global->window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
         // =========================================================
         // Simulation Pass
         // =========================================================
         accumulator += deltaTime;
-        while (accumulator >= core->engine.simulation.step) {
-            accumulator -= core->engine.simulation.step;
+        while (accumulator >= global->simulation.step) {
+            accumulator -= global->simulation.step;
             ++UPS;
         }
         // =========================================================
@@ -45,7 +46,7 @@ b8 tl_application_run(void) {
         // =========================================================
         // Presenting Pass
         // =========================================================
-        glfwSwapBuffers(core->platform.window.handle);
+        glfwSwapBuffers(global->window.handle);
         
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
@@ -57,10 +58,10 @@ b8 tl_application_run(void) {
         // Cleanup Pass
         // =========================================================
         glfwPollEvents();
-        tl_memory_arena_reset(core->arenas.frame);
+        tl_memory_arena_reset(global->arenas.frame);
     }
 
-    glfwHideWindow(core->platform.window.handle);
+    glfwHideWindow(global->window.handle);
     TLSTACKPOPV(TRUE)
 }
 

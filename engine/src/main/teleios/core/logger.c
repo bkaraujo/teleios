@@ -2,6 +2,10 @@
 #include <stdarg.h>
 #include "teleios/core.h"
 
+#if ! defined(TELEIOS_BUILD_RELEASE)
+#   include "teleios/global.h"
+#endif
+
 #if defined(TLPLATFORM_WINDOWS)
 #   define ANSI_COLOR_FATAL   ""
 #   define ANSI_COLOR_ERROR   ""
@@ -75,11 +79,11 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
         const char *format = "%66s at %20s:%04d %s(%s)\n\033[1;30m";
 
         fprintf(stdout, "\n");
-        for (u8 i = core->stack_index ; i > 0 ; --i) {
-            fprintf(stdout, format, colors[level], core->stack[i].filename, core->stack[i].lineno, core->stack[i].function, core->stack[i].arguments);
+        for (u8 i = global->stack_index ; i > 0 ; --i) {
+            fprintf(stdout, format, colors[level], global->stack[i].filename, global->stack[i].lineno, global->stack[i].function, global->stack[i].arguments);
         }
 
-        fprintf(stdout, format, colors[level], core->stack[0].filename, core->stack[0].lineno, core->stack[0].function, core->stack[0].arguments);
+        fprintf(stdout, format, colors[level], global->stack[0].filename, global->stack[0].lineno, global->stack[0].function, global->stack[0].arguments);
     }
 #endif
 }

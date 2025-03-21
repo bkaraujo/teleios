@@ -3,16 +3,17 @@
 #if ! defined(TELEIOS_BUILD_RELEASE)
 #include <stdio.h>
 #include <stdarg.h>
+#include "teleios/global.h"
 #endif
 
 void tl_meta_frame_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    if (core->stack_index >= sizeof(core->stack) / sizeof(TLStackFrame)) {
-        TLFATAL("core->stack_index exceeded")
+    if (global->stack_index >= sizeof(global->stack) / sizeof(TLStackFrame)) {
+        TLFATAL("global->stack_index exceeded")
     }
 
-    core->stack[core->stack_index].lineno = lineno;
-    core->stack[core->stack_index].timestamp = tl_time_epoch();
+    global->stack[global->stack_index].lineno = lineno;
+    global->stack[global->stack_index].timestamp = tl_time_epoch();
 
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
@@ -21,19 +22,19 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
         u16 i = 0;
         for ( ; i < 100 ; ++i) {
             if (function[i] == '\0') break;
-            core->stack[core->stack_index].function[i] = function[i];
+            global->stack[global->stack_index].function[i] = function[i];
         }
 
-        TLMEMSET(&core->stack[core->stack_index].function[i], 0, 100 - i);
+        TLMEMSET(&global->stack[global->stack_index].function[i], 0, 100 - i);
     }
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
     // ----------------------------------------------------------------
-    TLMEMSET(core->stack[core->stack_index].arguments, 0, 1024);
+    TLMEMSET(global->stack[global->stack_index].arguments, 0, 1024);
     if (arguments != NULL){
         __builtin_va_list arg_ptr;
         va_start(arg_ptr, arguments);
-        vsnprintf(core->stack[core->stack_index].arguments, 1024, arguments, arg_ptr);
+        vsnprintf(global->stack[global->stack_index].arguments, 1024, arguments, arg_ptr);
         va_end(arg_ptr);
     }
     // ----------------------------------------------------------------
@@ -50,34 +51,34 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
         u16 i = 0;
         for ( ; i < 100 ; ++i) {
             if (filename[index + i] == '\0') break;
-            core->stack[core->stack_index].filename[i] = filename[index + i];
+            global->stack[global->stack_index].filename[i] = filename[index + i];
         }
 
-        TLMEMSET(&core->stack[core->stack_index].filename[i], 0, 100 - i);
+        TLMEMSET(&global->stack[global->stack_index].filename[i], 0, 100 - i);
     }
 
-    core->stack_index++;
-    if (core->stack_index > core->stack_maximum) {
-        core->stack_maximum = core->stack_index;
+    global->stack_index++;
+    if (global->stack_index > global->stack_maximum) {
+        global->stack_maximum = global->stack_index;
     }
 
     // TLVERBOSE("STACK PUSH :: %s:%d %s(%s)",
-    //     core->stack[core->stack_index].filename, core->stack[core->stack_index].lineno,
-    //     core->stack[core->stack_index].function, core->stack[core->stack_index].arguments
+    //     global->stack[global->stack_index].filename, global->stack[global->stack_index].lineno,
+    //     global->stack[global->stack_index].function, global->stack[global->stack_index].arguments
     // )
 #endif
 }
 
 void tl_meta_frame_pop() {
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    if (core->stack_index == 0) TLWARN("core->stack_index is zero");
+    if (global->stack_index == 0) TLWARN("global->stack_index is zero");
 
     // TLVERBOSE("STACK POP :: %s:%d %s(%s)",
-    //     core->stack[core->stack_index].filename, core->stack[core->stack_index].lineno,
-    //     core->stack[core->stack_index].function, core->stack[core->stack_index].arguments
+    //     global->stack[global->stack_index].filename, global->stack[global->stack_index].lineno,
+    //     global->stack[global->stack_index].function, global->stack[global->stack_index].arguments
     // )
 
-    core->stack_index--;
+    global->stack_index--;
 #endif
 }
 

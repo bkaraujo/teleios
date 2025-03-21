@@ -1,10 +1,9 @@
 #include "teleios/core.h"
+#include "teleios/global.h"
 
 // ########################################################
 //                    MEMORY FUNCTIONS
 // ########################################################
-
-
 typedef struct {
     u64 index;
     char *payload;
@@ -48,8 +47,8 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     // Keep track of the created arena
     // ----------------------------------------------------------
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
-        if (core->platform.memory.arenas[i] == NULL) {
-            core->platform.memory.arenas[i] = arena;
+        if (global->memory.arenas[i] == NULL) {
+            global->memory.arenas[i] = arena;
             TLVERBOSE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
             TLSTACKPOPV(arena)
         }
@@ -67,8 +66,8 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena* arena) {
     }
 
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
-        if (core->platform.memory.arenas[i] == NULL) continue;
-        if (core->platform.memory.arenas[i] == arena) {
+        if (global->memory.arenas[i] == NULL) continue;
+        if (global->memory.arenas[i] == arena) {
             TLSTACKPOPV(i)
         }
     }
@@ -78,7 +77,7 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena* arena) {
 
 TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TLSTACKPUSHA("%d", index)
-    TLMemoryArena *arena = core->platform.memory.arenas[index];
+    TLMemoryArena *arena = global->memory.arenas[index];
     for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
@@ -88,13 +87,13 @@ TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     }
 
     for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
-        if (core->platform.memory.arenas[index]->tagged_size[i] != 0) {
+        if (global->memory.arenas[index]->tagged_size[i] != 0) {
             TLVERBOSE("TLMemoryArena 0x%p at %-30s: [%03d] %llu bytes", arena, tl_memory_name(i), arena->tagged_count[i], arena->tagged_size[i]);
         }
     }
 
     TLFREE(arena);
-    core->platform.memory.arenas[index] = NULL;
+    global->memory.arenas[index] = NULL;
 
     TLSTACKPOP
 }
@@ -222,36 +221,36 @@ b8 tl_platform_initialize(void) {
 
     TLDEBUG(
         "Window (%u x %u) :: %s",
-        core->platform.window.size.x,
-        core->platform.window.size.y,
-        tl_string(core->platform.window.title)
+        global->window.size.x,
+        global->window.size.y,
+        tl_string(global->window.title)
     )
 
     TLTRACE("GLFW creating window");
-    core->platform.window.handle = glfwCreateWindow(
-        core->platform.window.size.x,
-        core->platform.window.size.y,
-        tl_string(core->platform.window.title),
+    global->window.handle = glfwCreateWindow(
+        global->window.size.x,
+        global->window.size.y,
+        tl_string(global->window.title),
         NULL, NULL
     );
     
-    if (core->platform.window.handle == NULL) {
+    if (global->window.handle == NULL) {
         TLERROR("Failed to create GLFW window");
         TLSTACKPOPV(FALSE)
     }
 
-    core->platform.window.visible = FALSE;
-    core->platform.window.focused = glfwGetWindowAttrib(core->platform.window.handle, GLFW_FOCUSED) == GLFW_TRUE;
-    core->platform.window.maximized = glfwGetWindowAttrib(core->platform.window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
-    core->platform.window.minimized = glfwGetWindowAttrib(core->platform.window.handle, GLFW_ICONIFIED) == GLFW_TRUE;
+    global->window.visible = FALSE;
+    global->window.focused = glfwGetWindowAttrib(global->window.handle, GLFW_FOCUSED) == GLFW_TRUE;
+    global->window.maximized = glfwGetWindowAttrib(global->window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
+    global->window.minimized = glfwGetWindowAttrib(global->window.handle, GLFW_ICONIFIED) == GLFW_TRUE;
 
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     if (mode != NULL) {
-        core->platform.window.position.x = (mode->width - core->platform.window.size.x) / 2;
-        core->platform.window.position.y = (mode->height - core->platform.window.size.y) / 2;
+        global->window.position.x = (mode->width - global->window.size.x) / 2;
+        global->window.position.y = (mode->height - global->window.size.y) / 2;
     }
 
-    glfwSetWindowPos(core->platform.window.handle, core->platform.window.position.x, core->platform.window.position.y);
+    glfwSetWindowPos(global->window.handle, global->window.position.x, global->window.position.y);
 
     TLTRACE("GLFW creating window callbacks");
     TLEvent event = {0};
@@ -277,15 +276,14 @@ b8 tl_platform_terminate(void) {
     glfwTerminate();
 
     for (u8 i = 2 ; i < U8_MAX ; ++i) {
-        if (core->platform.memory.arenas[i] == NULL) continue;
+        if (global->memory.arenas[i] == NULL) continue;
 
-        TLWARN("Removing dangling TLMemoryArena 0x%p", core->platform.memory.arenas[i])
-        tl_memory_arena_do_destroy(0);  // core->arenas.permanent
-        tl_memory_arena_do_destroy(1);  // core->arenas.scene
-        tl_memory_arena_do_destroy(2);  // core->arenas.frame
-        tl_memory_set(core->platform.memory.arenas[i], 0, sizeof(TLMemoryArena));
+        TLWARN("Removing dangling TLMemoryArena 0x%p", global->memory.arenas[i])
+        tl_memory_arena_do_destroy(0);  // global->arenas.permanent
+        tl_memory_arena_do_destroy(1);  // global->arenas.scene
+        tl_memory_arena_do_destroy(2);  // global->arenas.frame
+        tl_memory_set(global->memory.arenas[i], 0, sizeof(TLMemoryArena));
     }
 
-    tl_memory_set(&core->platform, 0, sizeof(core->platform));
     TLSTACKPOPV(TRUE)
 }

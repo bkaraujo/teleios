@@ -1,5 +1,6 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
+#include "teleios/global.h"
 
 #include <stdio.h>
 
@@ -208,13 +209,13 @@ static b8 tl_serializer_read_engine(char* property, char* block, const yaml_toke
 
     if (IS_PROP_EQ("engine.graphics.")) {
         if (IS_BLOCK_EQ("vsync")) {
-            core->engine.graphics.vsync = tl_char_equals((char*) token->data.scalar.value, "true");
-            TLTRACE("core->engine.graphics.vsync = %d", core->engine.graphics.vsync)
+            global->graphics.vsync = tl_char_equals((char*) token->data.scalar.value, "true");
+            TLTRACE("global->graphics.vsync = %d", global->graphics.vsync)
             TLSTACKPOPV(TRUE);
         }
         if (IS_BLOCK_EQ("wireframe")) {
-            core->engine.graphics.wireframe = tl_char_equals((char*) token->data.scalar.value, "true");
-            TLTRACE("core->engine.graphics.wireframe = %d", core->engine.graphics.wireframe)
+            global->graphics.wireframe = tl_char_equals((char*) token->data.scalar.value, "true");
+            TLTRACE("global->graphics.wireframe = %d", global->graphics.wireframe)
             TLSTACKPOPV(TRUE);
         }
 
@@ -229,8 +230,8 @@ static b8 tl_serializer_read_engine(char* property, char* block, const yaml_toke
                 step = 24;
             }
 
-            core->engine.simulation.step = 1.0f / (f64) step;
-            TLTRACE("core->engine.simulation.step = %f", core->engine.simulation.step)
+            global->simulation.step = 1.0f / (f64) step;
+            TLTRACE("global->simulation.step = %f", global->simulation.step)
             TLSTACKPOPV(TRUE);
         }
     }
@@ -242,20 +243,20 @@ static b8 tl_serializer_read_application(char* property, char* block, const yaml
     TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
     if (IS_PROP_EQ("application.window.")) {
         if (IS_BLOCK_EQ("title")) {
-            core->platform.window.title = tl_string_clone(core->arenas.permanent, (char*) token->data.scalar.value);
-            TLTRACE("core->platform.window.title = %s", token->data.scalar.value)
+            global->window.title = tl_string_clone(global->arenas.permanent, (char*) token->data.scalar.value);
+            TLTRACE("global->window.title = %s", token->data.scalar.value)
             TLSTACKPOPV(TRUE);
         }
 
         if (IS_BLOCK_EQ("size")) {
-            if (IS_TOKEN_EQ( "SD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
-            if (IS_TOKEN_EQ( "HD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
-            if (IS_TOKEN_EQ("FHD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
-            if (IS_TOKEN_EQ("QHD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
-            if (IS_TOKEN_EQ("UHD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
+            if (IS_TOKEN_EQ( "SD")) { global->window.size.x = TL_VIDEO_RESOLUTION_SD; }
+            if (IS_TOKEN_EQ( "HD")) { global->window.size.x = TL_VIDEO_RESOLUTION_HD; }
+            if (IS_TOKEN_EQ("FHD")) { global->window.size.x = TL_VIDEO_RESOLUTION_FHD; }
+            if (IS_TOKEN_EQ("QHD")) { global->window.size.x = TL_VIDEO_RESOLUTION_QHD; }
+            if (IS_TOKEN_EQ("UHD")) { global->window.size.x = TL_VIDEO_RESOLUTION_UHD; }
 
-            core->platform.window.size.y = (core->platform.window.size.x * 9) / 16;
-            TLTRACE("core->platform.window.size = %u x %u", core->platform.window.size.x, core->platform.window.size.y)
+            global->window.size.y = (global->window.size.x * 9) / 16;
+            TLTRACE("global->window.size = %u x %u", global->window.size.x, global->window.size.y)
             TLSTACKPOPV(TRUE);
         }
     }

@@ -1,8 +1,9 @@
 #include "teleios/core.h"
+#include "teleios/global.h"
 
 b8 tl_graphics_initialize(void) {
     TLSTACKPUSH
-    glfwMakeContextCurrent(core->platform.window.handle);
+    glfwMakeContextCurrent(global->window.handle);
 
     TLDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
@@ -14,7 +15,7 @@ b8 tl_graphics_initialize(void) {
 
     TLDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
 
-    if (core->engine.graphics.vsync) {
+    if (global->graphics.vsync) {
         TLDEBUG("vsync: on")
         glfwSwapInterval(1);
     } else {
@@ -22,7 +23,7 @@ b8 tl_graphics_initialize(void) {
         glfwSwapInterval(0);
     }
 
-    if (core->engine.graphics.wireframe) {
+    if (global->graphics.wireframe) {
         TLDEBUG("wireframe: on")
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else {
@@ -35,6 +36,6 @@ b8 tl_graphics_initialize(void) {
 
 b8 tl_graphics_terminate(void) {
     TLSTACKPUSH
-    tl_memory_set(&core->engine.graphics, 0, sizeof(core->engine.graphics));
+    tl_memory_set(&global->graphics, 0, sizeof(global->graphics));
     TLSTACKPOPV(TRUE)
 }
