@@ -168,8 +168,8 @@ void *tl_memory_alloc(TLMemoryArena* arena, const u64 size, const TLMemoryTag ta
     // Adjust the TLMemoryPage internal state
     // -------------------------------------------------
     void* address = arena->page[found].payload + arena->page[found].index;
+    TLVERBOSE("TLMemoryArena 0x%p page %d [remaning %llu] :: allocating %llu ", arena, found, arena->page_size - arena->page[found].index, size)
     arena->page[found].index += size;
-    TLVERBOSE("TLMemoryArena 0x%p allocating %llu of page %d leaving %d bytes available", arena, size, found, (arena->page_size - arena->page[found].index))
     // -------------------------------------------------
     // Hand out the memory pointer
     // -------------------------------------------------

@@ -3,7 +3,7 @@
 
 TLINLINE u32 tl_char_length(const char *string) {
     TLSTACKPUSHA("0x%p", string)
-    if (string == NULL ) TLSTACKPOPV(-1);
+    if (string == NULL ) TLSTACKPOPV(U32_MAX);
     if (*string == '\0') TLSTACKPOPV(0);
 
     u32 index = 0;
@@ -186,6 +186,23 @@ TLString* tl_string_from_i32(TLMemoryArena* arena, i32 value, u8 base) {
     TLSTACKPOPV(string)
 }
 
+void tl_string_join(const TLString *string, const char *other) {
+    TLSTACKPUSHA("0x%p, 0x%p", string, other)
+    const u64 length = tl_char_length(other);
+    if (length == U32_MAX || length == 0) TLFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
+    const u64 created_length = string->length + length;
+    void *created = tl_memory_alloc(string->arena, created_length, TL_MEMORY_STRING);
+    tl_memory_copy(created, (void*)string->text, string->length);
+    tl_memory_copy(created + string->length, (void*)other, length);
+
+    ((TLString*)string)->text = created;
+    ((TLString*)string)->size = created_length;
+    ((TLString*)string)->length = created_length;
+    ((TLString*)string)->is_view = FALSE;
+
+    TLSTACKPOP
+}
+
 TLINLINE const char * tl_string(TLString *string) {
     TLSTACKPUSHA("0x%p", string)
     TLSTACKPOPV(string->text)
@@ -255,7 +272,15 @@ b8 tl_string_equals(const TLString* string, const char* guess) {
         TLSTACKPOPV(FALSE)
     }
 
-    TLSTACKPOPV(tl_char_equals(string->text, guess))
+    const u64 length = tl_char_length(guess);
+    if (string->length != length) TLSTACKPOPV(FALSE)
+
+    for (u64 i = 0; i < string->length; ++i) {
+        if (string->text[i] != guess[i])
+            TLSTACKPOPV(FALSE)
+    }
+
+    TLSTACKPOPV(TRUE)
 }
 
 b8 tl_string_contains(TLString* string, const char* guess) {

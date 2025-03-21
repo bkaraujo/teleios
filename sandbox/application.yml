@@ -51,6 +51,10 @@ application:
                   value: "u8"
                 - name: "geometry.primitive"
                   value: "quadrilateral"
+            - name: "COMPONENT_XXX"
+              properties:
+                - name: "shader.asset"
+                  value: "xxx"
         - name: "Ball"
         - name: "Paddle Left"
         - name: "Paddle Right"

@@ -23,7 +23,11 @@
 #   define ANSI_COLOR_VERBOSE "\033[1;37m"
 #endif
 
+#if defined(TELEIOS_BUILD_RELEASE)
 static TLLogLevel m_level = TL_LOG_LEVEL_INFO;
+#else
+static TLLogLevel m_level = TL_LOG_LEVEL_VERBOSE;
+#endif
 static const char *strings[] = {"VERBOSE ", "TRACE  ", "DEBUG  ", "INFO   ", "WARN   ", "ERROR  ", "FATAL  "};
 static const char *colors[] = { ANSI_COLOR_VERBOSE , ANSI_COLOR_TRACE, ANSI_COLOR_DEBUG, ANSI_COLOR_INFO, ANSI_COLOR_WARN, ANSI_COLOR_ERROR, ANSI_COLOR_FATAL };
 
