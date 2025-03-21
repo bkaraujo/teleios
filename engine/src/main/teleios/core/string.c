@@ -217,9 +217,12 @@ TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offs
 
 TLString* tl_string_view(TLString* string) {
     TLSTACKPUSHA("0x%p", string)
-    //TODO implement tl_string_view
-    TLFATAL("Implementation missing")
-    TLSTACKPOPV(NULL)
+    TLString *view = tl_string_reserve(string->arena, 0);
+    view->is_view = TRUE;
+    view->text = string->text;
+    view->size = string->size;
+    view->length = string->length;
+    TLSTACKPOPV(view)
 }
 
 u32 tl_string_length(TLString *string) {
@@ -230,24 +233,43 @@ u32 tl_string_length(TLString *string) {
     TLSTACKPOPV(string->length)
 }
 
-u32 tl_string_index_of(TLString* string, char token) {
+u32 tl_string_index_of(TLString* string, const char token) {
     TLSTACKPUSHA("0x%p, %s", string, token)
-    //TODO implement tl_string_index_of
-    TLFATAL("Implementation missing")
-    TLSTACKPOPV(FALSE)
+    for (u64 i = 0; i < string->length; i++) {
+        if (string->text[i] == token) TLSTACKPOPV(i);
+    }
+    TLSTACKPOPV(U32_MAX)
 }
 
-u32 tl_string_last_index_of(TLString* string, char token) {
+u32 tl_string_last_index_of(TLString* string, const char token) {
     TLSTACKPUSHA("0x%p, %s", string, token)
-    //TODO implement tl_string_last_index_of
+    if (string == NULL) TLSTACKPOPV(U32_MAX);
+
+    if (string->length == 0) {
+        if (string->text[0] == token) TLSTACKPOPV(0);
+        TLSTACKPOPV(U32_MAX)
+    }
+
+    for (u64 i = string->length - 1; i > 0; --i) {
+        if (string->text[i] == token) TLSTACKPOPV(i);
+    }
     TLFATAL("Implementation missing")
     TLSTACKPOPV(FALSE)
 }
 
 b8 tl_string_start_with(TLString* string, const char* guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
-    //TODO implement tl_string_start_with
-    TLSTACKPOPV(FALSE)
+    if (string == NULL || guess == NULL) TLSTACKPOPV(FALSE)
+
+    const u64 length = tl_char_length(guess);
+    if (length > string->length) TLSTACKPOPV(FALSE)
+
+    for (u64 i = 0; i < length; ++i) {
+        if (string->text[i] != guess[i])
+            TLSTACKPOPV(FALSE)
+    }
+
+    TLSTACKPOPV(TRUE)
 }
 
 b8 tl_string_ends_with(TLString* string, const char* guess) {
