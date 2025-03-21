@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include "teleios/core/logger.h"
+#include "teleios/core.h"
 
 #if defined(TLPLATFORM_WINDOWS)
 #   define ANSI_COLOR_FATAL   ""

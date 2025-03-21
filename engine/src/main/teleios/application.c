@@ -1,7 +1,6 @@
 #include "teleios/core.h"
-#include "teleios/core/platform.h"
+#include "teleios/runtime.h"
 #include "teleios/application.h"
-#include "GLFW/glfw3.h"
 
 b8 tl_application_initialize(void) {
     TLSTACKPUSH
