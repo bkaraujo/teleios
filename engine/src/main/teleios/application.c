@@ -25,16 +25,16 @@ b8 tl_application_run(void) {
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
     char title[60] = { 0 };
-    glfwShowWindow(runtime->platform.window.handle);
-    while (!glfwWindowShouldClose(runtime->platform.window.handle)) {
+    glfwShowWindow(core->platform.window.handle);
+    while (!glfwWindowShouldClose(core->platform.window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
         // =========================================================
         // Simulation Pass
         // =========================================================
         accumulator += deltaTime;
-        while (accumulator >= runtime->engine.simulation.step) {
-            accumulator -= runtime->engine.simulation.step;
+        while (accumulator >= core->engine.simulation.step) {
+            accumulator -= core->engine.simulation.step;
             ++UPS;
         }
         // =========================================================
@@ -45,7 +45,7 @@ b8 tl_application_run(void) {
         // =========================================================
         // Presenting Pass
         // =========================================================
-        glfwSwapBuffers(runtime->platform.window.handle);
+        glfwSwapBuffers(core->platform.window.handle);
         
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
@@ -57,10 +57,10 @@ b8 tl_application_run(void) {
         // Cleanup Pass
         // =========================================================
         glfwPollEvents();
-        tl_memory_arena_reset(runtime->arenas.frame);
+        tl_memory_arena_reset(core->arenas.frame);
     }
 
-    glfwHideWindow(runtime->platform.window.handle);
+    glfwHideWindow(core->platform.window.handle);
     TLSTACKPOPV(TRUE)
 }
 

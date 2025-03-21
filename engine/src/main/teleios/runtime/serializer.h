@@ -2,5 +2,6 @@
 #define __TELEIOS_SERIALIZER__
 
 void tl_serializer_read(const char *file_name);
+void tl_serializer_write(const char *file_name);
 
 #endif // __TELEIOS_SERIALIZER__

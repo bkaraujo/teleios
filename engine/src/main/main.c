@@ -1,7 +1,8 @@
 #include "teleios/core.h"
+#include "teleios/runtime.h"
 #include "teleios/application.h"
 
-TLRuntime *runtime;
+TLCore *core;
 
 static TLEventStatus event_echo(TLEvent *event) {
     TLINFO("Processando evento 0x%p", event)
@@ -13,15 +14,15 @@ int main (const int argc, const char *argv[]) {
         TLFATAL("argc != 2")
     }
 
-    runtime = TLMALLOC(sizeof(TLRuntime));
+    core = TLMALLOC(sizeof(TLCore));
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
-    runtime->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
+    core->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
     tl_serializer_read(argv[1]);
-    runtime->arenas.scene = tl_memory_arena_create(TLMEBIBYTES(32));
-    runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
-    runtime->engine.ecs.entities = tl_list_create(runtime->arenas.permanent);
-    runtime->engine.ecs.components = tl_list_create(runtime->arenas.permanent);
+    core->arenas.scene = tl_memory_arena_create(TLMEBIBYTES(32));
+    core->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
+    core->engine.ecs.entities = tl_list_create(core->arenas.permanent);
+    core->engine.ecs.components = tl_list_create(core->arenas.permanent);
 
     tl_event_subscribe(TL_EVENT_WINDOW_CREATED, event_echo);
 
@@ -42,14 +43,14 @@ int main (const int argc, const char *argv[]) {
 
     if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
 
-    tl_memory_arena_destroy(runtime->arenas.frame);
-    tl_memory_arena_destroy(runtime->arenas.permanent);
+    tl_memory_arena_destroy(core->arenas.frame);
+    tl_memory_arena_destroy(core->arenas.permanent);
 
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    TLDEBUG("runtime->stack used: %u", runtime->stack_maximum);
-    TLDEBUG("runtime->stack reserved: %u", sizeof(runtime->stack) / sizeof(TLStackFrame));
+    TLDEBUG("core->stack used: %u", core->stack_maximum);
+    TLDEBUG("core->stack reserved: %u", sizeof(core->stack) / sizeof(TLStackFrame));
 #endif
 
     TLSTACKPOPV(0)

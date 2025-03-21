@@ -1,5 +1,6 @@
 #include "teleios/core.h"
-#include "teleios/core/serializer.h"
+#include "teleios/runtime.h"
+
 #include <stdio.h>
 
 #define IS_BLOCK_EQ(s) tl_char_equals(block, s)
@@ -47,6 +48,7 @@ void tl_serializer_read(const char *file_name) {
     yaml_token_t token;
     TLMemoryArena *arena = tl_memory_arena_create(TLKIBIBYTES(4));
     sequences = tl_list_create(arena);
+
     do {
         yaml_parser_scan(&parser, &token);
         switch(token.type) {
@@ -206,13 +208,13 @@ static b8 tl_serializer_read_engine(char* property, char* block, const yaml_toke
 
     if (IS_PROP_EQ("engine.graphics.")) {
         if (IS_BLOCK_EQ("vsync")) {
-            runtime->engine.graphics.vsync = tl_char_equals((char*) token->data.scalar.value, "true");
-            TLTRACE("runtime->engine.graphics.vsync = %d", runtime->engine.graphics.vsync)
+            core->engine.graphics.vsync = tl_char_equals((char*) token->data.scalar.value, "true");
+            TLTRACE("core->engine.graphics.vsync = %d", core->engine.graphics.vsync)
             TLSTACKPOPV(TRUE);
         }
         if (IS_BLOCK_EQ("wireframe")) {
-            runtime->engine.graphics.wireframe = tl_char_equals((char*) token->data.scalar.value, "true");
-            TLTRACE("runtime->engine.graphics.wireframe = %d", runtime->engine.graphics.wireframe)
+            core->engine.graphics.wireframe = tl_char_equals((char*) token->data.scalar.value, "true");
+            TLTRACE("core->engine.graphics.wireframe = %d", core->engine.graphics.wireframe)
             TLSTACKPOPV(TRUE);
         }
 
@@ -227,8 +229,8 @@ static b8 tl_serializer_read_engine(char* property, char* block, const yaml_toke
                 step = 24;
             }
 
-            runtime->engine.simulation.step = 1.0f / (f64) step;
-            TLTRACE("runtime->engine.simulation.step = %f", runtime->engine.simulation.step)
+            core->engine.simulation.step = 1.0f / (f64) step;
+            TLTRACE("core->engine.simulation.step = %f", core->engine.simulation.step)
             TLSTACKPOPV(TRUE);
         }
     }
@@ -240,20 +242,20 @@ static b8 tl_serializer_read_application(char* property, char* block, const yaml
     TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
     if (IS_PROP_EQ("application.window.")) {
         if (IS_BLOCK_EQ("title")) {
-            runtime->platform.window.title = tl_string_clone(runtime->arenas.permanent, (char*) token->data.scalar.value);
-            TLTRACE("runtime->platform.window.title = %s", token->data.scalar.value)
+            core->platform.window.title = tl_string_clone(core->arenas.permanent, (char*) token->data.scalar.value);
+            TLTRACE("core->platform.window.title = %s", token->data.scalar.value)
             TLSTACKPOPV(TRUE);
         }
 
         if (IS_BLOCK_EQ("size")) {
-            if (IS_TOKEN_EQ( "SD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
-            if (IS_TOKEN_EQ( "HD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
-            if (IS_TOKEN_EQ("FHD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
-            if (IS_TOKEN_EQ("QHD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
-            if (IS_TOKEN_EQ("UHD")) { runtime->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
+            if (IS_TOKEN_EQ( "SD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
+            if (IS_TOKEN_EQ( "HD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
+            if (IS_TOKEN_EQ("FHD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
+            if (IS_TOKEN_EQ("QHD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
+            if (IS_TOKEN_EQ("UHD")) { core->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
 
-            runtime->platform.window.size.y = (runtime->platform.window.size.x * 9) / 16;
-            TLTRACE("runtime->platform.window.size = %u x %u", runtime->platform.window.size.x, runtime->platform.window.size.y)
+            core->platform.window.size.y = (core->platform.window.size.x * 9) / 16;
+            TLTRACE("core->platform.window.size = %u x %u", core->platform.window.size.x, core->platform.window.size.y)
             TLSTACKPOPV(TRUE);
         }
     }

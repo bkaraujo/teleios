@@ -51,13 +51,15 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/core/logger.c
         engine/src/main/teleios/core/graphics.c
         engine/src/main/teleios/core/platform.c
-        engine/src/main/teleios/core/serializer.c
         engine/src/main/teleios/core/container_list.c
         engine/src/main/teleios/core/container_stack.c
         engine/src/main/teleios/core/platform_linux.c
         engine/src/main/teleios/core/platform_windows.c
         engine/src/main/teleios/core/profiler.c
         engine/src/main/teleios/core/meta.c
+
+        engine/src/main/teleios/runtime/serializer.c
+        engine/src/main/teleios/runtime/scene.h
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)

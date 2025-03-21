@@ -12,7 +12,6 @@
 
 #include "teleios/core/platform.h"
 #include "teleios/core/graphics.h"
-#include "teleios/core/serializer.h"
 
 #include "teleios/core/time.h"
 #include "teleios/core/memory.h"
@@ -21,7 +20,7 @@
 
 #include "teleios/core/libs.h"
 
-typedef struct TLRuntime {
+typedef struct TLCore {
     struct TLGlobals {
         TLMemoryArena* permanent;
         TLMemoryArena* scene;
@@ -72,8 +71,8 @@ typedef struct TLRuntime {
     u8 stack_maximum;
     TLStackFrame stack[10];
 #endif
-} TLRuntime;
+} TLCore;
 
-extern TLRuntime *runtime;
+extern TLCore *core;
 
 #endif // __TELEIOS_CORE__

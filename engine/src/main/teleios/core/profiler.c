@@ -13,11 +13,11 @@ void tl_profiler_begin(const char *name) {
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     if (profilers == NULL) {
-        profilers = tl_list_create(runtime->arenas.permanent);
+        profilers = tl_list_create(core->arenas.permanent);
     }
 
-    TLProfile* profile = tl_memory_alloc(runtime->arenas.permanent, sizeof(TLProfile), TL_MEMORY_PROFILER);
-    profile->name = tl_string_wrap(runtime->arenas.permanent, name);
+    TLProfile* profile = tl_memory_alloc(core->arenas.permanent, sizeof(TLProfile), TL_MEMORY_PROFILER);
+    profile->name = tl_string_wrap(core->arenas.permanent, name);
     profile->timestamp = tl_time_epoch();
     tl_list_add(profilers, profile);
 #endif
