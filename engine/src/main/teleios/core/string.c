@@ -3,8 +3,8 @@
 
 TLINLINE u32 tl_char_length(const char *string) {
     TLSTACKPUSHA("0x%p", string)
-    if (string == NULL ) return -1;
-    if (*string == '\0') return 0;
+    if (string == NULL ) TLSTACKPOPV(-1);
+    if (*string == '\0') TLSTACKPOPV(0);
 
     u32 index = 0;
 
@@ -103,34 +103,87 @@ u32 tl_char_copy(char *target, const char *source) {
 
 struct TLString {
     u64 length;
+    u64 size;
     const char *text;
     TLMemoryArena *arena;
     b8 is_view;
 };
 
-TLINLINE static TLString* tl_string_create(TLMemoryArena* arena) {
-    TLSTACKPUSHA("0x%p", arena)
-    TLString *wrap = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
-    wrap->arena = arena;
-    wrap->is_view = FALSE;
-    TLSTACKPOPV(wrap)
+TLINLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
+    TLSTACKPUSHA("0x%p, %d", arena, size)
+    TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
+    string->is_view = FALSE;
+    string->arena = arena;
+    string->size = size;
+    string->length = 0;
+    if (string->size > 0)
+        string->text = tl_memory_alloc(arena, string->size, TL_MEMORY_STRING);
+
+    TLSTACKPOPV(string)
 }
 
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
     TLSTACKPUSHA("0x%p, 0x%p", arena, string)
-    TLString *wrap = tl_string_create(arena);
-    wrap->length = tl_char_length(string);
-    wrap->text = tl_memory_alloc(arena, wrap->length, TL_MEMORY_STRING);
-    tl_memory_copy((void*)wrap->text, (void*)string, wrap->length);
-    TLSTACKPOPV(wrap)
+    TLString *clone = tl_string_reserve(arena, tl_char_length(string));
+    clone->length = clone->size;
+    tl_memory_copy((void*)clone->text, (void*)string, clone->size);
+    TLSTACKPOPV(clone)
 }
 
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
     TLSTACKPUSHA("0x%p, 0x%p", arena, string)
-    TLString *wrap = tl_string_create(arena);
-    wrap->length = tl_char_length(string);
+    TLString *wrap = tl_string_reserve(arena, 0);
+    wrap->is_view = TRUE;
     wrap->text = string;
+    wrap->size = wrap->length;
+    wrap->length = tl_char_length(string);
     TLSTACKPOPV(wrap)
+}
+
+/**
+ * C++ version 0.4 char* style "itoa":
+ * Written by Lukás Chmela
+ * Released under GPLv3.
+ */
+TLString* tl_string_from_i32(TLMemoryArena* arena, i32 value, u8 base) {
+    TLSTACKPUSHA("%d, %d", value, base)
+
+    u32 digits = 0;
+    i32 desired = value;
+    do {
+        digits++;
+        desired = desired / 10;
+    } while(desired > 0);
+
+    TLString* string = tl_string_reserve(arena, digits);
+
+    // check that the base if valid
+    if (base < 2 || base > 36) { TLSTACKPOPV(string) }
+
+    int tmp_value;
+    char *ptr  = (char*) string->text;
+    char *ptr1 = (char*) string->text;
+
+    do {
+        tmp_value = value;
+        value /= base;
+        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
+        string->length++;
+    } while ( value );
+
+    // Apply negative sign
+    if (tmp_value < 0) *ptr++ = '-';
+    *ptr-- = '\0';
+
+    // Reverse the string
+    while(ptr1 < ptr) {
+        const char tmp_char = *ptr;
+        *ptr--= *ptr1;
+        *ptr1++ = tmp_char;
+        string->length++;
+    }
+
+    TLSTACKPOPV(string)
 }
 
 TLINLINE const char * tl_string(TLString *string) {

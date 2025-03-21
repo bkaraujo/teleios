@@ -71,7 +71,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
         const char *format = "%66s at %20s:%04d %s(%s)\n\033[1;30m";
 
         fprintf(stdout, "\n");
-        for (u8 i = runtime->stack_size ; i > 0 ; --i) {
+        for (u8 i = runtime->stack_index ; i > 0 ; --i) {
             fprintf(stdout, format, colors[level], runtime->stack[i].filename, runtime->stack[i].lineno, runtime->stack[i].function, runtime->stack[i].arguments);
         }
 

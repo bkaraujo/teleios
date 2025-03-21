@@ -188,6 +188,8 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define TLGIGABYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
 #define TLMEGABYTES(amount) ((amount) * 1000ULL * 1000ULL)
 #define TLKILOBYTES(amount) ((amount) * 1000ULL)
+
+#define TLARRSIZE(a,t) (sizeof(a) / sizeof(t))
 // ---------------------------------
 // Memmory
 // ---------------------------------
@@ -318,8 +320,9 @@ typedef struct {
 
 typedef struct TLRuntime {
     struct TLGlobals {
-        TLMemoryArena* frame;
         TLMemoryArena* permanent;
+        TLMemoryArena* scene;
+        TLMemoryArena* frame;
     } arenas;
 
     // Platform specifics
@@ -367,7 +370,7 @@ typedef struct TLRuntime {
     } application;
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    u8 stack_size;
+    u8 stack_index;
     u8 stack_maximum;
     TLStackFrame stack[10];
 #endif

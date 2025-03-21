@@ -58,7 +58,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     TLFATAL("Failed to allocate TLMemoryArena");
 }
 
-TLINLINE static b8 tl_memory_arena_is_valid(TLMemoryArena* arena) {
+TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena* arena) {
     TLSTACKPUSHA("0x%p", arena)
 
     if (arena == NULL) {
@@ -69,16 +69,17 @@ TLINLINE static b8 tl_memory_arena_is_valid(TLMemoryArena* arena) {
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (runtime->platform.memory.arenas[i] == NULL) continue;
         if (runtime->platform.memory.arenas[i] == arena) {
-            TLSTACKPOPV(TRUE)
+            TLSTACKPOPV(i)
         }
     }
 
     TLFATAL("TLMemoryArena 0x%p not found", arena)
 }
 
-TLINLINE static void tl_memory_arena_do_destroy(TLMemoryArena* arena) {
-    TLSTACKPUSHA("0x%p", arena)
-    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
+    TLSTACKPUSHA("%d", index)
+    TLMemoryArena *arena = runtime->platform.memory.arenas[index];
+    for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
             TLFREE(arena->page[i].payload);
@@ -87,22 +88,23 @@ TLINLINE static void tl_memory_arena_do_destroy(TLMemoryArena* arena) {
     }
 
     for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
-        if (arena->tagged_size[i] != 0) {
+        if (runtime->platform.memory.arenas[index]->tagged_size[i] != 0) {
             TLVERBOSE("TLMemoryArena 0x%p at %-30s: [%03d] %llu bytes", arena, tl_memory_name(i), arena->tagged_count[i], arena->tagged_size[i]);
         }
     }
 
     TLFREE(arena);
+    runtime->platform.memory.arenas[index] = NULL;
+
     TLSTACKPOP
 }
 
 void tl_memory_arena_reset(TLMemoryArena* arena) {
     TLSTACKPUSHA("0x%p", arena)
-    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+    for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
-        TLVERBOSE("TLMemoryArena 0x%p zeroing memory page %u", arena, i)
         tl_memory_set(arena->page[i].payload, 0, arena->page_size);
     }
     TLSTACKPOP
@@ -110,11 +112,8 @@ void tl_memory_arena_reset(TLMemoryArena* arena) {
 
 void tl_memory_arena_destroy(TLMemoryArena* arena) {
     TLSTACKPUSHA("0x%p", arena)
-    if (!tl_memory_arena_is_valid(arena)) {
-        TLSTACKPOP
-    }
-
-    tl_memory_arena_do_destroy(arena);
+    const u8 index = tl_memory_arena_get_index(arena);
+    tl_memory_arena_do_destroy(index);
     TLSTACKPOP
 }
 
@@ -123,17 +122,13 @@ void *tl_memory_alloc(TLMemoryArena* arena, const u64 size, const TLMemoryTag ta
     // -------------------------------------------------
     // Ensure that the Arena can hold the desired size
     // -------------------------------------------------
-    if (!tl_memory_arena_is_valid(arena)) {
-        TLSTACKPOPV(NULL)
-    }
-
     if (size == 0) {
-        TLWARN("TLMemoryArena 0x%p allocation size must be greater then 0", arena)
+        TLFATAL("TLMemoryArena 0x%p allocation size must be greater then 0", arena)
         TLSTACKPOPV(NULL)
     }
 
     if (size > arena->page_size) {
-        TLWARN("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
+        TLFATAL("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
         TLSTACKPOPV(NULL)
     }
     // -------------------------------------------------
@@ -285,7 +280,9 @@ b8 tl_platform_terminate(void) {
         if (runtime->platform.memory.arenas[i] == NULL) continue;
 
         TLWARN("Removing dangling TLMemoryArena 0x%p", runtime->platform.memory.arenas[i])
-        tl_memory_arena_do_destroy(runtime->platform.memory.arenas[i]);
+        tl_memory_arena_do_destroy(0);  // runtime->arenas.permanent
+        tl_memory_arena_do_destroy(1);  // runtime->arenas.scene
+        tl_memory_arena_do_destroy(2);  // runtime->arenas.frame
         tl_memory_set(runtime->platform.memory.arenas[i], 0, sizeof(TLMemoryArena));
     }
 

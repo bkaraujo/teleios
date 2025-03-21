@@ -20,8 +20,7 @@ int main (const int argc, const char *argv[]) {
 
     runtime->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
     tl_serializer_read(argv[1]);
-
-
+    runtime->arenas.scene = tl_memory_arena_create(TLMEBIBYTES(32));
     runtime->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     runtime->engine.ecs.entities = tl_list_create(runtime->arenas.permanent);
     runtime->engine.ecs.components = tl_list_create(runtime->arenas.permanent);
@@ -50,8 +49,10 @@ int main (const int argc, const char *argv[]) {
 
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
 
+#if ! defined(TELEIOS_BUILD_RELEASE)
     TLDEBUG("runtime->stack used: %u", runtime->stack_maximum);
     TLDEBUG("runtime->stack reserved: %u", sizeof(runtime->stack) / sizeof(TLStackFrame));
+#endif
 
     TLSTACKPOPV(0)
 }
