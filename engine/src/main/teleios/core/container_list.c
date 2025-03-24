@@ -10,7 +10,7 @@ struct TLList {
     u64 length;
     struct TLNode* head;
     struct TLNode* tail;
-    TLMemoryArena* arena;
+    TLMemoryArena *arena;
 } ;
 
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
@@ -23,7 +23,7 @@ static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
     TLSTACKPOPV(created)
 }
 
-TLList* tl_list_create(TLMemoryArena* arena) {
+TLList* tl_list_create(TLMemoryArena *arena) {
     TLSTACKPUSHA("0x%p", arena)
     TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
     if (list == NULL) {

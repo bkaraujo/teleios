@@ -1,11 +1,15 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
 #include "teleios/application.h"
-#include "teleios/global.h"
+#include "teleios/globals.h"
+
+static TLScene *scene;
 
 b8 tl_application_initialize(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_application_initialize");
+    scene = tl_scene_create("main");
+
     TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
     tl_profiler_end("tl_application_initialize");
     TLSTACKPOPV(TRUE)
@@ -25,7 +29,6 @@ b8 tl_application_run(void) {
     //TODO move glClearColor to scene initialization
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
-    char title[60] = { 0 };
     glfwShowWindow(global->window.handle);
     while (!glfwWindowShouldClose(global->window.handle)) {
         f64 deltaTime = glfwGetTime() - lastTime;
@@ -68,7 +71,11 @@ b8 tl_application_run(void) {
 b8 tl_application_terminate(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_application_terminate");
-    //-----
+    if (scene != NULL) {
+        tl_memory_arena_destroy(scene->arena);
+        scene->arena = NULL;
+    }
+
     TLDEBUG("Application terminated in %llu micros", tl_profiler_time("tl_application_terminate"));
     tl_profiler_end("tl_application_terminate");
     TLSTACKPOPV(TRUE)

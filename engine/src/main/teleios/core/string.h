@@ -17,7 +17,7 @@ b8 tl_string_ends_with(TLString *string, const char *guess);
 b8 tl_string_is_view(const TLString *string);
 b8 tl_string_equals(const TLString *string, const char *guess);
 b8 tl_string_contains(TLString *string, const char *guess);
-TLString* tl_string_from_i32(TLMemoryArena* arena, i32 value, u8 base);
+TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, u8 base);
 void tl_string_join(const TLString *string, const char *other);
 
 u32 tl_char_length(const char *string);

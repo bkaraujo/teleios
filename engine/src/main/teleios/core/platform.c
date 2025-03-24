@@ -1,5 +1,5 @@
 #include "teleios/core.h"
-#include "teleios/global.h"
+#include "teleios/globals.h"
 
 // ########################################################
 //                    MEMORY FUNCTIONS
@@ -28,6 +28,7 @@ static const char *tl_memory_name(const TLMemoryTag tag) {
         case TL_MEMORY_CONTAINER_ITERATOR   : TLSTACKPOPV("TL_MEMORY_CONTAINER_ITERATOR")
         case TL_MEMORY_STRING               : TLSTACKPOPV("TL_MEMORY_STRING")
         case TL_MEMORY_PROFILER             : TLSTACKPOPV("TL_MEMORY_PROFILER")
+        case TL_MEMORY_SCENE                : TLSTACKPOPV("TL_MEMORY_SCENE")
         case TL_MEMORY_MAXIMUM              : TLSTACKPOPV("TL_MEMORY_MAXIMUM")
     }
 
@@ -39,7 +40,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
-    TLMemoryArena* arena = TLMALLOC(sizeof(TLMemoryArena));
+    TLMemoryArena *arena = TLMALLOC(sizeof(TLMemoryArena));
     if (arena == NULL) TLFATAL("Failed to allocate TLMemoryArena");
     TLMEMSET(arena, 0, sizeof(TLMemoryArena));
     arena->page_size = size;
@@ -57,7 +58,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     TLFATAL("Failed to allocate TLMemoryArena");
 }
 
-TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena* arena) {
+TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
     TLSTACKPUSHA("0x%p", arena)
 
     if (arena == NULL) {
@@ -98,7 +99,7 @@ TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TLSTACKPOP
 }
 
-void tl_memory_arena_reset(TLMemoryArena* arena) {
+void tl_memory_arena_reset(TLMemoryArena *arena) {
     TLSTACKPUSHA("0x%p", arena)
     for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
@@ -109,14 +110,14 @@ void tl_memory_arena_reset(TLMemoryArena* arena) {
     TLSTACKPOP
 }
 
-void tl_memory_arena_destroy(TLMemoryArena* arena) {
+void tl_memory_arena_destroy(TLMemoryArena *arena) {
     TLSTACKPUSHA("0x%p", arena)
     const u8 index = tl_memory_arena_get_index(arena);
     tl_memory_arena_do_destroy(index);
     TLSTACKPOP
 }
 
-void *tl_memory_alloc(TLMemoryArena* arena, const u64 size, const TLMemoryTag tag) {
+void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag tag) {
     TLSTACKPUSHA("0x%p, %llu, %d", arena, size, tag)
     // -------------------------------------------------
     // Ensure that the Arena can hold the desired size
@@ -274,16 +275,6 @@ b8 tl_platform_terminate(void) {
 
     TLVERBOSE("Terminating GLFW");
     glfwTerminate();
-
-    for (u8 i = 2 ; i < U8_MAX ; ++i) {
-        if (global->memory.arenas[i] == NULL) continue;
-
-        TLWARN("Removing dangling TLMemoryArena 0x%p", global->memory.arenas[i])
-        tl_memory_arena_do_destroy(0);  // global->arenas.permanent
-        tl_memory_arena_do_destroy(1);  // global->arenas.scene
-        tl_memory_arena_do_destroy(2);  // global->arenas.frame
-        tl_memory_set(global->memory.arenas[i], 0, sizeof(TLMemoryArena));
-    }
 
     TLSTACKPOPV(TRUE)
 }

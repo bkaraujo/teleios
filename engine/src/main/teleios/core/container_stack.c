@@ -4,7 +4,7 @@ struct TLStack {
     TLList* list;
 };
 
-TLStack* tl_stack_create(TLMemoryArena* arena)  {
+TLStack* tl_stack_create(TLMemoryArena *arena)  {
     TLSTACKPUSHA("0x%p", arena)
     TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
     stack->list = tl_list_create(arena);

@@ -1,6 +1,6 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
-#include "teleios/global.h"
+#include "teleios/globals.h"
 #include "teleios/application.h"
 
 TLGlobal *global;
@@ -18,9 +18,10 @@ int main (const int argc, const char *argv[]) {
     global = TLMALLOC(sizeof(TLGlobal));
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
+    global->yaml = argv[1];
     global->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
-    tl_serializer_read(argv[1]);
-    global->arenas.scene = tl_memory_arena_create(TLMEBIBYTES(32));
+    tl_serializer_read();
+
     global->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
     global->ecs.entities = tl_list_create(global->arenas.permanent);
     global->ecs.components = tl_list_create(global->arenas.permanent);

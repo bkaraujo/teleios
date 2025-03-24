@@ -1,8 +1,8 @@
-//
-// Created by baraujo on 21/03/25.
-//
+#ifndef __TELEIOS_RUNTIME_SCENE__
+#define __TELEIOS_RUNTIME_SCENE__
 
-#ifndef SCENE_CUH
-#define SCENE_CUH
+#include "teleios/runtime.h"
 
-#endif //SCENE_CUH
+TLScene* tl_scene_create(const char* name);
+
+#endif //__TELEIOS_RUNTIME_SCENE__

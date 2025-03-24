@@ -4,10 +4,11 @@
 #include "teleios/core/types.h"
 #include "teleios/runtime/types.h"
 
-typedef struct TLCore {
+typedef struct {
+    const char* yaml;
+
     struct {
         TLMemoryArena* permanent;
-        TLMemoryArena* scene;
         TLMemoryArena* frame;
     } arenas;
 
@@ -28,7 +29,7 @@ typedef struct TLCore {
         u64 allocated;
         u64 tagged_count[TL_MEMORY_MAXIMUM];
         u64 tagged_size[TL_MEMORY_MAXIMUM];
-        TLMemoryArena* arenas[U8_MAX];
+        TLMemoryArena *arenas[U8_MAX];
     } memory;
 
     struct {

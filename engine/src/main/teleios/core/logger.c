@@ -3,7 +3,7 @@
 #include "teleios/core.h"
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
-#   include "teleios/global.h"
+#   include "teleios/globals.h"
 #endif
 
 #if defined(TLPLATFORM_WINDOWS)

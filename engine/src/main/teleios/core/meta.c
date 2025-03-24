@@ -3,7 +3,7 @@
 #if ! defined(TELEIOS_BUILD_RELEASE)
 #include <stdio.h>
 #include <stdarg.h>
-#include "teleios/global.h"
+#include "teleios/globals.h"
 #endif
 
 void tl_meta_frame_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {

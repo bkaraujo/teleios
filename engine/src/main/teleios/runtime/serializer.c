@@ -1,6 +1,6 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
-#include "teleios/global.h"
+#include "teleios/globals.h"
 
 #include <stdio.h>
 
@@ -21,15 +21,13 @@ struct TLTuple {
     u32 sequence;
 };
 
-static TLList *sequences;
+void tl_serializer_read(void) {
+    TLSTACKPUSHA("%s", global->yaml)
 
-void tl_serializer_read(const char *file_name) {
-    TLSTACKPUSHA("%s", file_name)
-
-    TLINFO("Loading %s", file_name)
-    FILE* file = fopen(file_name, "r");
+    TLINFO("Loading %s", global->yaml)
+    FILE* file = fopen(global->yaml, "r");
     if (file == NULL) {
-        TLFATAL("Failed to open %s", file_name);
+        TLFATAL("Failed to open %s", global->yaml);
     }
 
     yaml_parser_t parser;
@@ -48,7 +46,8 @@ void tl_serializer_read(const char *file_name) {
     
     yaml_token_t token;
     TLMemoryArena *arena = tl_memory_arena_create(TLKIBIBYTES(4));
-    sequences = tl_list_create(arena);
+
+    TLList *sequences = tl_list_create(arena);
 
     do {
         yaml_parser_scan(&parser, &token);
@@ -264,4 +263,171 @@ static b8 tl_serializer_read_application(char* property, char* block, const yaml
     //TODO parse [application.scenes]
 
     TLSTACKPOPV(FALSE);
+}
+
+TLScene* tl_serializer_scene(const char *name) {
+    TLSTACKPUSHA("%s", name)
+
+    TLDEBUG("Loading %s", global->yaml)
+    FILE* file = fopen(global->yaml, "r");
+    if (file == NULL) TLFATAL("Failed to open %s", global->yaml);
+
+    yaml_parser_t parser;
+    if (!yaml_parser_initialize(&parser)) {
+        fclose(file);
+        TLFATAL("Failed to initialize parser!");
+    }
+
+    yaml_parser_set_input_file(&parser, file);
+
+    u8 block_index;
+    char block[U8_MAX]; // current YAML_KEY_TOKEN
+
+    u16 property_index;
+    char property[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
+
+    yaml_token_t token;
+    TLMemoryArena *arena = tl_memory_arena_create(TLKIBIBYTES(4));
+
+    TLList *sequences = tl_list_create(arena);
+    TLScene* scene = tl_memory_alloc(global->arenas.permanent, sizeof(TLScene), TL_MEMORY_SCENE);
+
+    do {
+        yaml_parser_scan(&parser, &token);
+        switch(token.type) {
+            default: continue;
+            // #########################################################################################################
+            // YAML_BLOCK_SEQUENCE_START_TOKEN
+            // #########################################################################################################
+            case YAML_BLOCK_SEQUENCE_START_TOKEN: {
+                // -----------------------------------------------------------
+                // If it's already inside a block persist into 'property'
+                // -----------------------------------------------------------
+                struct TLTuple *tuple = tl_memory_alloc(arena, sizeof(struct TLTuple), TL_MEMORY_SERIALIZER);
+                tuple->sequence = 0;
+
+                tuple->name = tl_string_clone(arena, property);
+                tl_string_join(tuple->name, block);
+                tl_string_join(tuple->name, ".");
+
+                tl_list_add(sequences, tuple);
+            } break;
+            // #########################################################################################################
+            // YAML_BLOCK_MAPPING_START_TOKEN
+            // #########################################################################################################
+            case YAML_BLOCK_MAPPING_START_TOKEN: {
+                EXPECT(YAML_KEY_TOKEN)
+                EXPECT(YAML_SCALAR_TOKEN)
+                // -----------------------------------------------------------
+                // If it's already inside a block persist into 'property'
+                // -----------------------------------------------------------
+                if (block_index != 0) {
+                    tl_memory_copy(property + property_index, block, block_index);
+                    property_index += block_index;
+
+                    tl_memory_copy(property + property_index, ".", 1);
+                    property_index++;
+                }
+                // -----------------------------------------------------------
+                // Copy the scalar content to the 'block'
+                // -----------------------------------------------------------
+                tl_memory_copy(block, token.data.scalar.value, token.data.scalar.length);
+                if (block_index > token.data.scalar.length) {
+                    tl_memory_set(block + token.data.scalar.length, 0, block_index - token.data.scalar.length);
+                }
+                block_index = token.data.scalar.length;
+            } break;
+            // #########################################################################################################
+            // YAML_BLOCK_ENTRY_TOKEN
+            // #########################################################################################################
+            case YAML_BLOCK_ENTRY_TOKEN: {
+                // -----------------------------------------------------------
+                // If it's already inside a block persist into 'property'
+                // -----------------------------------------------------------
+                if (block_index != 0) {
+                    tl_memory_copy(property + property_index, block, block_index);
+                    property_index += block_index;
+
+                    tl_memory_copy(property + property_index, ".", 1);
+                    property_index++;
+                }
+                // -----------------------------------------------------------
+                // Copy the scalar content to the 'block'
+                // -----------------------------------------------------------
+                TLString *string = NULL;
+
+                // -----------------------------------------------------------
+                // Try tro increase the counter
+                // -----------------------------------------------------------
+                TLIterator *iterator = tl_list_iterator_create(sequences);
+                for (struct TLTuple *tuple = tl_list_iterator_next(iterator) ; tuple != NULL; tuple = tl_list_iterator_next(iterator)) {
+                    if (tl_string_equals(tuple->name, property)) {
+                        string = tl_string_from_i32(arena, (i32) tuple->sequence, 10);
+                        tuple->sequence++;
+                    }
+                }
+
+                u32 length = tl_string_length(string);
+                tl_memory_copy(block, (void*) tl_string(string), length);
+
+                if (block_index > length) {
+                    tl_memory_set(block + length, 0, block_index - length);
+                }
+
+                block_index = tl_string_length(string);
+            } continue;
+            // #########################################################################################################
+            // YAML_KEY_TOKEN
+            // #########################################################################################################
+            case YAML_KEY_TOKEN: {
+                EXPECT(YAML_SCALAR_TOKEN)
+                // -----------------------------------------------------------
+                // Copy the scalar content to the 'block'
+                // -----------------------------------------------------------
+                tl_memory_copy(block, token.data.scalar.value, token.data.scalar.length);
+                if (block_index > token.data.scalar.length) {
+                    tl_memory_set(block + token.data.scalar.length, 0, block_index - token.data.scalar.length);
+                }
+
+                block_index = token.data.scalar.length;
+            } break;
+            // #########################################################################################################
+            // YAML_SCALAR_TOKEN
+            // #########################################################################################################
+            case YAML_SCALAR_TOKEN: {
+                TLWARN("Unknown property: %s%s", property, block);
+            } break;
+            // #########################################################################################################
+            // YAML_BLOCK_END_TOKEN
+            // #########################################################################################################
+            case YAML_BLOCK_END_TOKEN: {
+                b8 found = FALSE;
+                for (u16 i = property_index - 2 ; i > 0 ; --i) {
+                    if (*(property + i)  == '.') {
+                        tl_memory_set(property + i + 1, 0, U16_MAX - i);
+                        property_index = i + 1;
+                        found = TRUE;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    tl_memory_set(property, 0, U16_MAX);
+                    property_index = 0;
+                }
+
+                tl_memory_set(block, 0, U8_MAX - block_index);
+                block_index = 0;
+            } break;
+        }
+
+        if (token.type != YAML_STREAM_END_TOKEN) {
+            yaml_token_delete(&token);
+        }
+    } while (token.type != YAML_STREAM_END_TOKEN);
+
+    yaml_token_delete(&token);
+    yaml_parser_delete(&parser);
+
+    TLSTACKPOPV(scene)
 }

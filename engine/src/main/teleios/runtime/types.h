@@ -8,6 +8,8 @@
 // Scene
 // ---------------------------------
 typedef struct {
+    TLString* name;
+
     struct {
         vec4s clear_color;
         u32 depth_function;
@@ -30,7 +32,7 @@ typedef struct {
     } camera;
 
     const char *entities[27];
-    TLMemoryArena* arena;
+    TLMemoryArena *arena;
 } TLScene;
 
 #endif //__TELEIOS_RUNTIME_TYPES__

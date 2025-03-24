@@ -3,7 +3,7 @@
 
 #include "teleios/defines.h"
 
-TLList* tl_list_create(TLMemoryArena* arena);
+TLList* tl_list_create(TLMemoryArena *arena);
 void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value));
 void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value));
 u64 tl_list_length(TLList* list);
@@ -15,7 +15,7 @@ b8 tl_list_contains(TLList* list, void *value);
 TLIterator* tl_list_iterator_create(TLList* list);
 void* tl_list_iterator_next(TLIterator* iterator);
 
-TLStack* tl_stack_create(TLMemoryArena* arena);
+TLStack* tl_stack_create(TLMemoryArena *arena);
 void tl_stack_push(TLStack* stack, void* value);
 void* tl_stack_pop(TLStack* stack);
 void* tl_stack_peek(TLStack* stack);

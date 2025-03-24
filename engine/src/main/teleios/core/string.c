@@ -145,7 +145,7 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
  * Written by Lukás Chmela
  * Released under GPLv3.
  */
-TLString* tl_string_from_i32(TLMemoryArena* arena, i32 value, u8 base) {
+TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, u8 base) {
     TLSTACKPUSHA("%d, %d", value, base)
 
     u32 digits = 0;

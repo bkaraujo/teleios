@@ -1,5 +1,5 @@
 #include "teleios/core.h"
-#include "teleios/global.h"
+#include "teleios/globals.h"
 
 typedef struct {
     TLString* name;

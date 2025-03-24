@@ -1,5 +1,5 @@
 #include "teleios/core.h"
-#include "teleios/global.h"
+#include "teleios/globals.h"
 
 b8 tl_graphics_initialize(void) {
     TLSTACKPUSH
