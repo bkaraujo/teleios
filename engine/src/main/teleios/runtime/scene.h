@@ -3,6 +3,6 @@
 
 #include "teleios/runtime.h"
 
-TLScene* tl_scene_create(const char* name);
+b8 tl_scene_load(const char* name);
 
 #endif //__TELEIOS_RUNTIME_SCENE__

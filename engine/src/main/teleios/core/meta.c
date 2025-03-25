@@ -1,5 +1,9 @@
 #include "teleios/core.h"
 
+#if defined(TLPLATFORM_LINUX)
+#include <sys/time.h>
+#endif
+
 #if ! defined(TELEIOS_BUILD_RELEASE)
 #include <stdio.h>
 #include <stdarg.h>
@@ -13,7 +17,31 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
     }
 
     global->stack[global->stack_index].lineno = lineno;
-    global->stack[global->stack_index].timestamp = tl_time_epoch();
+
+#if defined(TLPLATFORM_LINUX)
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    const u64 micros = (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
+
+    global->stack[global->stack_index].timestamp =  micros;
+#elif defined(TLPLATFORM_WINDOWS)
+    FILETIME ft;
+    ULARGE_INTEGER uli;
+    uint64_t epoch_microseconds;
+
+    GetSystemTimeAsFileTime(&ft);
+    uli.LowPart = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+
+    // FILETIME is in 100-nanosecond intervals since January 1, 1601 (UTC).
+    // We need to convert it to microseconds since January 1, 1970 (UTC).
+
+    // Subtract the number of 100-nanosecond intervals between the two dates.
+    // The value is 116444736000000000 (obtained from various sources).
+    epoch_microseconds = (uli.QuadPart - 116444736000000000ULL) / 10; // Convert to microseconds
+
+    global->stack[global->stack_index].timestamp = epoch_microseconds
+#endif
 
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null

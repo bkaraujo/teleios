@@ -21,6 +21,7 @@ TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, u8 base);
 void tl_string_join(const TLString *string, const char *other);
 
 u32 tl_char_length(const char *string);
+u32 tl_char_index_of(const char *string, const char token);
 u32 tl_char_last_index(const char *string, char character);
 b8 tl_char_equals(const char *string, const char *guess);
 b8 tl_char_start_with(const char *string, const char *guess);

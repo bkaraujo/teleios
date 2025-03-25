@@ -10,11 +10,12 @@
 #include "teleios/core/time.h"
 
 void tl_time_clock(TLClock* clock) {
+    TLSTACKPUSHA("0x%p", clock)
     struct timespec now = { 0 };
-    if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) return;
+    if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) TLSTACKPOP
 
     struct tm localtime = { 0 };
-    if (localtime_r(&now.tv_sec, &localtime) == NULL) return;
+    if (localtime_r(&now.tv_sec, &localtime) == NULL) TLSTACKPOP
 
     clock->year = localtime.tm_year + 1900;
     clock->month = localtime.tm_mon + 1;
@@ -23,14 +24,16 @@ void tl_time_clock(TLClock* clock) {
     clock->minute = localtime.tm_min;
     clock->second = localtime.tm_sec;
     clock->millis = now.tv_nsec / 1000;
+
+    TLSTACKPOP
 }
 
 u64 tl_time_epoch(void) {
+    TLSTACKPUSH
     struct timeval tv;
     gettimeofday(&tv, NULL);
     const u64 micros = (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
-
-    return micros;
+    TLSTACKPOPV(micros);
 }
 
 #endif

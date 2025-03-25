@@ -48,8 +48,8 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     // Keep track of the created arena
     // ----------------------------------------------------------
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
-        if (global->memory.arenas[i] == NULL) {
-            global->memory.arenas[i] = arena;
+        if (global->platform.memory.arenas[i] == NULL) {
+            global->platform.memory.arenas[i] = arena;
             TLVERBOSE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
             TLSTACKPOPV(arena)
         }
@@ -67,8 +67,8 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
     }
 
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
-        if (global->memory.arenas[i] == NULL) continue;
-        if (global->memory.arenas[i] == arena) {
+        if (global->platform.memory.arenas[i] == NULL) continue;
+        if (global->platform.memory.arenas[i] == arena) {
             TLSTACKPOPV(i)
         }
     }
@@ -78,7 +78,7 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
 
 TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TLSTACKPUSHA("%d", index)
-    TLMemoryArena *arena = global->memory.arenas[index];
+    TLMemoryArena *arena = global->platform.memory.arenas[index];
     for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
@@ -88,13 +88,13 @@ TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     }
 
     for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
-        if (global->memory.arenas[index]->tagged_size[i] != 0) {
+        if (global->platform.memory.arenas[index]->tagged_size[i] != 0) {
             TLVERBOSE("TLMemoryArena 0x%p at %-30s: [%03d] %llu bytes", arena, tl_memory_name(i), arena->tagged_count[i], arena->tagged_size[i]);
         }
     }
 
     TLFREE(arena);
-    global->memory.arenas[index] = NULL;
+    global->platform.memory.arenas[index] = NULL;
 
     TLSTACKPOP
 }
@@ -222,36 +222,36 @@ b8 tl_platform_initialize(void) {
 
     TLDEBUG(
         "Window (%u x %u) :: %s",
-        global->window.size.x,
-        global->window.size.y,
-        tl_string(global->window.title)
+        global->platform.window.size.x,
+        global->platform.window.size.y,
+        tl_string(global->platform.window.title)
     )
 
     TLTRACE("GLFW creating window");
-    global->window.handle = glfwCreateWindow(
-        global->window.size.x,
-        global->window.size.y,
-        tl_string(global->window.title),
+    global->platform.window.handle = glfwCreateWindow(
+        global->platform.window.size.x,
+        global->platform.window.size.y,
+        tl_string(global->platform.window.title),
         NULL, NULL
     );
     
-    if (global->window.handle == NULL) {
+    if (global->platform.window.handle == NULL) {
         TLERROR("Failed to create GLFW window");
         TLSTACKPOPV(FALSE)
     }
 
-    global->window.visible = FALSE;
-    global->window.focused = glfwGetWindowAttrib(global->window.handle, GLFW_FOCUSED) == GLFW_TRUE;
-    global->window.maximized = glfwGetWindowAttrib(global->window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
-    global->window.minimized = glfwGetWindowAttrib(global->window.handle, GLFW_ICONIFIED) == GLFW_TRUE;
+    global->platform.window.visible = FALSE;
+    global->platform.window.focused = glfwGetWindowAttrib(global->platform.window.handle, GLFW_FOCUSED) == GLFW_TRUE;
+    global->platform.window.maximized = glfwGetWindowAttrib(global->platform.window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
+    global->platform.window.minimized = glfwGetWindowAttrib(global->platform.window.handle, GLFW_ICONIFIED) == GLFW_TRUE;
 
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     if (mode != NULL) {
-        global->window.position.x = (mode->width - global->window.size.x) / 2;
-        global->window.position.y = (mode->height - global->window.size.y) / 2;
+        global->platform.window.position.x = (mode->width - global->platform.window.size.x) / 2;
+        global->platform.window.position.y = (mode->height - global->platform.window.size.y) / 2;
     }
 
-    glfwSetWindowPos(global->window.handle, global->window.position.x, global->window.position.y);
+    glfwSetWindowPos(global->platform.window.handle, global->platform.window.position.x, global->platform.window.position.y);
 
     TLTRACE("GLFW creating window callbacks");
     TLEvent event = {0};

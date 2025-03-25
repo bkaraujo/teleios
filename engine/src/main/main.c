@@ -19,12 +19,12 @@ int main (const int argc, const char *argv[]) {
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
     global->yaml = argv[1];
-    global->arenas.permanent = tl_memory_arena_create(TLMEBIBYTES(32));
-    tl_serializer_read();
+    global->platform.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.scene.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.frame.arena = tl_memory_arena_create(TLMEBIBYTES(10));
 
-    global->arenas.frame = tl_memory_arena_create(TLMEBIBYTES(10));
-    global->ecs.entities = tl_list_create(global->arenas.permanent);
-    global->ecs.components = tl_list_create(global->arenas.permanent);
+    tl_serializer_read();
 
     tl_event_subscribe(TL_EVENT_WINDOW_CREATED, event_echo);
 
@@ -45,8 +45,10 @@ int main (const int argc, const char *argv[]) {
 
     if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
 
-    tl_memory_arena_destroy(global->arenas.frame);
-    tl_memory_arena_destroy(global->arenas.permanent);
+    tl_memory_arena_destroy(global->application.frame.arena);
+    tl_memory_arena_destroy(global->application.scene.arena);
+    tl_memory_arena_destroy(global->application.arena);
+    tl_memory_arena_destroy(global->platform.arena);
 
     if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
 

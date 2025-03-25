@@ -36,6 +36,23 @@ TLINLINE u32 tl_char_last_index(const char *string, const char token) {
     TLSTACKPOPV(index)
 }
 
+TLINLINE u32 tl_char_index_of(const char *string, const char token) {
+    TLSTACKPUSHA("0x%p, %c", string, token)
+    const char* s = string;
+    for (u16 i = 0; *s != '\0' ; ++s) {
+        if (*s == token) {
+            TLSTACKPOPV(i)
+        }
+
+        i++;
+        if (i == U32_MAX) {
+            TLFATAL("Failed to find string length")
+        }
+    }
+
+    TLSTACKPOPV(U32_MAX)
+}
+
 b8 tl_char_equals(const char *string, const char *guess) {
     TLSTACKPUSHA("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {

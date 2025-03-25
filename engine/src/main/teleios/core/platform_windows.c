@@ -23,8 +23,7 @@ u64 tl_time_epoch(void) {
     // The value is 116444736000000000 (obtained from various sources).
     epoch_microseconds = (uli.QuadPart - 116444736000000000ULL) / 10; // Convert to microseconds
 
-    TLSTACKPOP
-    return epoch_microseconds;
+    TLSTACKPOPV(epoch_microseconds)
 }
 
 #endif

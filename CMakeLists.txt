@@ -44,7 +44,6 @@ add_executable(${PROJECT_NAME}
         engine/src/main/main.c
         engine/src/main/glad/glad.c
 
-        engine/src/main/teleios/core/ulid.c
         engine/src/main/teleios/core/event.c
         engine/src/main/teleios/application.c
         engine/src/main/teleios/core/string.c

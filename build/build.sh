@@ -6,7 +6,7 @@ BUILDFS="$ROOTFS/cmake-build-debug"
 # -----------------------------------------
 # (Re)create the build directory
 # -----------------------------------------
-if [[ ! -z $1 && $1 -eq "clean" ]]; then
+if [[ ! -z $1 && $1 == "clean" ]]; then
   rm -rf $BUILDFS
 fi
 
@@ -21,7 +21,17 @@ fi
 # -----------------------------------------
 echo "[TELEIOS] Build ... "
 cd $BUILDFS
-
+# -----------------------------------------
+# Check for correct meta.h usage
+# -----------------------------------------
+find $ROOTFS/engine/src/main/teleios/ -type f -name "*.c" ! -name 'logger.c' | while read -r fname ; do
+    if [[ $(grep -c return "$fname") -ne 0 ]] ; then
+        echo "Unexpected [return] statemente in $fname"
+    fi
+done
+# -----------------------------------------
+# Build the target
+# -----------------------------------------
 echo "cmake --build $BUILDFS -j$(expr $(hwinfo --cpu --short | wc -l) - 1)"
 cmake --build $BUILDFS -j$(expr $(hwinfo --cpu --short | wc -l) - 1)
 RESULT=$?

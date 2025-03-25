@@ -3,12 +3,10 @@
 #include "teleios/application.h"
 #include "teleios/globals.h"
 
-static TLScene *scene;
-
 b8 tl_application_initialize(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_application_initialize");
-    scene = tl_scene_create("main");
+    tl_scene_load("main");
 
     TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
     tl_profiler_end("tl_application_initialize");
@@ -19,9 +17,6 @@ b8 tl_application_run(void) {
     TLSTACKPUSH
     TLClock t1, t2; 
     tl_time_clock(&t1);
-        
-    u64 FPS = 0;
-    u64 UPS = 0;
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
@@ -29,52 +24,53 @@ b8 tl_application_run(void) {
     //TODO move glClearColor to scene initialization
     glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
-    glfwShowWindow(global->window.handle);
-    while (!glfwWindowShouldClose(global->window.handle)) {
-        f64 deltaTime = glfwGetTime() - lastTime;
+    glfwShowWindow(global->platform.window.handle);
+    while (!glfwWindowShouldClose(global->platform.window.handle)) {
+        const f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
+
+        global->application.frame.current++;
+
         // =========================================================
         // Simulation Pass
         // =========================================================
         accumulator += deltaTime;
-        while (accumulator >= global->simulation.step) {
-            accumulator -= global->simulation.step;
-            ++UPS;
+        while (accumulator >= global->application.simulation.step) {
+            global->application.simulation.current++;
+            global->application.simulation.per_second++;
+
+            accumulator -= global->application.simulation.step;
         }
         // =========================================================
         // Graphics Pass
         // =========================================================
-        ++FPS;
+        global->application.frame.per_second++;
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // =========================================================
         // Presenting Pass
         // =========================================================
-        glfwSwapBuffers(global->window.handle);
+        glfwSwapBuffers(global->platform.window.handle);
         
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
             TLMEMCPY(&t1, &t2, sizeof(TLClock));
-            TLDEBUG("FPS %llu, UPS %llu", FPS, UPS);
-            FPS = UPS = 0;
+            TLDEBUG("FPS %llu, UPS %llu", global->application.frame.per_second, global->application.simulation.per_second);
+            global->application.frame.per_second = global->application.simulation.per_second = 0;
         }
         // =========================================================
         // Cleanup Pass
         // =========================================================
         glfwPollEvents();
-        tl_memory_arena_reset(global->arenas.frame);
+        tl_memory_arena_reset(global->application.frame.arena);
     }
 
-    glfwHideWindow(global->window.handle);
+    glfwHideWindow(global->platform.window.handle);
     TLSTACKPOPV(TRUE)
 }
 
 b8 tl_application_terminate(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_application_terminate");
-    if (scene != NULL) {
-        tl_memory_arena_destroy(scene->arena);
-        scene->arena = NULL;
-    }
 
     TLDEBUG("Application terminated in %llu micros", tl_profiler_time("tl_application_terminate"));
     tl_profiler_end("tl_application_terminate");
