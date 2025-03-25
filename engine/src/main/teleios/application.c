@@ -6,7 +6,11 @@
 b8 tl_application_initialize(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_application_initialize");
-    tl_scene_load("main");
+
+    if (!tl_scene_load("main")) {
+        TLERROR("Failed to load scene [main]");
+        TLSTACKPOPV(FALSE)
+    }
 
     TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
     tl_profiler_end("tl_application_initialize");
@@ -20,9 +24,6 @@ b8 tl_application_run(void) {
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
-
-    //TODO move glClearColor to scene initialization
-    glClearColor(0.75f, 0.75f, 0.1f, 1.0f);
 
     glfwShowWindow(global->platform.window.handle);
     while (!glfwWindowShouldClose(global->platform.window.handle)) {

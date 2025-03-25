@@ -46,6 +46,9 @@ static void tl_serializer_walk(void (*processor)(const char* prefix, const char*
 
         switch(token.type) {
             default: continue;
+            case YAML_NO_TOKEN: {
+                TLFATAL("Malformed YAML token");
+            } break;
             // #########################################################################################################
             // YAML_BLOCK_SEQUENCE_START_TOKEN
             // #########################################################################################################
@@ -270,17 +273,27 @@ static b8 tl_serializer_read_application(const char* prefix, const char* block, 
     TLSTACKPOPV(FALSE);
 }
 
-static void tl_serializer_read_setup(const char* prefix, const char* block, const yaml_token_t *token) {
+static void tl_serializer_read_settings(const char* prefix, const char* block, const yaml_token_t *token) {
     TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
     if (tl_serializer_read_engine     (prefix, block, token)) TLSTACKPOP
     if (tl_serializer_read_application(prefix, block, token)) TLSTACKPOP
     TLSTACKPOP
 }
 
-void tl_serializer_read(void) {
+b8 tl_serializer_read_yaml(void) {
     TLSTACKPUSH
-    tl_serializer_walk(tl_serializer_read_setup);
-    TLSTACKPOP
+    tl_serializer_walk(tl_serializer_read_settings);
+    if (global->platform.window.size.x == 0 || global->platform.window.size.y == 0) {
+        TLERROR("Invalid window size")
+        TLSTACKPOPV(FALSE)
+    }
+
+    if (global->platform.window.title == NULL) {
+        TLERROR("Invalid window title")
+        TLSTACKPOPV(FALSE)
+    }
+
+    TLSTACKPOPV(TRUE)
 }
 
 static void tl_serializer_find_scene(const char* prefix, const char* block, const yaml_token_t *token) {
@@ -294,7 +307,6 @@ static void tl_serializer_find_scene(const char* prefix, const char* block, cons
 
     TLSTACKPOP
 }
-
 
 #define TL_GLPARAM(p, f, g)          \
         if (IS_TOKEN_EQ(f)) {        \
@@ -463,7 +475,6 @@ static void tl_serializer_load_scene(const char* prefix, const char* block, cons
             }
         }
     }
-
     // ----------------------------------------------------------------
     //  application.scenes.#.camera
     // ----------------------------------------------------------------
@@ -474,7 +485,7 @@ static void tl_serializer_load_scene(const char* prefix, const char* block, cons
     TLSTACKPOP
 }
 
-b8 tl_serializer_scene(const char *name) {
+b8 tl_serializer_read_scene(const char *name) {
     TLSTACKPUSHA("%s", name)
     tl_memory_arena_reset(global->application.scene.arena);
     global->application.scene.name = tl_string_clone(global->application.scene.arena, name);
@@ -495,4 +506,3 @@ b8 tl_serializer_scene(const char *name) {
 
     TLSTACKPOPV(FALSE)
 }
-

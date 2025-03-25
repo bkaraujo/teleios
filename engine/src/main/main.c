@@ -12,7 +12,8 @@ static TLEventStatus event_echo(TLEvent *event) {
 
 int main (const int argc, const char *argv[]) {
     if (argc != 2) {
-        TLFATAL("argc != 2")
+        TLERROR("argc != 2")
+        TLSTACKPOPV(99)
     }
 
     TLGlobal local = { 0 };
@@ -26,7 +27,10 @@ int main (const int argc, const char *argv[]) {
 
 
     global->yaml = tl_string_clone(global->application.arena, argv[1]);
-    tl_serializer_read();
+    if (!tl_serializer_read_yaml()) {
+        TLERROR("Invalid application yaml");
+        TLSTACKPOPV(99)
+    }
 
     tl_event_subscribe(TL_EVENT_WINDOW_CREATED, event_echo);
 
