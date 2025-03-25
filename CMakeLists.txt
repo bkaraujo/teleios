@@ -56,6 +56,7 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/core/platform_windows.c
         engine/src/main/teleios/core/profiler.c
         engine/src/main/teleios/core/meta.c
+        engine/src/main/teleios/core/ulid.c
 
         engine/src/main/teleios/runtime/serializer.c
         engine/src/main/teleios/runtime/scene.c

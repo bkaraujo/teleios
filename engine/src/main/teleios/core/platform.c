@@ -29,6 +29,7 @@ static const char *tl_memory_name(const TLMemoryTag tag) {
         case TL_MEMORY_STRING               : TLSTACKPOPV("TL_MEMORY_STRING")
         case TL_MEMORY_PROFILER             : TLSTACKPOPV("TL_MEMORY_PROFILER")
         case TL_MEMORY_SCENE                : TLSTACKPOPV("TL_MEMORY_SCENE")
+        case TL_MEMORY_ULID                 : TLSTACKPOPV("TL_MEMORY_ULID")
         case TL_MEMORY_MAXIMUM              : TLSTACKPOPV("TL_MEMORY_MAXIMUM")
     }
 

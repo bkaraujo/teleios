@@ -19,7 +19,7 @@ void tl_profiler_begin(const char *name) {
 
     TLProfile* profile = tl_memory_alloc(global->platform.arena, sizeof(TLProfile), TL_MEMORY_PROFILER);
     profile->name = tl_string_wrap(global->platform.arena, name);
-    profile->timestamp = tl_time_epoch();
+    profile->timestamp = tl_time_epoch_micros();
     tl_list_add(profilers, profile);
 #endif
     TLSTACKPOP
@@ -52,7 +52,7 @@ u64 tl_profiler_time(const char *name) {
 #if ! defined(TELEIOS_BUILD_RELEASE)
     const TLProfile* profile = tl_profiler_current(name);
     if (profile != NULL) {
-        TLSTACKPOPV(tl_time_epoch() - profile->timestamp)
+        TLSTACKPOPV(tl_time_epoch_micros() - profile->timestamp)
     }
 #endif
     TLSTACKPOPV(U64_MAX)

@@ -28,12 +28,19 @@ void tl_time_clock(TLClock* clock) {
     TLSTACKPOP
 }
 
-u64 tl_time_epoch(void) {
+u64 tl_time_epoch_millis(void) {
     TLSTACKPUSH
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    const u64 micros = (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
+    struct timespec now = { 0 };
+    clock_gettime(CLOCK_REALTIME_COARSE, &now);
+    const u64 micros = (uint64_t) now.tv_sec * 1000000 + now.tv_nsec;
     TLSTACKPOPV(micros);
 }
 
+u64 tl_time_epoch_micros(void) {
+    TLSTACKPUSH
+    struct timeval now = { 0 };
+    gettimeofday(&now, NULL);
+    const u64 micros = (uint64_t) now.tv_sec * 1000000 + now.tv_usec;
+    TLSTACKPOPV(micros);
+}
 #endif

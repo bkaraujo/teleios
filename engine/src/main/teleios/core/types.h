@@ -2,6 +2,9 @@
 #define __TELEIOS_CORE_TYPES__
 
 #include "teleios/defines.h"
+
+typedef struct TLUlid TLUlid;
+typedef struct TLUlidGenerator TLUlidGenerator;
 // ---------------------------------
 // Memmory
 // ---------------------------------
@@ -13,6 +16,7 @@ typedef enum {
     TL_MEMORY_CONTAINER_NODE,
     TL_MEMORY_CONTAINER_ITERATOR,
     TL_MEMORY_STRING,
+    TL_MEMORY_ULID,
     TL_MEMORY_PROFILER,
     TL_MEMORY_SCENE,
     TL_MEMORY_MAXIMUM

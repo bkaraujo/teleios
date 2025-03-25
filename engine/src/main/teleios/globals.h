@@ -54,11 +54,8 @@ typedef struct {
 
         struct {
             TLString* name;
-            char prefix[U8_MAX];
-            b8 found;
 
             TLMemoryArena *arena;
-            const char *entities[27];
 
             struct {
                 vec4s clear_color;
@@ -79,7 +76,14 @@ typedef struct {
                     i8 near;
                     i8 far;
                 } rectangle;
+
+                vec3s scale;
+                vec3s rotation;
+                vec3s position;
             } camera;
+
+            b8 found;
+            char prefix[U8_MAX];
         } scene;
 
         struct {
