@@ -5,11 +5,6 @@
 
 TLGlobal *global;
 
-static TLEventStatus event_echo(TLEvent *event) {
-    TLINFO("Processando evento 0x%p", event)
-    return TL_EVENT_NOT_CONSUMED;
-}
-
 int main (const int argc, const char *argv[]) {
     if (argc != 2) {
         TLERROR("argc != 2")
@@ -31,8 +26,6 @@ int main (const int argc, const char *argv[]) {
         TLERROR("Invalid application yaml");
         TLSTACKPOPV(99)
     }
-
-    tl_event_subscribe(TL_EVENT_WINDOW_CREATED, event_echo);
 
     if (!tl_platform_initialize()) {
         TLERROR("Platform failed to initialize")

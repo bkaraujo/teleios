@@ -2,6 +2,29 @@
 #include "teleios/runtime.h"
 #include "teleios/globals.h"
 
+static b8 running = TRUE;
+static b8 paused = FALSE;
+
+static TLEventStatus tl_process_window_minimized(TLEvent *event) {
+    paused = TRUE;
+
+    global->application.frame.per_second = 0;
+    global->application.simulation.per_second = 0;
+    TLINFO("Simulation paused")
+    return TL_EVENT_NOT_CONSUMED;
+}
+
+static TLEventStatus tl_process_window_closed(TLEvent *event) {
+    running = FALSE;
+    return TL_EVENT_NOT_CONSUMED;
+}
+
+static TLEventStatus tl_process_window_restored(TLEvent *event) {
+    paused = FALSE;
+    TLWARN("Simulation resumed")
+    return TL_EVENT_NOT_CONSUMED;
+}
+
 b8 tl_engine_initialize(void) {
     TLSTACKPUSH
     tl_profiler_begin("tl_engine_initialize");
@@ -15,6 +38,11 @@ b8 tl_engine_initialize(void) {
     global->application.simulation.per_second = 0;
 
     tl_memory_arena_reset(global->application.frame.arena);
+
+    tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
+    tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
+    tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
+
 
     TLDEBUG("Engine initialized in %llu micros", tl_profiler_time("tl_engine_initialize"));
     tl_profiler_end("tl_engine_initialize");
@@ -30,39 +58,42 @@ b8 tl_engine_run(void) {
     f64 lastTime = glfwGetTime();
 
     glfwShowWindow(global->platform.window.handle);
-    while (!glfwWindowShouldClose(global->platform.window.handle)) {
+    while (running) {
         const f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
 
-        global->application.frame.current++;
-        if (global->application.frame.current == 0) {
-            global->application.frame.overflow++;
-            TLWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
-        }
-        // =========================================================
-        // Simulation Pass
-        // =========================================================
-        accumulator += deltaTime;
-        while (accumulator >= global->application.simulation.step) {
-            global->application.simulation.current++;
-            if (global->application.simulation.current == 0) {
-                global->application.simulation.overflow++;
-                TLWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
+        if (!paused) {
+            global->application.frame.current++;
+            if (global->application.frame.current == 0) {
+                global->application.frame.overflow++;
+                TLWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
             }
 
-            global->application.simulation.per_second++;
+            // =========================================================
+            // Simulation Pass
+            // =========================================================
+            accumulator += deltaTime;
+            while (accumulator >= global->application.simulation.step) {
+                global->application.simulation.current++;
+                if (global->application.simulation.current == 0) {
+                    global->application.simulation.overflow++;
+                    TLWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
+                }
 
-            accumulator -= global->application.simulation.step;
+                global->application.simulation.per_second++;
+
+                accumulator -= global->application.simulation.step;
+            }
+            // =========================================================
+            // Update Pass
+            // =========================================================
+            global->application.frame.per_second++;
+            glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // =========================================================
+            // Rendering Pass
+            // =========================================================
         }
-        // =========================================================
-        // Update Pass
-        // =========================================================
-        global->application.frame.per_second++;
-        glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // =========================================================
-        // Rendering Pass
-        // =========================================================
 
         // =========================================================
         // Presentation Pass

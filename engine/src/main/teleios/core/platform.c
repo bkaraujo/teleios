@@ -315,8 +315,6 @@ b8 tl_platform_initialize(void) {
     glfwSetWindowIconifyCallback(global->platform.window.handle, tl_window_callback_window_minimized);
     glfwSetWindowMaximizeCallback(global->platform.window.handle, tl_window_callback_window_maximize);
 
-    TLEvent event = {0};
-    tl_event_submit(TL_EVENT_WINDOW_CREATED, &event);
     // --------------------------------------------------------------------------------------
     // Initialize graphics
     // --------------------------------------------------------------------------------------
