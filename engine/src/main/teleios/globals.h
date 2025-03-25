@@ -40,6 +40,20 @@ typedef struct {
             b8 focused;
             b8 hovered;
         } window;
+
+        struct {
+            struct {
+                b8 key[GLFW_KEY_LAST + 1];
+            } keyboard;
+            struct {
+                b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
+                u32 position_x;
+                u32 position_y;
+                u8 scroll_x;
+                u8 scroll_y;
+                b8 hoover;
+            } cursor;
+        } input;
     } platform;
 
     struct {
@@ -94,6 +108,22 @@ typedef struct {
             u32 current;
             u16 overflow;
             u16 per_second;
+
+            struct {
+                struct {
+                    struct {
+                        b8 key[GLFW_KEY_LAST + 1];
+                    } keyboard;
+                    struct {
+                        b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
+                        u32 position_x;
+                        u32 position_y;
+                        u8 scroll_x;
+                        u8 scroll_y;
+                        b8 hoover;
+                    } cursor;
+                } input;
+            } last;
         } frame;
     } application;
 

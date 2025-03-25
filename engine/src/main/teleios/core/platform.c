@@ -17,7 +17,7 @@ struct TLMemoryArena {
     TLMemoryPage page[U8_MAX];
 };
 
-static const char *tl_memory_name(const TLMemoryTag tag) {
+static const char* tl_memory_name(const TLMemoryTag tag) {
     TLSTACKPUSHA("%d", tag)
     switch (tag) {
         case TL_MEMORY_BLOCK                : TLSTACKPOPV("TL_MEMORY_BLOCK")
@@ -191,49 +191,93 @@ void tl_memory_copy(void *target, void *source, const u64 size) {
 // ########################################################
 //                  WINDOWING FUNCTIONS
 // ########################################################
-static void tl_window_callback_window_closed(GLFWwindow* window) {
+static void tl_window_callback_window_closed(GLFWwindow* _) {
     tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
 }
 
-static void tl_window_callback_window_pos(GLFWwindow* window, const int xPos, const int yPos) {
-    TLEvent event = { 0 };
-    event.i32[0] = xPos;
-    event.i32[1] = yPos;
-
+static void tl_window_callback_window_pos(GLFWwindow* _, const int xPos, const int yPos) {
     global->platform.window.position.x = xPos;
     global->platform.window.position.y = yPos;
+
+    TLEvent event = { 0 };
+    event.i32[0] = global->platform.window.position.x;
+    event.i32[1] = global->platform.window.position.y;
 
     tl_event_submit(TL_EVENT_WINDOW_MOVED, &event);
 }
 
-static void tl_window_callback_window_size(GLFWwindow* window, const int width, const int height) {
-    TLEvent event = { 0 };
-    event.i32[0] = width;
-    event.i32[1] = height;
-
+static void tl_window_callback_window_size(GLFWwindow* _, const int width, const int height) {
     global->platform.window.size.x = width;
     global->platform.window.size.y = height;
+
+    TLEvent event = { 0 };
+    event.i32[0] = global->platform.window.size.x;
+    event.i32[1] = global->platform.window.size.y;
 
     tl_event_submit(TL_EVENT_WINDOW_RESIZED, &event);
 }
 
-static void tl_window_callback_window_focus(GLFWwindow* window, const i32 focused) {
+static void tl_window_callback_window_focus(GLFWwindow* _, const i32 focused) {
     global->platform.window.focused = focused;
+
     tl_event_submit(focused ? TL_EVENT_WINDOW_FOCUS_GAINED : TL_EVENT_WINDOW_FOCUS_LOST, NULL);
 }
 
-static void tl_window_callback_window_minimized(GLFWwindow* window, const i32 minimized) {
+static void tl_window_callback_window_minimized(GLFWwindow* _, const i32 minimized) {
     global->platform.window.maximized = FALSE;
     global->platform.window.minimized = minimized;
+
     tl_event_submit(minimized ? TL_EVENT_WINDOW_MINIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
 
-static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 maximized) {
+static void tl_window_callback_window_maximize(GLFWwindow* _, const i32 maximized) {
     global->platform.window.maximized = maximized;
     global->platform.window.minimized = FALSE;
+
     tl_event_submit(maximized ? TL_EVENT_WINDOW_MAXIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
+// ########################################################
+//                  INPUT FUNCTIONS
+// ########################################################
+static void tl_window_callback_input_keyboard(GLFWwindow* _, const int key, const int scancode, const int action, const int mods) {
+    global->platform.input.keyboard.key[key] = action == GLFW_PRESS;
 
+    TLEvent event = { 0 };
+    event.u32[0] = key;
+
+    tl_event_submit(action == GLFW_PRESS ? TL_EVENT_INPUT_KEY_PRESSED : TL_EVENT_INPUT_KEY_RELEASED, &event);
+}
+
+static void tl_window_callback_input_cursor_position(GLFWwindow* _, const double xpos, const double ypos) {
+    global->platform.input.cursor.position_x = (u32) xpos;
+    global->platform.input.cursor.position_y = (u32) ypos;
+
+    TLEvent event = { 0 };
+    event.u32[0] = global->platform.input.cursor.position_x;
+    event.u32[1] = global->platform.input.cursor.position_y;
+
+    tl_event_submit(TL_EVENT_INPUT_CURSOR_MOVED, &event);
+}
+
+static void tl_window_callback_input_cursor_button(GLFWwindow* _, const int button, const int action, const int mods) {
+
+}
+
+static void tl_window_callback_input_cursor_scroll(GLFWwindow* _, const double xoffset, const double yoffset) {
+    global->platform.input.cursor.scroll_x = xoffset > 0 ? 1 : xoffset < 0 ? -1 : 0;
+    global->platform.input.cursor.scroll_y = yoffset > 0 ? 1 : yoffset < 0 ? -1 : 0;
+
+    TLEvent event = { 0 };
+    event.u8[0] = global->platform.input.cursor.scroll_x;
+    event.u8[1] = global->platform.input.cursor.scroll_y;
+
+    tl_event_submit(TL_EVENT_INPUT_CURSOR_SCROLLED, &event);
+}
+
+static void tl_window_callback_input_cursor_entered(GLFWwindow* _, const int entered) {
+    global->platform.input.cursor.hoover = entered == GLFW_TRUE;
+    tl_event_submit(entered ? TL_EVENT_INPUT_CURSOR_ENTERED : TL_EVENT_INPUT_CURSOR_EXITED, NULL);
+}
 // ########################################################
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
@@ -315,6 +359,11 @@ b8 tl_platform_initialize(void) {
     glfwSetWindowIconifyCallback(global->platform.window.handle, tl_window_callback_window_minimized);
     glfwSetWindowMaximizeCallback(global->platform.window.handle, tl_window_callback_window_maximize);
 
+    glfwSetKeyCallback(global->platform.window.handle, tl_window_callback_input_keyboard);
+    glfwSetMouseButtonCallback(global->platform.window.handle, tl_window_callback_input_cursor_button);
+    glfwSetCursorPosCallback(global->platform.window.handle, tl_window_callback_input_cursor_position);
+    glfwSetScrollCallback(global->platform.window.handle, tl_window_callback_input_cursor_scroll);
+    glfwSetCursorEnterCallback(global->platform.window.handle, tl_window_callback_input_cursor_entered);
     // --------------------------------------------------------------------------------------
     // Initialize graphics
     // --------------------------------------------------------------------------------------

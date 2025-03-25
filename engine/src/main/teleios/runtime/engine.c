@@ -21,7 +21,7 @@ static TLEventStatus tl_process_window_closed(TLEvent *event) {
 
 static TLEventStatus tl_process_window_restored(TLEvent *event) {
     paused = FALSE;
-    TLWARN("Simulation resumed")
+    TLINFO("Simulation resumed")
     return TL_EVENT_NOT_CONSUMED;
 }
 
@@ -116,7 +116,10 @@ b8 tl_engine_run(void) {
         tl_memory_arena_reset(global->application.frame.arena);
     }
 
+    global->application.frame.per_second = 0;
+    global->application.simulation.per_second = 0;
     glfwHideWindow(global->platform.window.handle);
+
     TLSTACKPOPV(TRUE)
 }
 
