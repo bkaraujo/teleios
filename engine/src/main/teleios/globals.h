@@ -5,7 +5,7 @@
 #include "teleios/runtime/types.h"
 
 typedef struct {
-    const char* yaml;
+    TLString* yaml;
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     u8 stack_index;
@@ -14,6 +14,7 @@ typedef struct {
 #endif
 
     struct {
+        // Execution-wide arena
         TLMemoryArena* arena;
 
         struct {
@@ -62,7 +63,7 @@ typedef struct {
             struct {
                 vec4s clear_color;
                 i32 depth_function;
-                i32 blend_equations;
+                i32 blend_equation;
                 i32 blend_function_src;
                 i32 blend_function_tgt;
                 b8 blend_enabled;

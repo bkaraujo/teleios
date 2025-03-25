@@ -1,6 +1,6 @@
 engine:
   logging:
-    level: verbose
+    level: trace
   graphics:
     vsync: false
     wireframe: false
@@ -22,7 +22,7 @@ application:
         function: LEQUAL
       blend:
         enabled: true
-        equation: FUNC_ADD
+        equation: FUNC_REVERSE_SUBTRACT
         function:
           source: SRC_ALPHA
           target: ONE_MINUS_SRC_ALPHA

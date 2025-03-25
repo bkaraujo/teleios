@@ -15,46 +15,47 @@ int main (const int argc, const char *argv[]) {
         TLFATAL("argc != 2")
     }
 
-    global = TLMALLOC(sizeof(TLGlobal));
+    TLGlobal local = { 0 };
+    global = &local;
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
-    global->yaml = argv[1];
     global->platform.arena = tl_memory_arena_create(TLMEBIBYTES(10));
     global->application.arena = tl_memory_arena_create(TLMEBIBYTES(10));
     global->application.scene.arena = tl_memory_arena_create(TLMEBIBYTES(10));
     global->application.frame.arena = tl_memory_arena_create(TLMEBIBYTES(10));
 
+
+    global->yaml = tl_string_clone(global->application.arena, argv[1]);
     tl_serializer_read();
 
     tl_event_subscribe(TL_EVENT_WINDOW_CREATED, event_echo);
 
     if (!tl_platform_initialize()) {
-        TLERROR("Platform failed to initialize");
-        if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
+        TLERROR("Platform failed to initialize")
+        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_application_initialize()) {
         TLERROR("Application failed to initialize");
-        if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
-        if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
+        if (!tl_application_terminate()) TLERROR("Application failed to terminate")
+        if (!tl_platform_terminate   ()) TLFATAL("Platform failed to terminate")
         exit(99);
     }
 
-    if (!tl_application_run()) { TLERROR("Application failed to execute"); }
-
-    if (!tl_application_terminate()) { TLERROR("Application failed to terminate"); }
+    if (!tl_application_run      ()) TLERROR("Application failed to execute")
+    if (!tl_application_terminate()) TLERROR("Application failed to terminate")
 
     tl_memory_arena_destroy(global->application.frame.arena);
     tl_memory_arena_destroy(global->application.scene.arena);
     tl_memory_arena_destroy(global->application.arena);
     tl_memory_arena_destroy(global->platform.arena);
 
-    if (!tl_platform_terminate()) { TLFATAL("Platform failed to terminate"); }
+    if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     TLDEBUG("global->stack used: %u", global->stack_maximum);
-    TLDEBUG("global->stack reserved: %u", sizeof(global->stack) / sizeof(TLStackFrame));
+    TLDEBUG("global->stack reserved: %u", TLARRSIZE(global->stack, TLStackFrame));
 #endif
 
     TLSTACKPOPV(0)

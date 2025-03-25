@@ -25,10 +25,9 @@ typedef struct {
 } TLTuple;
 
 static void tl_serializer_walk(void (*processor)(const char* prefix, const char* block, const yaml_token_t *toke)) {
-    TLSTACKPUSHA("%s", global->yaml)
-    TLVERBOSE("fopen(%s, \"r\")", global->yaml)
-    FILE* file = fopen(global->yaml, "r");
-    if (file == NULL) TLFATAL("Failed to open %s", global->yaml);
+    TLSTACKPUSHA("%s", tl_string(global->yaml))
+    FILE* file = fopen(tl_string(global->yaml), "r");
+    if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
 
     yaml_parser_t parser;
     if (!yaml_parser_initialize(&parser)) { fclose(file); TLFATAL("Failed to initialize parser!"); }
@@ -296,25 +295,37 @@ static void tl_serializer_find_scene(const char* prefix, const char* block, cons
     TLSTACKPOP
 }
 
-#define TL_GL_DEPTH_FUNCTION(f,g)  \
-if (IS_TOKEN_EQ(f)) {                                                   \
-    global->application.scene.graphics.depth_function = g;             \
-    TLTRACE("global->application.scene.graphics.depth_function = GL_%s", f)   \
-    TLSTACKPOP                                                              \
-}
+
+#define TL_GLPARAM(p, f, g)          \
+        if (IS_TOKEN_EQ(f)) {        \
+        p = g;                       \
+        TLTRACE("%s = GL_%s", #p, f) \
+        TLSTACKPOP                   \
+    }
 
 static void tl_serializer_load_scene(const char* prefix, const char* block, const yaml_token_t *token) {
     TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
+
+    // Ensure the right [application.scenes.#] is being parsed
     if ( ! tl_char_start_with(prefix, global->application.scene.prefix) ) TLSTACKPOP
 
+    // String used to check if property is the desired key
+    char buffer[MAX_PROP];
 
+    // ----------------------------------------------------------------
+    //  application.scenes.#.clear_color
+    // ----------------------------------------------------------------
     if ( IS_BLOCK_EQ("clear_color") ) {
         const char *current_pos = (const char*) TOKEN_VALUE;
         char *endptr;
 
         global->application.scene.graphics.clear_color.x = strtof(current_pos, &endptr);
         if (current_pos == endptr) {
-            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            global->application.scene.graphics.clear_color.x = 0.75f;
+            global->application.scene.graphics.clear_color.y = 0.23f;
+            global->application.scene.graphics.clear_color.z = 0.75f;
+            global->application.scene.graphics.clear_color.w = 1.0f;
+            TLWARN("Failed to read [scene.clear_color.red] assuming magenta");
             TLSTACKPOP
         }
 
@@ -325,7 +336,11 @@ static void tl_serializer_load_scene(const char* prefix, const char* block, cons
 
         global->application.scene.graphics.clear_color.y = strtof(current_pos, &endptr);
         if (current_pos == endptr) {
-            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            global->application.scene.graphics.clear_color.x = 0.75f;
+            global->application.scene.graphics.clear_color.y = 0.23f;
+            global->application.scene.graphics.clear_color.z = 0.75f;
+            global->application.scene.graphics.clear_color.w = 1.0f;
+            TLWARN("Failed to read [scene.clear_color.green] assuming magenta");
             TLSTACKPOP
         }
         current_pos = endptr;
@@ -335,7 +350,11 @@ static void tl_serializer_load_scene(const char* prefix, const char* block, cons
 
         global->application.scene.graphics.clear_color.z = strtof(current_pos, &endptr);
         if (current_pos == endptr) {
-            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            global->application.scene.graphics.clear_color.x = 0.75f;
+            global->application.scene.graphics.clear_color.y = 0.23f;
+            global->application.scene.graphics.clear_color.z = 0.75f;
+            global->application.scene.graphics.clear_color.w = 1.0f;
+            TLWARN("Failed to read [scene.clear_color.blue] assuming magenta");
             TLSTACKPOP
         }
         current_pos = endptr;
@@ -345,50 +364,113 @@ static void tl_serializer_load_scene(const char* prefix, const char* block, cons
 
         global->application.scene.graphics.clear_color.w = strtof(current_pos, &endptr);
         if (current_pos == endptr) {
-            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            global->application.scene.graphics.clear_color.x = 0.75f;
+            global->application.scene.graphics.clear_color.y = 0.23f;
+            global->application.scene.graphics.clear_color.z = 0.75f;
+            global->application.scene.graphics.clear_color.w = 1.0f;
+            TLWARN("Failed to read [scene.clear_color.alpha] assuming magenta");
             TLSTACKPOP
         }
     }
-
-    char buffer[MAX_PROP];
-
+    // ----------------------------------------------------------------
+    //  application.scenes.#.depth
+    // ----------------------------------------------------------------
     tl_memory_set(buffer, 0, MAX_PROP);
     tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "depth.");
-    if ( tl_char_equals(buffer, prefix) && IS_BLOCK_EQ("enabled") ) {
-        global->application.scene.graphics.depth_enabled = TRUE;
-        TLTRACE("global->application.scene.graphics.depth_enabled = %d", global->application.scene.graphics.depth_enabled )
-        TLSTACKPOP
-    }
+    if ( tl_char_equals(buffer, prefix)) {
+        if (IS_BLOCK_EQ("enabled") ) {
+            global->application.scene.graphics.depth_enabled = TRUE;
+            TLTRACE("global->application.scene.graphics.depth_enabled = %d", global->application.scene.graphics.depth_enabled )
+            TLSTACKPOP
+        }
 
-    tl_memory_set(buffer, 0, MAX_PROP);
-    tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "depth.");
-    if ( tl_char_equals(buffer, prefix) && IS_BLOCK_EQ("function") ) {
-        TL_GL_DEPTH_FUNCTION("LESS" ,GL_LESS)
-        TL_GL_DEPTH_FUNCTION("NEVER" ,GL_NEVER)
-        TL_GL_DEPTH_FUNCTION("LEQUAL" ,GL_LEQUAL)
-        TL_GL_DEPTH_FUNCTION("GEQUAL" ,GL_GEQUAL)
-        TL_GL_DEPTH_FUNCTION("ALWAYS" ,GL_ALWAYS)
-        TL_GL_DEPTH_FUNCTION("GREATER" ,GL_GREATER)
-        TL_GL_DEPTH_FUNCTION("NOTEQUAL" ,GL_NOTEQUAL)
-        TL_GL_DEPTH_FUNCTION("ALWAYS" ,GL_ALWAYS)
+        if (IS_BLOCK_EQ("function") ) {
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "LESS", GL_LESS)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "NEVER", GL_NEVER)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "ALWAYS", GL_ALWAYS)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "LEQUAL", GL_LEQUAL)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "GEQUAL", GL_GEQUAL)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "ALWAYS", GL_ALWAYS)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "GREATER", GL_GREATER)
+            TL_GLPARAM(global->application.scene.graphics.depth_function, "NOTEQUAL", GL_NOTEQUAL)
+        }
     }
-
+    // ----------------------------------------------------------------
+    //  application.scenes.#.blend
+    // ----------------------------------------------------------------
     tl_memory_set(buffer, 0, MAX_PROP);
     tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "blend.");
-    if ( tl_char_equals(buffer, prefix) && IS_BLOCK_EQ("enabled") ) {
-        global->application.scene.graphics.blend_enabled = TRUE;
-        TLTRACE("global->application.scene.graphics.blend_enabled = %d", global->application.scene.graphics.blend_enabled )
-        TLSTACKPOP
+    if (tl_char_start_with(prefix, buffer)) {
+        if (IS_BLOCK_EQ("enabled") ) {
+            global->application.scene.graphics.blend_enabled = TRUE;
+            TLTRACE("global->application.scene.graphics.blend_enabled = %d", global->application.scene.graphics.blend_enabled )
+            TLSTACKPOP
+        }
+
+        if (IS_BLOCK_EQ("equation") ) {
+            TL_GLPARAM(global->application.scene.graphics.blend_equation, "MIN", GL_MIN)
+            TL_GLPARAM(global->application.scene.graphics.blend_equation, "MAX", GL_MAX)
+            TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_ADD", GL_FUNC_ADD)
+            TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_SUBTRACT", GL_FUNC_SUBTRACT)
+            TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_REVERSE_SUBTRACT", GL_FUNC_REVERSE_SUBTRACT)
+        }
+
+        tl_memory_set(buffer, 0, MAX_PROP);
+        tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "blend.function.");
+        if (tl_char_equals(prefix, buffer)) {
+            if (IS_BLOCK_EQ("source") ) {
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ZERO", GL_ZERO)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE", GL_ONE)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC_COLOR", GL_SRC_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC_COLOR", GL_ONE_MINUS_SRC_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "DST_COLOR", GL_DST_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_DST_COLOR", GL_ONE_MINUS_DST_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC_ALPHA", GL_SRC_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC_ALPHA", GL_ONE_MINUS_SRC_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "DST_ALPHA", GL_DST_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_DST_ALPHA", GL_ONE_MINUS_DST_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "CONSTANT_COLOR", GL_CONSTANT_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_CONSTANT_COLOR", GL_ONE_MINUS_CONSTANT_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "CONSTANT_ALPHA", GL_CONSTANT_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_CONSTANT_ALPHA", GL_ONE_MINUS_CONSTANT_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC_ALPHA_SATURATE", GL_SRC_ALPHA_SATURATE)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC1_COLOR", GL_SRC1_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC1_COLOR", GL_ONE_MINUS_SRC1_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC1_ALPHA", GL_SRC1_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC1_ALPHA", GL_ONE_MINUS_SRC1_ALPHA)
+            }
+
+            if (IS_BLOCK_EQ("target") ) {
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ZERO", GL_ZERO)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE", GL_ONE)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC_COLOR", GL_SRC_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC_COLOR", GL_ONE_MINUS_SRC_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "DST_COLOR", GL_DST_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_DST_COLOR", GL_ONE_MINUS_DST_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC_ALPHA", GL_SRC_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC_ALPHA", GL_ONE_MINUS_SRC_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "DST_ALPHA", GL_DST_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_DST_ALPHA", GL_ONE_MINUS_DST_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "CONSTANT_COLOR", GL_CONSTANT_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_CONSTANT_COLOR", GL_ONE_MINUS_CONSTANT_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "CONSTANT_ALPHA", GL_CONSTANT_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_CONSTANT_ALPHA", GL_ONE_MINUS_CONSTANT_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC_ALPHA_SATURATE", GL_SRC_ALPHA_SATURATE)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC1_COLOR", GL_SRC1_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC1_COLOR", GL_ONE_MINUS_SRC1_COLOR)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC1_ALPHA", GL_SRC1_ALPHA)
+                TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC1_ALPHA", GL_ONE_MINUS_SRC1_ALPHA)
+            }
+        }
     }
 
-    // blend:
-    //   enabled: true
-    //   equation: FUNC_ADD
-    //   function:
-    //     source: SRC_ALPHA
-    //     target: ONE_MINUS_SRC_ALPHA
+    // ----------------------------------------------------------------
+    //  application.scenes.#.camera
+    // ----------------------------------------------------------------
 
-
+    // ----------------------------------------------------------------
+    //  application.scenes.#.actors
+    // ----------------------------------------------------------------
     TLSTACKPOP
 }
 
@@ -413,3 +495,4 @@ b8 tl_serializer_scene(const char *name) {
 
     TLSTACKPOPV(FALSE)
 }
+
