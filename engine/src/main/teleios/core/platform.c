@@ -198,6 +198,9 @@ b8 tl_platform_initialize(void) {
     tl_profiler_begin("tl_platform_initialize");
 
     TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
+    // --------------------------------------------------------------------------------------
+    // Initialize GLFW
+    // --------------------------------------------------------------------------------------
     TLTRACE("Initializing GLFW");
     if (!glfwInit()) {
         TLERROR("Failed to initialize GLFW")
@@ -220,7 +223,9 @@ b8 tl_platform_initialize(void) {
     glfwWindowHint(GLFW_DEPTH_BITS, 0);
     glfwWindowHint(GLFW_STENCIL_BITS, 0);
     glfwWindowHint(GLFW_ALPHA_BITS, 0);
-
+    // --------------------------------------------------------------------------------------
+    // Create the platform surface
+    // --------------------------------------------------------------------------------------
     TLDEBUG(
         "Window (%u x %u) :: %s",
         global->platform.window.size.x,
@@ -228,7 +233,6 @@ b8 tl_platform_initialize(void) {
         tl_string(global->platform.window.title)
     )
 
-    TLTRACE("GLFW creating window");
     global->platform.window.handle = glfwCreateWindow(
         global->platform.window.size.x,
         global->platform.window.size.y,
@@ -240,7 +244,9 @@ b8 tl_platform_initialize(void) {
         TLERROR("Failed to create GLFW window");
         TLSTACKPOPV(FALSE)
     }
-
+    // --------------------------------------------------------------------------------------
+    // Cache state
+    // --------------------------------------------------------------------------------------
     global->platform.window.visible = FALSE;
     global->platform.window.focused = glfwGetWindowAttrib(global->platform.window.handle, GLFW_FOCUSED) == GLFW_TRUE;
     global->platform.window.maximized = glfwGetWindowAttrib(global->platform.window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
@@ -253,13 +259,39 @@ b8 tl_platform_initialize(void) {
     }
 
     glfwSetWindowPos(global->platform.window.handle, global->platform.window.position.x, global->platform.window.position.y);
-
-    TLTRACE("GLFW creating window callbacks");
+    // --------------------------------------------------------------------------------------
+    // Register callbacks
+    // --------------------------------------------------------------------------------------
     TLEvent event = {0};
     tl_event_submit(TL_EVENT_WINDOW_CREATED, &event);
+    // --------------------------------------------------------------------------------------
+    // Initialize graphics
+    // --------------------------------------------------------------------------------------
+    glfwMakeContextCurrent(global->platform.window.handle);
 
-    if (!tl_graphics_initialize()) {
+    TLDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        TLERROR("Failed to initialize GLAD")
         TLSTACKPOPV(FALSE)
+    }
+
+    TLDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
+
+    if (global->platform.graphics.vsync) {
+        TLDEBUG("vsync: on")
+        glfwSwapInterval(1);
+    } else {
+        TLDEBUG("vsync: off")
+        glfwSwapInterval(0);
+    }
+
+    if (global->platform.graphics.wireframe) {
+        TLDEBUG("wireframe: on")
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        TLDEBUG("wireframe: off")
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     TLDEBUG("Platform initialized in %llu micros", tl_profiler_time("tl_platform_initialize"));
@@ -269,12 +301,8 @@ b8 tl_platform_initialize(void) {
 
 b8 tl_platform_terminate(void) {
     TLSTACKPUSH
-    if (!tl_graphics_terminate()) {
-        TLERROR("Failed to terminate graphics");
-        TLSTACKPOPV(FALSE)
-    }
 
-    TLVERBOSE("Terminating GLFW");
+    tl_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
     glfwTerminate();
 
     TLSTACKPOPV(TRUE)

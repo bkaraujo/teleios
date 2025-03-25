@@ -1,25 +1,29 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
-#include "teleios/application.h"
 #include "teleios/globals.h"
 
-b8 tl_application_initialize(void) {
+b8 tl_engine_initialize(void) {
     TLSTACKPUSH
-    tl_profiler_begin("tl_application_initialize");
+    tl_profiler_begin("tl_engine_initialize");
 
-    if (!tl_scene_load("main")) {
-        TLERROR("Failed to load scene [main]");
-        TLSTACKPOPV(FALSE)
-    }
+    global->application.frame.current = 0;
+    global->application.frame.overflow = 0;
+    global->application.frame.per_second = 0;
 
-    TLDEBUG("Application initialized in %llu micros", tl_profiler_time("tl_application_initialize"));
-    tl_profiler_end("tl_application_initialize");
+    global->application.simulation.current = 0;
+    global->application.simulation.overflow = 0;
+    global->application.simulation.per_second = 0;
+
+    tl_memory_arena_reset(global->application.frame.arena);
+
+    TLDEBUG("Engine initialized in %llu micros", tl_profiler_time("tl_engine_initialize"));
+    tl_profiler_end("tl_engine_initialize");
     TLSTACKPOPV(TRUE)
 }
 
-b8 tl_application_run(void) {
+b8 tl_engine_run(void) {
     TLSTACKPUSH
-    TLClock t1, t2; 
+    TLClock t1, t2;
     tl_time_clock(&t1);
 
     f64 accumulator = 0.0f;
@@ -31,27 +35,43 @@ b8 tl_application_run(void) {
         lastTime += deltaTime;
 
         global->application.frame.current++;
-
+        if (global->application.frame.current == 0) {
+            global->application.frame.overflow++;
+            TLWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
+        }
         // =========================================================
         // Simulation Pass
         // =========================================================
         accumulator += deltaTime;
         while (accumulator >= global->application.simulation.step) {
             global->application.simulation.current++;
+            if (global->application.simulation.current == 0) {
+                global->application.simulation.overflow++;
+                TLWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
+            }
+
             global->application.simulation.per_second++;
 
             accumulator -= global->application.simulation.step;
         }
         // =========================================================
-        // Graphics Pass
+        // Update Pass
         // =========================================================
         global->application.frame.per_second++;
         glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         // =========================================================
-        // Presenting Pass
+        // Rendering Pass
+        // =========================================================
+
+        // =========================================================
+        // Presentation Pass
         // =========================================================
         glfwSwapBuffers(global->platform.window.handle);
-        
+
+        // =========================================================
+        // FPS calculation
+        // =========================================================
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
             TLMEMCPY(&t1, &t2, sizeof(TLClock));
@@ -69,11 +89,11 @@ b8 tl_application_run(void) {
     TLSTACKPOPV(TRUE)
 }
 
-b8 tl_application_terminate(void) {
+b8 tl_engine_terminate(void) {
     TLSTACKPUSH
-    tl_profiler_begin("tl_application_terminate");
+    tl_profiler_begin("tl_engine_terminate");
 
-    TLDEBUG("Application terminated in %llu micros", tl_profiler_time("tl_application_terminate"));
-    tl_profiler_end("tl_application_terminate");
+    TLDEBUG("Engine terminated in %llu micros", tl_profiler_time("tl_engine_terminate"));
+    tl_profiler_end("tl_engine_terminate");
     TLSTACKPOPV(TRUE)
 }

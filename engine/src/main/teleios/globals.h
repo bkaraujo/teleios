@@ -48,8 +48,9 @@ typedef struct {
 
         struct {
             f64 step;
-            u64 current;
-            u32 per_second;
+            u32 current;
+            u16 overflow;
+            u16 per_second;
         } simulation;
 
         struct {
@@ -66,6 +67,8 @@ typedef struct {
                 b8 blend_enabled;
                 b8 depth_enabled;
             } graphics;
+
+            TLList *layers;
 
             struct {
                 struct {
@@ -87,9 +90,10 @@ typedef struct {
         } scene;
 
         struct {
-            u64 current;
-            u32 per_second;
             TLMemoryArena *arena;
+            u32 current;
+            u16 overflow;
+            u16 per_second;
         } frame;
     } application;
 

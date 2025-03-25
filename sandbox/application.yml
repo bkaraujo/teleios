@@ -9,11 +9,10 @@ engine:
   renderer:
     modelMatrix: un_model
     viewProjectionMatrix: un_viewProjection
-application:
-  version: 0.1.0
   window:
     size: HD
     title: LearnOpenGL
+application:
   scenes:
     - name: main
       clear_color: .7, .2, .7, 1

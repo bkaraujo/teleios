@@ -45,7 +45,6 @@ add_executable(${PROJECT_NAME}
         engine/src/main/glad/glad.c
 
         engine/src/main/teleios/core/event.c
-        engine/src/main/teleios/application.c
         engine/src/main/teleios/core/string.c
         engine/src/main/teleios/core/logger.c
         engine/src/main/teleios/core/graphics.c
@@ -60,6 +59,10 @@ add_executable(${PROJECT_NAME}
 
         engine/src/main/teleios/runtime/serializer.c
         engine/src/main/teleios/runtime/scene.c
+        engine/src/main/teleios/runtime/layer.c
+        engine/src/main/teleios/runtime/engine.c
+
+        engine/src/main/teleios/application/application.c
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)

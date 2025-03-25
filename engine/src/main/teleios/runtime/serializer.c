@@ -230,26 +230,7 @@ static b8 tl_serializer_read_engine(const char* prefix, const char* block, const
         }
     }
 
-    TLWARN("Unknown prefix: %s%s", prefix, block);
-
-    TLSTACKPOPV(FALSE);
-}
-
-static b8 tl_serializer_read_application(const char* prefix, const char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
-
-    if (!tl_char_start_with(prefix, "application.")) TLSTACKPOPV(FALSE);
-    if (tl_char_start_with(prefix, "application.scenes.")) TLSTACKPOPV(TRUE)
-
-    if (IS_PREFIX_EQ("application.")) {
-        if (IS_BLOCK_EQ("version")) {
-            global->application.version = tl_string_clone(global->platform.arena, (char*) TOKEN_VALUE);
-            TLTRACE("global->application.version = %s", TOKEN_VALUE)
-            TLSTACKPOPV(TRUE);
-        }
-    }
-
-    if (IS_PREFIX_EQ("application.window.")) {
+    if (IS_PREFIX_EQ("engine.window.")) {
         if (IS_BLOCK_EQ("title")) {
             global->platform.window.title = tl_string_clone(global->platform.arena, (char*) TOKEN_VALUE);
             TLTRACE("global->platform.window.title = %s", TOKEN_VALUE)
@@ -265,6 +246,25 @@ static b8 tl_serializer_read_application(const char* prefix, const char* block, 
 
             global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
             TLTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
+            TLSTACKPOPV(TRUE);
+        }
+    }
+
+    TLWARN("Unknown prefix: %s%s", prefix, block);
+
+    TLSTACKPOPV(FALSE);
+}
+
+static b8 tl_serializer_read_application(const char* prefix, const char* block, const yaml_token_t *token) {
+    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
+
+    if (!tl_char_start_with(prefix, "application.")) TLSTACKPOPV(FALSE);
+    if (tl_char_start_with(prefix, "application.scenes.")) TLSTACKPOPV(TRUE)
+
+    if (IS_PREFIX_EQ("application.")) {
+        if (IS_BLOCK_EQ("version")) {
+            global->application.version = tl_string_clone(global->platform.arena, (char*) TOKEN_VALUE);
+            TLTRACE("global->application.version = %s", TOKEN_VALUE)
             TLSTACKPOPV(TRUE);
         }
     }
