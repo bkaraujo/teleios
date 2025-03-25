@@ -189,6 +189,52 @@ void tl_memory_copy(void *target, void *source, const u64 size) {
     TLSTACKPOP
 }
 // ########################################################
+//                  WINDOWING FUNCTIONS
+// ########################################################
+static void tl_window_callback_window_closed(GLFWwindow* window) {
+    tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
+}
+
+static void tl_window_callback_window_pos(GLFWwindow* window, const int xPos, const int yPos) {
+    TLEvent event = { 0 };
+    event.i32[0] = xPos;
+    event.i32[1] = yPos;
+
+    global->platform.window.position.x = xPos;
+    global->platform.window.position.y = yPos;
+
+    tl_event_submit(TL_EVENT_WINDOW_MOVED, &event);
+}
+
+static void tl_window_callback_window_size(GLFWwindow* window, const int width, const int height) {
+    TLEvent event = { 0 };
+    event.i32[0] = width;
+    event.i32[1] = height;
+
+    global->platform.window.size.x = width;
+    global->platform.window.size.y = height;
+
+    tl_event_submit(TL_EVENT_WINDOW_RESIZED, &event);
+}
+
+static void tl_window_callback_window_focus(GLFWwindow* window, const i32 focused) {
+    global->platform.window.focused = focused;
+    tl_event_submit(focused ? TL_EVENT_WINDOW_FOCUS_GAINED : TL_EVENT_WINDOW_FOCUS_LOST, NULL);
+}
+
+static void tl_window_callback_window_minimized(GLFWwindow* window, const i32 minimized) {
+    global->platform.window.maximized = FALSE;
+    global->platform.window.minimized = minimized;
+    tl_event_submit(minimized ? TL_EVENT_WINDOW_MINIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
+}
+
+static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 maximized) {
+    global->platform.window.maximized = maximized;
+    global->platform.window.minimized = FALSE;
+    tl_event_submit(maximized ? TL_EVENT_WINDOW_MAXIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
+}
+
+// ########################################################
 //                  LIFECYCLE FUNCTIONS
 // ########################################################
 #include "teleios/core/platform.h"
@@ -262,6 +308,13 @@ b8 tl_platform_initialize(void) {
     // --------------------------------------------------------------------------------------
     // Register callbacks
     // --------------------------------------------------------------------------------------
+    glfwSetWindowCloseCallback(global->platform.window.handle, tl_window_callback_window_closed);
+    glfwSetWindowPosCallback(global->platform.window.handle, tl_window_callback_window_pos);
+    glfwSetWindowSizeCallback(global->platform.window.handle, tl_window_callback_window_size);
+    glfwSetWindowFocusCallback(global->platform.window.handle, tl_window_callback_window_focus);
+    glfwSetWindowIconifyCallback(global->platform.window.handle, tl_window_callback_window_minimized);
+    glfwSetWindowMaximizeCallback(global->platform.window.handle, tl_window_callback_window_maximize);
+
     TLEvent event = {0};
     tl_event_submit(TL_EVENT_WINDOW_CREATED, &event);
     // --------------------------------------------------------------------------------------

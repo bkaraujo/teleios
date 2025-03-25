@@ -38,13 +38,27 @@ typedef enum {
 // ---------------------------------
 typedef enum {
     TL_EVENT_WINDOW_CREATED,
+    /**
+     *    event.i32[0] = width;<br>
+     *    event.i32[1] = height;
+     */
     TL_EVENT_WINDOW_RESIZED,
-    TL_EVENT_WINDOW_DESTROYED,
+    /** No aditional data */
+    TL_EVENT_WINDOW_CLOSED,
+    /**
+     *    event.i32[0] = xPos;<br>
+     *    event.i32[1] = yPos;
+     */
     TL_EVENT_WINDOW_MOVED,
+    /** No aditional data */
     TL_EVENT_WINDOW_MINIMIZED,
+    /** No aditional data */
     TL_EVENT_WINDOW_MAXIMIZED,
+    /** No aditional data */
     TL_EVENT_WINDOW_RESTORED,
+    /** No aditional data */
     TL_EVENT_WINDOW_FOCUS_GAINED,
+    /** No aditional data */
     TL_EVENT_WINDOW_FOCUS_LOST,
 
     TL_EVENT_MAXIMUM
