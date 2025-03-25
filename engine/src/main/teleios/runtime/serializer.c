@@ -1,12 +1,18 @@
+#include <ctype.h>
+
 #include "teleios/core.h"
 #include "teleios/runtime.h"
 #include "teleios/globals.h"
 
 #include <stdio.h>
 
+#define MAX_PROP 1024
+#define TOKEN_VALUE token->data.scalar.value
+#define TOKEN_LENGTH token->data.scalar.length
 #define IS_BLOCK_EQ(s) tl_char_equals(block, s)
-#define IS_PROP_EQ(s) tl_char_equals(property, s)
-#define IS_TOKEN_EQ(s) tl_char_equals(token->data.scalar.value, s)
+#define IS_PREFIX_EQ(s) tl_char_equals(prefix, s)
+#define IS_PROP_EQ(p,b) (IS_PREFIX_EQ(p) && IS_BLOCK_EQ(b))
+#define IS_TOKEN_EQ(s) tl_char_equals(TOKEN_VALUE, s)
 
 #define EXPECT(t)                                   \
     yaml_token_delete(&token);                      \
@@ -18,9 +24,9 @@ typedef struct {
     u32 sequence;
 } TLTuple;
 
-static void tl_serializer_walk(void (*processor)(const char* property, const char* block, const yaml_token_t *toke)) {
+static void tl_serializer_walk(void (*processor)(const char* prefix, const char* block, const yaml_token_t *toke)) {
     TLSTACKPUSHA("%s", global->yaml)
-    TLDEBUG("Loading %s", global->yaml)
+    TLVERBOSE("fopen(%s, \"r\")", global->yaml)
     FILE* file = fopen(global->yaml, "r");
     if (file == NULL) TLFATAL("Failed to open %s", global->yaml);
 
@@ -29,12 +35,12 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
     yaml_parser_set_input_file(&parser, file);
 
     u8 block_index = 0;
-    u16 property_index = 0;
+    u16 prefix_index = 0;
     yaml_token_t token;
     TLMemoryArena *arena = tl_memory_arena_create(TLKIBIBYTES(4));
     TLList *sequences = tl_list_create(arena);
     char block[U8_MAX]; // current YAML_KEY_TOKEN
-    char property[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
+    char prefix[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
 
     do {
         yaml_parser_scan(&parser, &token);
@@ -46,12 +52,12 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
             // #########################################################################################################
             case YAML_BLOCK_SEQUENCE_START_TOKEN: {
                 // -----------------------------------------------------------
-                // If it's already inside a block persist into 'property'
+                // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
                 TLTuple *tuple = tl_memory_alloc(arena, sizeof(TLTuple), TL_MEMORY_SERIALIZER);
                 tuple->sequence = 0;
 
-                tuple->name = tl_string_clone(arena, property);
+                tuple->name = tl_string_clone(arena, prefix);
                 tl_string_join(tuple->name, block);
                 tl_string_join(tuple->name, ".");
 
@@ -64,14 +70,14 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
                 EXPECT(YAML_KEY_TOKEN)
                 EXPECT(YAML_SCALAR_TOKEN)
                 // -----------------------------------------------------------
-                // If it's already inside a block persist into 'property'
+                // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
                 if (block_index != 0) {
-                    tl_memory_copy(property + property_index, block, block_index);
-                    property_index += block_index;
+                    tl_memory_copy(prefix + prefix_index, block, block_index);
+                    prefix_index += block_index;
 
-                    tl_memory_copy(property + property_index, ".", 1);
-                    property_index++;
+                    tl_memory_copy(prefix + prefix_index, ".", 1);
+                    prefix_index++;
                 }
                 // -----------------------------------------------------------
                 // Copy the scalar content to the 'block'
@@ -87,14 +93,14 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
             // #########################################################################################################
             case YAML_BLOCK_ENTRY_TOKEN: {
                 // -----------------------------------------------------------
-                // If it's already inside a block persist into 'property'
+                // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
                 if (block_index != 0) {
-                    tl_memory_copy(property + property_index, block, block_index);
-                    property_index += block_index;
+                    tl_memory_copy(prefix + prefix_index, block, block_index);
+                    prefix_index += block_index;
 
-                    tl_memory_copy(property + property_index, ".", 1);
-                    property_index++;
+                    tl_memory_copy(prefix + prefix_index, ".", 1);
+                    prefix_index++;
                 }
                 // -----------------------------------------------------------
                 // Copy the scalar content to the 'block'
@@ -106,7 +112,7 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
                 // -----------------------------------------------------------
                 TLIterator *iterator = tl_list_iterator_create(sequences);
                 for (TLTuple *tuple = tl_list_iterator_next(iterator) ; tuple != NULL; tuple = tl_list_iterator_next(iterator)) {
-                    if (tl_string_equals(tuple->name, property)) {
+                    if (tl_string_equals(tuple->name, prefix)) {
                         string = tl_string_from_i32(arena, (i32) tuple->sequence, 10);
                         tuple->sequence++;
                     }
@@ -140,25 +146,25 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
             // YAML_SCALAR_TOKEN
             // #########################################################################################################
             case YAML_SCALAR_TOKEN: {
-                processor(property, block, &token);
+                processor(prefix, block, &token);
             } break;
             // #########################################################################################################
             // YAML_BLOCK_END_TOKEN
             // #########################################################################################################
             case YAML_BLOCK_END_TOKEN: {
                 b8 found = FALSE;
-                for (u16 i = property_index - 2 ; i > 0 ; --i) {
-                    if (*(property + i)  == '.') {
-                        tl_memory_set(property + i + 1, 0, U16_MAX - i);
-                        property_index = i + 1;
+                for (u16 i = prefix_index - 2 ; i > 0 ; --i) {
+                    if (*(prefix + i)  == '.') {
+                        tl_memory_set(prefix + i + 1, 0, U16_MAX - i);
+                        prefix_index = i + 1;
                         found = TRUE;
                         break;
                     }
                 }
 
                 if (!found) {
-                    tl_memory_set(property, 0, U16_MAX);
-                    property_index = 0;
+                    tl_memory_set(prefix, 0, U16_MAX);
+                    prefix_index = 0;
                 }
 
                 tl_memory_set(block, 0, U8_MAX - block_index);
@@ -178,12 +184,12 @@ static void tl_serializer_walk(void (*processor)(const char* property, const cha
     TLSTACKPOP
 }
 
-static b8 tl_serializer_read_engine(const char* property, const char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
+static b8 tl_serializer_read_engine(const char* prefix, const char* block, const yaml_token_t *token) {
+    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
 
-    if (!tl_char_start_with(property, "engine.")) TLSTACKPOPV(FALSE)
+    if (!tl_char_start_with(prefix, "engine.")) TLSTACKPOPV(FALSE)
 
-    if (IS_PROP_EQ("engine.logging.")) {
+    if (IS_PREFIX_EQ("engine.logging.")) {
         if (IS_BLOCK_EQ("level")) {
             if (IS_TOKEN_EQ("verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); TLSTACKPOPV(TRUE); }
             if (IS_TOKEN_EQ(  "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); TLSTACKPOPV(TRUE); }
@@ -195,24 +201,24 @@ static b8 tl_serializer_read_engine(const char* property, const char* block, con
         }
     }
 
-    if (IS_PROP_EQ("engine.graphics.")) {
+    if (IS_PREFIX_EQ("engine.graphics.")) {
         if (IS_BLOCK_EQ("vsync")) {
-            global->platform.graphics.vsync = tl_char_equals((char*) token->data.scalar.value, "true");
+            global->platform.graphics.vsync = tl_char_equals((char*) TOKEN_VALUE, "true");
             TLTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
             TLSTACKPOPV(TRUE);
         }
         if (IS_BLOCK_EQ("wireframe")) {
-            global->platform.graphics.wireframe = tl_char_equals((char*) token->data.scalar.value, "true");
+            global->platform.graphics.wireframe = tl_char_equals((char*) TOKEN_VALUE, "true");
             TLTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
             TLSTACKPOPV(TRUE);
         }
     }
 
-    if (IS_PROP_EQ("engine.simulation.")) {
+    if (IS_PREFIX_EQ("engine.simulation.")) {
         if (IS_BLOCK_EQ("step")) {
-            u8 step = strtol((char*) token->data.scalar.value, (void*)(token->data.scalar.value + token->data.scalar.length), 10);
+            u8 step = strtol((char*) TOKEN_VALUE, (void*)(TOKEN_VALUE + TOKEN_LENGTH), 10);
             if (step == 0) {
-                TLWARN("Failed to read [%s%s] assuming 24", property, block);
+                TLWARN("Failed to read [%s%s] assuming 24", prefix, block);
                 step = 24;
             }
 
@@ -222,29 +228,29 @@ static b8 tl_serializer_read_engine(const char* property, const char* block, con
         }
     }
 
-    TLWARN("Unknown property: %s%s", property, block);
+    TLWARN("Unknown prefix: %s%s", prefix, block);
 
     TLSTACKPOPV(FALSE);
 }
 
-static b8 tl_serializer_read_application(const char* property, const char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
+static b8 tl_serializer_read_application(const char* prefix, const char* block, const yaml_token_t *token) {
+    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
 
-    if (!tl_char_start_with(property, "application.")) TLSTACKPOPV(FALSE);
-    if (tl_char_start_with(property, "application.scenes.")) TLSTACKPOPV(TRUE)
+    if (!tl_char_start_with(prefix, "application.")) TLSTACKPOPV(FALSE);
+    if (tl_char_start_with(prefix, "application.scenes.")) TLSTACKPOPV(TRUE)
 
-    if (IS_PROP_EQ("application.")) {
+    if (IS_PREFIX_EQ("application.")) {
         if (IS_BLOCK_EQ("version")) {
-            global->application.version = tl_string_clone(global->platform.arena, (char*) token->data.scalar.value);
-            TLTRACE("global->application.version = %s", token->data.scalar.value)
+            global->application.version = tl_string_clone(global->platform.arena, (char*) TOKEN_VALUE);
+            TLTRACE("global->application.version = %s", TOKEN_VALUE)
             TLSTACKPOPV(TRUE);
         }
     }
 
-    if (IS_PROP_EQ("application.window.")) {
+    if (IS_PREFIX_EQ("application.window.")) {
         if (IS_BLOCK_EQ("title")) {
-            global->platform.window.title = tl_string_clone(global->platform.arena, (char*) token->data.scalar.value);
-            TLTRACE("global->platform.window.title = %s", token->data.scalar.value)
+            global->platform.window.title = tl_string_clone(global->platform.arena, (char*) TOKEN_VALUE);
+            TLTRACE("global->platform.window.title = %s", TOKEN_VALUE)
             TLSTACKPOPV(TRUE);
         }
 
@@ -261,14 +267,14 @@ static b8 tl_serializer_read_application(const char* property, const char* block
         }
     }
 
-    TLWARN("Unknown property: %s%s", property, block);
+    TLWARN("Unknown prefix: %s%s", prefix, block);
     TLSTACKPOPV(FALSE);
 }
 
-static void tl_serializer_read_setup(const char* property, const char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
-    if (tl_serializer_read_engine     (property, block, token)) TLSTACKPOP
-    if (tl_serializer_read_application(property, block, token)) TLSTACKPOP
+static void tl_serializer_read_setup(const char* prefix, const char* block, const yaml_token_t *token) {
+    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
+    if (tl_serializer_read_engine     (prefix, block, token)) TLSTACKPOP
+    if (tl_serializer_read_application(prefix, block, token)) TLSTACKPOP
     TLSTACKPOP
 }
 
@@ -278,22 +284,111 @@ void tl_serializer_read(void) {
     TLSTACKPOP
 }
 
-static void tl_serializer_read_scene_with_id(const char *id, const char* property, const char* block, const yaml_token_t *token) {
+static void tl_serializer_find_scene(const char* prefix, const char* block, const yaml_token_t *token) {
+    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
+    if ( ! IS_PROP_EQ(global->application.scene.prefix, "name") ) TLSTACKPOP
 
+    if (IS_TOKEN_EQ(tl_string(global->application.scene.name))) {
+        global->application.scene.found = TRUE;
+        TLSTACKPOP
+    }
+
+    TLSTACKPOP
 }
 
-static void tl_serializer_read_scene(const char* property, const char* block, const yaml_token_t *token) {
-    TLSTACKPUSHA("%s, %s, 0x%p", property, block, token)
-    if (!tl_char_start_with(property, "application.scenes.")) TLSTACKPOP
+#define TL_GL_DEPTH_FUNCTION(f,g)  \
+if (IS_TOKEN_EQ(f)) {                                                   \
+    global->application.scene.graphics.depth_function = g;             \
+    TLTRACE("global->application.scene.graphics.depth_function = GL_%s", f)   \
+    TLSTACKPOP                                                              \
+}
 
-    const u64 idx = tl_char_index_of(property + 19, '.');
-    char sequence[idx + 1];
-    tl_memory_set(sequence, 0 , idx + 1);
-    tl_memory_copy(sequence, (void*)property + 19, idx);
+static void tl_serializer_load_scene(const char* prefix, const char* block, const yaml_token_t *token) {
+    TLSTACKPUSHA("%s, %s, 0x%p", prefix, block, token)
+    if ( ! tl_char_start_with(prefix, global->application.scene.prefix) ) TLSTACKPOP
 
 
+    if ( IS_BLOCK_EQ("clear_color") ) {
+        const char *current_pos = (const char*) TOKEN_VALUE;
+        char *endptr;
 
-    TLWARN("Processing property: %s%s", property, block)
+        global->application.scene.graphics.clear_color.x = strtof(current_pos, &endptr);
+        if (current_pos == endptr) {
+            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            TLSTACKPOP
+        }
+
+        current_pos = endptr;
+        while (isspace(*current_pos) || *current_pos == ',') {
+            current_pos++;
+        }
+
+        global->application.scene.graphics.clear_color.y = strtof(current_pos, &endptr);
+        if (current_pos == endptr) {
+            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            TLSTACKPOP
+        }
+        current_pos = endptr;
+        while (isspace(*current_pos) || *current_pos == ',') {
+            current_pos++;
+        }
+
+        global->application.scene.graphics.clear_color.z = strtof(current_pos, &endptr);
+        if (current_pos == endptr) {
+            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            TLSTACKPOP
+        }
+        current_pos = endptr;
+        while (isspace(*current_pos) || *current_pos == ',') {
+            current_pos++;
+        }
+
+        global->application.scene.graphics.clear_color.w = strtof(current_pos, &endptr);
+        if (current_pos == endptr) {
+            TLWARN("Failed to read [scene.clear_color] assuming magenta");
+            TLSTACKPOP
+        }
+    }
+
+    char buffer[MAX_PROP];
+
+    tl_memory_set(buffer, 0, MAX_PROP);
+    tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "depth.");
+    if ( tl_char_equals(buffer, prefix) && IS_BLOCK_EQ("enabled") ) {
+        global->application.scene.graphics.depth_enabled = TRUE;
+        TLTRACE("global->application.scene.graphics.depth_enabled = %d", global->application.scene.graphics.depth_enabled )
+        TLSTACKPOP
+    }
+
+    tl_memory_set(buffer, 0, MAX_PROP);
+    tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "depth.");
+    if ( tl_char_equals(buffer, prefix) && IS_BLOCK_EQ("function") ) {
+        TL_GL_DEPTH_FUNCTION("LESS" ,GL_LESS)
+        TL_GL_DEPTH_FUNCTION("NEVER" ,GL_NEVER)
+        TL_GL_DEPTH_FUNCTION("LEQUAL" ,GL_LEQUAL)
+        TL_GL_DEPTH_FUNCTION("GEQUAL" ,GL_GEQUAL)
+        TL_GL_DEPTH_FUNCTION("ALWAYS" ,GL_ALWAYS)
+        TL_GL_DEPTH_FUNCTION("GREATER" ,GL_GREATER)
+        TL_GL_DEPTH_FUNCTION("NOTEQUAL" ,GL_NOTEQUAL)
+        TL_GL_DEPTH_FUNCTION("ALWAYS" ,GL_ALWAYS)
+    }
+
+    tl_memory_set(buffer, 0, MAX_PROP);
+    tl_char_join(buffer, MAX_PROP, global->application.scene.prefix, "blend.");
+    if ( tl_char_equals(buffer, prefix) && IS_BLOCK_EQ("enabled") ) {
+        global->application.scene.graphics.blend_enabled = TRUE;
+        TLTRACE("global->application.scene.graphics.blend_enabled = %d", global->application.scene.graphics.blend_enabled )
+        TLSTACKPOP
+    }
+
+    // blend:
+    //   enabled: true
+    //   equation: FUNC_ADD
+    //   function:
+    //     source: SRC_ALPHA
+    //     target: ONE_MINUS_SRC_ALPHA
+
+
     TLSTACKPOP
 }
 
@@ -302,6 +397,19 @@ b8 tl_serializer_scene(const char *name) {
     tl_memory_arena_reset(global->application.scene.arena);
     global->application.scene.name = tl_string_clone(global->application.scene.arena, name);
 
-    tl_serializer_walk(tl_serializer_read_scene);
+    for (u8 sequence = 0 ; sequence < U8_MAX ; sequence++) {
+        tl_memory_set(global->application.scene.prefix, 0, U8_MAX);
+        snprintf(global->application.scene.prefix, U8_MAX, "application.scenes.%d.", sequence);
+
+        global->application.scene.found = FALSE;
+        tl_serializer_walk(tl_serializer_find_scene);
+        if (global->application.scene.found) {
+            TLDEBUG("Found scene [%s] at position [%u]", name, sequence)
+            tl_serializer_walk(tl_serializer_load_scene);
+
+            TLSTACKPOPV(TRUE)
+        }
+    }
+
     TLSTACKPOPV(FALSE)
 }

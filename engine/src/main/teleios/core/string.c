@@ -118,6 +118,13 @@ u32 tl_char_copy(char *target, const char *source) {
     TLSTACKPOPV(copied)
 }
 
+TLINLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const char *str1) {
+    TLSTACKPUSHA("0x%p, %d, %s, %s", buffer, size, str0, str1)
+    if (tl_char_length(str0) + tl_char_length(str1) > size) TLSTACKPOP
+    sprintf(buffer, "%s%s", str0, str1);
+    TLSTACKPOP
+}
+
 struct TLString {
     u64 length;
     u64 size;
