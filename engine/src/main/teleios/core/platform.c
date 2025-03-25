@@ -80,7 +80,7 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
 TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TLSTACKPUSHA("%d", index)
     TLMemoryArena *arena = global->platform.memory.arenas[index];
-    for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
+    for (u32 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
             TLFREE(arena->page[i].payload);
@@ -102,7 +102,7 @@ TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
 
 void tl_memory_arena_reset(TLMemoryArena *arena) {
     TLSTACKPUSHA("0x%p", arena)
-    for (u8 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
+    for (u32 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
