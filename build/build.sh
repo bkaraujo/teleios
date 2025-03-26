@@ -24,7 +24,7 @@ cd $BUILDFS
 # -----------------------------------------
 # Check for correct meta.h usage
 # -----------------------------------------
-find $ROOTFS/engine/src/main/teleios/ -type f -name "*.c" ! -name 'logger.c' | while read -r fname ; do
+find $ROOTFS/engine/src/main/teleios/ -type f -name "*.c" ! -name 'logger.c' ! -name 'profiler.c' | while read -r fname ; do
     if [[ $(grep -c return "$fname") -ne 0 ]] ; then
         echo "Unexpected [return] statemente in $fname"
     fi

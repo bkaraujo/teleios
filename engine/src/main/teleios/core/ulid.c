@@ -29,15 +29,14 @@ struct TLUlid {
     char text[27];
 };
 
-/* Gather entropy from the operating system.
- * Returns 0 on success.
- */
 static int platform_entropy(void *buf, const i32 len) {
+    TLSTACKPUSHA("0x%p, %d", buf, len)
 #if _WIN32
     BOOLEAN NTAPI SystemFunction036(PVOID, ULONG);
-    return !SystemFunction036(buf, len);
+    TLSTACKPOPV(!SystemFunction036(buf, len))
 #elif __linux__
-    return syscall(SYS_getrandom, buf, len, 0) != len;
+    i32 result = syscall(SYS_getrandom, buf, len, 0);
+    TLSTACKPOPV(result != len)
 #else
     int r = 0;
     FILE *f = fopen("/dev/urandom", "rb");
@@ -45,7 +44,7 @@ static int platform_entropy(void *buf, const i32 len) {
         r = fread(buf, len, 1, f);
         fclose(f);
     }
-    return !r;
+    TLSTACKPOPV(!r)
 #endif
 }
 
@@ -181,6 +180,7 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 }
 
 // static b8 ulid_decode(u8 ulid[16], const i8 *s) {
+//     TLSTACKPUSHA("0x%p, 0x%p", ulid, s)
 //     static const i8 v[] = {
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -216,11 +216,11 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1
 //     };
 //     if (v[(i32)s[0]] > 7)
-//         return TRUE;
+//         TLSTACKPOPV(TRUE)
 //
 //     for (i32 i = 0; i < 26; i++)
 //         if (v[(i32)s[i]] == -1)
-//             return TRUE;
+//             TLSTACKPOPV(TRUE)
 //
 //     ulid[ 0] = v[(i32)s[ 0]] << 5 | v[(i32)s[ 1]] >> 0;
 //     ulid[ 1] = v[(i32)s[ 2]] << 3 | v[(i32)s[ 3]] >> 2;
@@ -239,7 +239,7 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //     ulid[14] = v[(i32)s[22]] << 7 | v[(i32)s[23]] << 2 | v[(i32)s[24]] >> 3;
 //     ulid[15] = v[(i32)s[24]] << 5 | v[(i32)s[25]] >> 0;
 //
-//     return FALSE;
+//     TLSTACKPOPV(FALSE)
 // }
 
 TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {

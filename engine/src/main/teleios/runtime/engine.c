@@ -6,23 +6,32 @@ static b8 running = TRUE;
 static b8 paused = FALSE;
 
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
+    TLSTACKPUSHA("0x%p", event)
+
     paused = TRUE;
 
     global->application.frame.per_second = 0;
     global->application.simulation.per_second = 0;
     TLINFO("Simulation paused")
-    return TL_EVENT_NOT_CONSUMED;
+
+    TLSTACKPOPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_closed(const TLEvent *event) {
+    TLSTACKPUSHA("0x%p", event)
+
     running = FALSE;
-    return TL_EVENT_NOT_CONSUMED;
+
+    TLSTACKPOPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_restored(const TLEvent *event) {
+    TLSTACKPUSHA("0x%p", event)
+
     paused = FALSE;
     TLINFO("Simulation resumed")
-    return TL_EVENT_NOT_CONSUMED;
+
+    TLSTACKPOPV(TL_EVENT_NOT_CONSUMED)
 }
 
 b8 tl_engine_initialize(void) {
