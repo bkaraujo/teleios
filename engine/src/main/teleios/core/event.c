@@ -45,7 +45,7 @@ b8 tl_event_subscribe(const u16 event, const PFN_handler handler) {
     TLSTACKPOPV(TRUE)
 }
 
-void tl_event_submit(const u16 event, TLEvent* data) {
+void tl_event_submit(const u16 event, const TLEvent* data) {
     TLSTACKPUSHA("%u, 0x%p", event, data)
 
     if (event >= TL_EVENT_MAXIMUM) {

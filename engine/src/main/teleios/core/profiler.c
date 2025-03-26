@@ -1,79 +1,91 @@
 #include "teleios/core.h"
 #include "teleios/globals.h"
 
+#if defined(TLPLATFORM_LINUX)
+#include <time.h>
+#include <sys/time.h>
+#endif
+
 typedef struct {
-    TLString* name;
+    const char* name;
     u64 timestamp;
     u64 ticks;
 } TLProfile;
 
-TLList* profilers = NULL;
+static TLProfile profile[U8_MAX];
 
 void tl_profiler_begin(const char *name) {
-    TLSTACKPUSHA("%s", name)
-
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    if (profilers == NULL) {
-        profilers = tl_list_create(global->platform.arena);
-    }
-
-    TLProfile* profile = tl_memory_alloc(global->platform.arena, sizeof(TLProfile), TL_MEMORY_PROFILER);
-    profile->name = tl_string_wrap(global->platform.arena, name);
-    profile->timestamp = tl_time_epoch_micros();
-    tl_list_add(profilers, profile);
-#endif
-    TLSTACKPOP
-}
-
-TLProfile* tl_profiler_current(const char *name) {
-    TLSTACKPUSHA("0x%p", name)
-    TLIterator* it = tl_list_iterator_create(profilers);
-    TLProfile* profile = NULL;
-    for (profile = tl_list_iterator_next(it) ; profile != NULL ; profile = tl_list_iterator_next(it)) {
-        if (tl_string_equals(profile->name, name)) {
-            TLSTACKPOPV(profile)
+    u32 index = 0;
+    for (u32 i = 0; i < U8_MAX; ++i) {
+        if (profile[i].name == NULL) {
+            index = i;
+            break;
         }
     }
 
-    TLSTACKPOPV(NULL)
+    profile[index].name = name;
+#if defined(TLPLATFORM_LINUX)
+    struct timeval now; gettimeofday(&now, NULL);
+    profile[index].timestamp = (u64) now.tv_sec * 1000000 + now.tv_usec;
+#elif defined(TLPLATFORM_WINDOWS)
+#erro "!!!"
+#endif
+#endif
 }
 
-void tl_profiler_tick(const char *name) {
-    TLSTACKPUSHA("%s", name)
-#if ! defined(TELEIOS_BUILD_RELEASE)
-    TLProfile* profile = tl_profiler_current(name);
-    if (profile != NULL) { profile->ticks++; }
-#endif
-    TLSTACKPOP
+static u8 tl_profiler_index(const char *name) {
+    for (u8 i = 0; i < U8_MAX; ++i) {
+        if (profile[i].name == NULL) continue;
+
+        b8 found = TRUE;
+        for (u64 j = 0; j < U64_MAX; ++j) {
+            if (profile[i].name[j] != name[j]) {
+                found = FALSE;
+                break;
+            }
+
+            if (name[j] == '\0') break;
+        }
+
+        if (found) return i;
+    }
+
+    TLFATAL("Profile [%s] not found", name)
 }
 
 u64 tl_profiler_time(const char *name) {
-    TLSTACKPUSHA("%s", name)
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    const TLProfile* profile = tl_profiler_current(name);
-    if (profile != NULL) {
-        TLSTACKPOPV(tl_time_epoch_micros() - profile->timestamp)
-    }
+    const u8 index = tl_profiler_index(name);
+#if defined(TLPLATFORM_LINUX)
+    struct timeval now = { 0 };
+    gettimeofday(&now, NULL);
+    return (uint64_t) now.tv_sec * 1000000 + now.tv_usec - profile[index].timestamp;
+#elif defined(TLPLATFORM_WINDOWS)
+#erro "!!!"
+#else
+    return U64_MAX;
 #endif
-    TLSTACKPOPV(U64_MAX)
+#endif
 }
 
-u64 tl_profiler_count(const char *name) {
-    TLSTACKPUSHA("%s", name)
+void tl_profiler_tick(const char *name) {
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    const TLProfile* profile = tl_profiler_current(name);
-    if (profile != NULL) {
-        TLSTACKPOPV(profile->ticks)
-    }
+    const u8 index = tl_profiler_index(name);
+    profile[index].ticks++;
 #endif
-    TLSTACKPOPV(U64_MAX)
+}
+
+u64 tl_profiler_ticks(const char *name) {
+#if ! defined(TELEIOS_BUILD_RELEASE)
+    const u8 index = tl_profiler_index(name);
+    return profile[index].ticks;
+#else
+    return U64_MAX;
+#endif
 }
 
 void tl_profiler_end(const char *name) {
-    TLSTACKPUSHA("%s", name)
-#if ! defined(TELEIOS_BUILD_RELEASE)
-    TLProfile* profile = tl_profiler_current(name);
-    if (profile != NULL) { tl_list_remove(profilers, profile); }
-#endif
-    TLSTACKPOP
+    const u8 index = tl_profiler_index(name);
+    TLMEMSET(&profile[index], 0, sizeof(TLProfile));
 }

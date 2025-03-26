@@ -107,7 +107,6 @@ void tl_list_add(TLList* list, void *value) {
         TLSTACKPOP
     }
 
-
     if (list->head == list->tail) {
         list->length++;
         list->tail = created;

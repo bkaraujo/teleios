@@ -48,12 +48,12 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
     // ----------------------------------------------------------------
     {
         u16 i = 0;
-        for ( ; i < 100 ; ++i) {
+        for ( ; i < STACK_SIZE_MAXIMUM ; ++i) {
             if (function[i] == '\0') break;
             global->stack[global->stack_index].function[i] = function[i];
         }
 
-        TLMEMSET(&global->stack[global->stack_index].function[i], 0, 100 - i);
+        TLMEMSET(&global->stack[global->stack_index].function[i], 0, STACK_SIZE_MAXIMUM - i);
     }
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
@@ -77,12 +77,12 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
         }
 
         u16 i = 0;
-        for ( ; i < 100 ; ++i) {
+        for ( ; i < STACK_SIZE_MAXIMUM ; ++i) {
             if (filename[index + i] == '\0') break;
             global->stack[global->stack_index].filename[i] = filename[index + i];
         }
 
-        TLMEMSET(&global->stack[global->stack_index].filename[i], 0, 100 - i);
+        TLMEMSET(&global->stack[global->stack_index].filename[i], 0, STACK_SIZE_MAXIMUM - i);
     }
 
     global->stack_index++;

@@ -3,6 +3,9 @@
 
 #include "teleios/core/types.h"
 #include "teleios/runtime/types.h"
+#include "teleios/core/libs.h"
+
+#define STACK_SIZE_MAXIMUM 10
 
 typedef struct {
     TLString* yaml;
@@ -10,7 +13,7 @@ typedef struct {
 #if ! defined(TELEIOS_BUILD_RELEASE)
     u8 stack_index;
     u8 stack_maximum;
-    TLStackFrame stack[10];
+    TLStackFrame stack[STACK_SIZE_MAXIMUM];
 #endif
 
     struct {

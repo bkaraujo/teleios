@@ -5,7 +5,7 @@
 static b8 running = TRUE;
 static b8 paused = FALSE;
 
-static TLEventStatus tl_process_window_minimized(TLEvent *event) {
+static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
     paused = TRUE;
 
     global->application.frame.per_second = 0;
@@ -14,12 +14,12 @@ static TLEventStatus tl_process_window_minimized(TLEvent *event) {
     return TL_EVENT_NOT_CONSUMED;
 }
 
-static TLEventStatus tl_process_window_closed(TLEvent *event) {
+static TLEventStatus tl_process_window_closed(const TLEvent *event) {
     running = FALSE;
     return TL_EVENT_NOT_CONSUMED;
 }
 
-static TLEventStatus tl_process_window_restored(TLEvent *event) {
+static TLEventStatus tl_process_window_restored(const TLEvent *event) {
     paused = FALSE;
     TLINFO("Simulation resumed")
     return TL_EVENT_NOT_CONSUMED;
@@ -27,7 +27,6 @@ static TLEventStatus tl_process_window_restored(TLEvent *event) {
 
 b8 tl_engine_initialize(void) {
     TLSTACKPUSH
-    tl_profiler_begin("tl_engine_initialize");
 
     global->application.frame.current = 0;
     global->application.frame.overflow = 0;
@@ -44,8 +43,7 @@ b8 tl_engine_initialize(void) {
     tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
 
 
-    TLDEBUG("Engine initialized in %llu micros", tl_profiler_time("tl_engine_initialize"));
-    tl_profiler_end("tl_engine_initialize");
+    TLDEBUG("Engine initialized in %llu micros", TLPROFILER_MICROS);
     TLSTACKPOPV(TRUE)
 }
 
@@ -125,9 +123,7 @@ b8 tl_engine_run(void) {
 
 b8 tl_engine_terminate(void) {
     TLSTACKPUSH
-    tl_profiler_begin("tl_engine_terminate");
 
-    TLDEBUG("Engine terminated in %llu micros", tl_profiler_time("tl_engine_terminate"));
-    tl_profiler_end("tl_engine_terminate");
+    TLDEBUG("Engine terminated in %llu micros", TLPROFILER_MICROS);
     TLSTACKPOPV(TRUE)
 }

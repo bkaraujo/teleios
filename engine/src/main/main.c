@@ -1,7 +1,7 @@
-#include "teleios/core.h"
-#include "teleios/runtime.h"
+#include <teleios/application/loader.h>
+
 #include "teleios/globals.h"
-#include "teleios/application/application.h"
+#include "teleios/application.h"
 
 TLGlobal *global;
 
@@ -33,24 +33,21 @@ int main (const int argc, const char *argv[]) {
         exit(99);
     }
 
-    if (!tl_application_initialize()) {
+    if (!tl_application_load()) {
         TLERROR("Application failed to initialize");
-        if (!tl_application_terminate()) TLERROR("Application failed to terminate")
-        if (!tl_platform_terminate   ()) TLFATAL("Platform failed to terminate")
+        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_engine_initialize()) {
         TLERROR("Engine failed to initialize");
-        if (!tl_engine_terminate     ()) TLERROR("Engine failed to terminate")
-        if (!tl_application_terminate()) TLERROR("Application failed to terminate")
-        if (!tl_platform_terminate   ()) TLFATAL("Platform failed to terminate")
+        if (!tl_engine_terminate  ()) TLERROR("Engine failed to terminate")
+        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
         exit(99);
     }
 
-    if (!tl_engine_run           ()) TLERROR("Engine failed to execute")
-    if (!tl_application_terminate()) TLERROR("Application failed to terminate")
-    if (!tl_engine_terminate     ()) TLERROR("Engine failed to terminate")
+    if (!tl_engine_run      ()) TLERROR("Engine failed to execute")
+    if (!tl_engine_terminate()) TLERROR("Engine failed to terminate")
 
     tl_memory_arena_destroy(global->application.frame.arena);
     tl_memory_arena_destroy(global->application.scene.arena);

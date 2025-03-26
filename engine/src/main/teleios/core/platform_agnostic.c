@@ -285,7 +285,6 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* _, const int ent
 
 b8 tl_platform_initialize(void) {
     TLSTACKPUSH
-    tl_profiler_begin("tl_platform_initialize");
 
     TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
     // --------------------------------------------------------------------------------------
@@ -394,8 +393,7 @@ b8 tl_platform_initialize(void) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    TLDEBUG("Platform initialized in %llu micros", tl_profiler_time("tl_platform_initialize"));
-    tl_profiler_end("tl_platform_initialize");
+    TLDEBUG("Platform initialized in %llu micros", TLPROFILER_MICROS);
     TLSTACKPOPV(TRUE)
 }
 
