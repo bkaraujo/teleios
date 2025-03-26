@@ -126,8 +126,8 @@ TLINLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const
 }
 
 struct TLString {
-    u64 length;
     u64 size;
+    u64 length;
     const char *text;
     TLMemoryArena *arena;
     b8 is_view;
@@ -138,10 +138,11 @@ TLINLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size
     TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
     string->is_view = FALSE;
     string->arena = arena;
-    string->size = size;
     string->length = 0;
-    if (string->size > 0)
+    if (size > 0) {
+        string->size = size + 1; // extra byte for NULL character
         string->text = tl_memory_alloc(arena, string->size, TL_MEMORY_STRING);
+    }
 
     TLSTACKPOPV(string)
 }
@@ -149,8 +150,8 @@ TLINLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
     TLSTACKPUSHA("0x%p, 0x%p", arena, string)
     TLString *clone = tl_string_reserve(arena, tl_char_length(string));
-    clone->length = clone->size;
-    tl_memory_copy((void*)clone->text, (void*)string, clone->size);
+    clone->length = clone->size - 1;
+    tl_memory_copy((void*)clone->text, (void*)string, clone->length);
     TLSTACKPOPV(clone)
 }
 
@@ -169,7 +170,7 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
  * Written by Lukás Chmela
  * Released under GPLv3.
  */
-TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, u8 base) {
+TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
     TLSTACKPUSHA("%d, %d", value, base)
 
     u32 digits = 0;
@@ -214,14 +215,14 @@ void tl_string_join(const TLString *string, const char *other) {
     TLSTACKPUSHA("0x%p, 0x%p", string, other)
     const u64 length = tl_char_length(other);
     if (length == U32_MAX || length == 0) TLFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
-    const u64 created_length = string->length + length;
-    void *created = tl_memory_alloc(string->arena, created_length, TL_MEMORY_STRING);
+    ((TLString*)string)->size = string->size + length;
+
+    void *created = tl_memory_alloc(string->arena, string->size, TL_MEMORY_STRING);
     tl_memory_copy(created, (void*)string->text, string->length);
     tl_memory_copy(created + string->length, (void*)other, length);
 
     ((TLString*)string)->text = created;
-    ((TLString*)string)->size = created_length;
-    ((TLString*)string)->length = created_length;
+    ((TLString*)string)->length = string->size - 1;
     ((TLString*)string)->is_view = FALSE;
 
     TLSTACKPOP

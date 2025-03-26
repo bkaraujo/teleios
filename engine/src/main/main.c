@@ -16,16 +16,8 @@ int main (const int argc, const char *argv[]) {
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
     global->platform.arena = tl_memory_arena_create(TLMEBIBYTES(10));
-    global->application.arena = tl_memory_arena_create(TLMEBIBYTES(10));
-    global->application.scene.arena = tl_memory_arena_create(TLMEBIBYTES(10));
-    global->application.frame.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->yaml = tl_string_clone(global->platform.arena, argv[1]);
 
-
-    global->yaml = tl_string_clone(global->application.arena, argv[1]);
-    if (!tl_serializer_read_yaml()) {
-        TLERROR("Invalid application yaml");
-        TLSTACKPOPV(99)
-    }
 
     if (!tl_platform_initialize()) {
         TLERROR("Platform failed to initialize")

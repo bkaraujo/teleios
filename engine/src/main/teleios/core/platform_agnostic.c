@@ -283,8 +283,15 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* _, const int ent
 // ########################################################
 #include "teleios/core/platform.h"
 
+static void tl_serializer_read(const char *prefix, const char *element, const char *value, u64 length);
+
 b8 tl_platform_initialize(void) {
     TLSTACKPUSH
+    global->application.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.scene.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.frame.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+
+    tl_serializer_walk(tl_serializer_read);
 
     TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
     // --------------------------------------------------------------------------------------
@@ -395,6 +402,86 @@ b8 tl_platform_initialize(void) {
 
     TLDEBUG("Platform initialized in %llu micros", TLPROFILER_MICROS);
     TLSTACKPOPV(TRUE)
+}
+
+static void tl_serializer_read(const char *prefix, const char *element, const char *value, const u64 length) {
+    TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
+
+    if (tl_char_start_with(prefix, "application.")) {
+        if (tl_char_start_with(prefix, "application.scenes.")) TLSTACKPOP
+
+        if (tl_char_equals(prefix, "application.")) {
+            if (tl_char_equals(element, "version")) {
+                global->application.version = tl_string_clone(global->platform.arena, value);
+                TLTRACE("global->application.version = %s", value)
+                TLSTACKPOP
+            }
+        }
+
+        TLSTACKPOP
+    }
+
+    if (tl_char_start_with(prefix, "engine.")) {
+        if (tl_char_equals(prefix, "engine.logging.") && tl_char_equals(element, "level")) {
+            if (tl_char_equals(value, "verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); TLSTACKPOP }
+            if (tl_char_equals(value,   "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); TLSTACKPOP }
+            if (tl_char_equals(value,   "debug")) { tl_logger_loglevel(  TL_LOG_LEVEL_DEBUG); TLSTACKPOP }
+            if (tl_char_equals(value,    "info")) { tl_logger_loglevel(   TL_LOG_LEVEL_INFO); TLSTACKPOP }
+            if (tl_char_equals(value,    "warn")) { tl_logger_loglevel(   TL_LOG_LEVEL_WARN); TLSTACKPOP }
+            if (tl_char_equals(value,   "error")) { tl_logger_loglevel(  TL_LOG_LEVEL_ERROR); TLSTACKPOP }
+            if (tl_char_equals(value,   "fatal")) { tl_logger_loglevel(  TL_LOG_LEVEL_FATAL); TLSTACKPOP }
+        }
+
+        if (tl_char_equals(prefix, "engine.graphics.")) {
+            if (tl_char_equals(element, "vsync")) {
+                global->platform.graphics.vsync = tl_char_equals(value, "true");
+                TLTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
+                TLSTACKPOP
+            }
+            if (tl_char_equals(element, "wireframe")) {
+                global->platform.graphics.wireframe = tl_char_equals(value, "true");
+                TLTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
+                TLSTACKPOP
+            }
+        }
+
+        if (tl_char_equals(prefix, "engine.simulation.") && tl_char_equals(element, "step")) {
+            u8 step = strtol(value, (void*)(value + length), 10);
+            if (step == 0) {
+                TLWARN("Failed to read [%s%s] assuming 24", prefix, value);
+                step = 24;
+            }
+
+            global->application.simulation.step = 1.0f / (f64) step;
+            TLTRACE("global->simulation.step = %f", global->application.simulation.step)
+            TLSTACKPOP
+        }
+
+        if (tl_char_equals(prefix, "engine.window.")) {
+            if (tl_char_equals(element, "title")) {
+                global->platform.window.title = tl_string_clone(global->platform.arena, value);
+                TLTRACE("global->platform.window.title = %s", value)
+                TLSTACKPOP
+            }
+
+            if (tl_char_equals(element, "size")) {
+                if (tl_char_equals(value,  "SD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
+                if (tl_char_equals(value,  "HD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
+                if (tl_char_equals(value, "FHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
+                if (tl_char_equals(value, "QHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
+                if (tl_char_equals(value, "UHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
+
+                global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
+                TLTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
+                TLSTACKPOP
+            }
+        }
+
+        TLSTACKPOP
+    }
+
+    TLWARN("Unknown prefix: %s", prefix)
+    TLSTACKPOP
 }
 
 b8 tl_platform_terminate(void) {

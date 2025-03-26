@@ -194,5 +194,5 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 // Globals
 // ---------------------------------
-
+#define TL_YAML_PROPERTY_MAX_SIZE 1024
 #endif // __TELEIOS_DEFINES__
