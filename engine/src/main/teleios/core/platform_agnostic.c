@@ -260,7 +260,12 @@ static void tl_window_callback_input_cursor_position(GLFWwindow* _, const double
 }
 
 static void tl_window_callback_input_cursor_button(GLFWwindow* _, const int button, const int action, const int mods) {
+    global->platform.input.cursor.button[button] = action == GLFW_PRESS;
 
+    TLEvent event = { 0 };
+    event.u32[0] = button;
+
+    tl_event_submit(action == GLFW_PRESS ? TL_EVENT_INPUT_CURSOR_PRESSED : TL_EVENT_INPUT_CURSOR_RELEASED, &event);
 }
 
 static void tl_window_callback_input_cursor_scroll(GLFWwindow* _, const double xoffset, const double yoffset) {
