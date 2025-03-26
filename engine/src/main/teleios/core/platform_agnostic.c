@@ -240,12 +240,19 @@ static void tl_window_callback_window_maximize(GLFWwindow* _, const i32 maximize
 //                  INPUT FUNCTIONS
 // ########################################################
 static void tl_window_callback_input_keyboard(GLFWwindow* _, const int key, const int scancode, const int action, const int mods) {
-    global->platform.input.keyboard.key[key] = action == GLFW_PRESS;
+    i32 type;
+
+    if (action == GLFW_PRESS) {
+        type = TL_EVENT_INPUT_KEY_PRESSED;
+        global->platform.input.keyboard.key[key] = TRUE;
+    } else {
+        type = TL_EVENT_INPUT_KEY_RELEASED;
+        global->platform.input.keyboard.key[key] = FALSE;
+    }
 
     TLEvent event = { 0 };
     event.u32[0] = key;
-
-    tl_event_submit(action == GLFW_PRESS ? TL_EVENT_INPUT_KEY_PRESSED : TL_EVENT_INPUT_KEY_RELEASED, &event);
+    tl_event_submit(type, &event);
 }
 
 static void tl_window_callback_input_cursor_position(GLFWwindow* _, const double xpos, const double ypos) {
@@ -260,12 +267,22 @@ static void tl_window_callback_input_cursor_position(GLFWwindow* _, const double
 }
 
 static void tl_window_callback_input_cursor_button(GLFWwindow* _, const int button, const int action, const int mods) {
+    i32 type;
+
+    if (action == GLFW_PRESS) {
+        type = TL_EVENT_INPUT_CURSOR_PRESSED;
+        global->platform.input.cursor.button[button] = TRUE;
+    } else {
+        type = TL_EVENT_INPUT_CURSOR_RELEASED;
+        global->platform.input.cursor.button[button] = FALSE;
+    }
+
     global->platform.input.cursor.button[button] = action == GLFW_PRESS;
 
     TLEvent event = { 0 };
     event.u32[0] = button;
 
-    tl_event_submit(action == GLFW_PRESS ? TL_EVENT_INPUT_CURSOR_PRESSED : TL_EVENT_INPUT_CURSOR_RELEASED, &event);
+    tl_event_submit(type, &event);
 }
 
 static void tl_window_callback_input_cursor_scroll(GLFWwindow* _, const double xoffset, const double yoffset) {
