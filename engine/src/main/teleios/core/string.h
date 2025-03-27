@@ -2,6 +2,7 @@
 #define __TELEIOS_STRING__
 
 #include "teleios/defines.h"
+#include "teleios/core/memory/types.h"
 
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string);
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string);

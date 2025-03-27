@@ -1,0 +1,14 @@
+#ifndef __TELEIOS_CORE_GRAPHICS_TYPES__
+#define __TELEIOS_CORE_GRAPHICS_TYPES__
+
+#include "teleios/defines.h"
+
+typedef enum {
+    TL_VIDEO_RESOLUTION_SD  = 480,
+    TL_VIDEO_RESOLUTION_HD  = 720,
+    TL_VIDEO_RESOLUTION_FHD = 1080,
+    TL_VIDEO_RESOLUTION_QHD = 1440,
+    TL_VIDEO_RESOLUTION_UHD = 2160
+} TLVideoResolution;
+
+#endif // __TELEIOS_CORE_GRAPHICS_TYPES__

@@ -3,116 +3,20 @@
 
 #include "teleios/defines.h"
 
+typedef struct TLList TLStack;
+typedef struct TLList TLList;
+typedef struct TLIterator TLIterator;
+typedef struct TLString TLString;
 typedef struct TLUlid TLUlid;
 typedef struct TLUlidGenerator TLUlidGenerator;
-// ---------------------------------
-// Memmory
-// ---------------------------------
-typedef enum {
-    TL_MEMORY_BLOCK,
-    TL_MEMORY_SERIALIZER,
-    TL_MEMORY_CONTAINER_STACK,
-    TL_MEMORY_CONTAINER_LIST,
-    TL_MEMORY_CONTAINER_NODE,
-    TL_MEMORY_CONTAINER_ITERATOR,
-    TL_MEMORY_STRING,
-    TL_MEMORY_ULID,
-    TL_MEMORY_PROFILER,
-    TL_MEMORY_SCENE,
-    TL_MEMORY_MAXIMUM
-} TLMemoryTag;
-
-typedef struct TLMemoryArena TLMemoryArena;
-// ---------------------------------
-// Graphics
-// ---------------------------------
-typedef enum {
-    TL_VIDEO_RESOLUTION_SD  = 480,
-    TL_VIDEO_RESOLUTION_HD  = 720,
-    TL_VIDEO_RESOLUTION_FHD = 1080,
-    TL_VIDEO_RESOLUTION_QHD = 1440,
-    TL_VIDEO_RESOLUTION_UHD = 2160
-} TLVideoResolution;
-// ---------------------------------
-// Event Handling
-// ---------------------------------
-typedef enum {
-    TL_EVENT_WINDOW_CREATED,
-    /**
-     *    event.i32[0] = width;<br>
-     *    event.i32[1] = height;
-     */
-    TL_EVENT_WINDOW_RESIZED,
-    /** No aditional data */
-    TL_EVENT_WINDOW_CLOSED,
-    /**
-     *    event.i32[0] = xPos;<br>
-     *    event.i32[1] = yPos;
-     */
-    TL_EVENT_WINDOW_MOVED,
-    /** No aditional data */
-    TL_EVENT_WINDOW_MINIMIZED,
-    /** No aditional data */
-    TL_EVENT_WINDOW_MAXIMIZED,
-    /** No aditional data */
-    TL_EVENT_WINDOW_RESTORED,
-    /** No aditional data */
-    TL_EVENT_WINDOW_FOCUS_GAINED,
-    /** No aditional data */
-    TL_EVENT_WINDOW_FOCUS_LOST,
-
-    TL_EVENT_INPUT_KEY_PRESSED,
-    TL_EVENT_INPUT_KEY_RELEASED,
-    TL_EVENT_INPUT_CURSOR_PRESSED,
-    TL_EVENT_INPUT_CURSOR_RELEASED,
-    TL_EVENT_INPUT_CURSOR_MOVED,
-    TL_EVENT_INPUT_CURSOR_SCROLLED,
-    TL_EVENT_INPUT_CURSOR_ENTERED,
-    TL_EVENT_INPUT_CURSOR_EXITED,
-
-    TL_EVENT_MAXIMUM
-} TLEventCodes;
-
-typedef union {
-    i64 i64[2];
-    u64 u64[2];
-    f64 f64[2];
-
-    i32 i32[4];
-    u32 u32[4];
-    f32 f32[4];
-
-    i16 i16[8];
-    u16 u16[8];
-
-    i8 i8[16];
-    u8 u8[16];
-} TLEvent;
-
-typedef enum {
-    TL_EVENT_CONSUMED       = 10,
-    TL_EVENT_NOT_CONSUMED   = 11,
-} TLEventStatus;
-// ---------------------------------
-// Time
-// ---------------------------------
 typedef struct {
     u16 millis;
     u16 year; u8 month; u8 day;
     u8 hour; u8 minute; u8 second;
 } TLClock;
-// ---------------------------------
-// Container
-// ---------------------------------
-typedef struct TLStack TLStack;
-typedef struct TLList TLList;
-typedef struct TLIterator TLIterator;
-typedef struct TLString TLString;
-// ---------------------------------
-// Meta Programming
-// ---------------------------------
+
 #if ! defined(TELEIOS_BUILD_RELEASE)
-typedef struct {
+typedef struct TLStackFrame {
     u64 timestamp;
     char filename[100];
     char function[100];

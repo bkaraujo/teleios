@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include "teleios/core.h"
+#include "../../core.h"
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
-#   include "teleios/globals.h"
+#include "../../globals.h"
 #endif
 
 #if defined(TLPLATFORM_WINDOWS)

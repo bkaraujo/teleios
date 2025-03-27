@@ -1,16 +1,17 @@
-#include "teleios/core.h"
-
-#if defined(TLPLATFORM_LINUX)
-#include <sys/time.h>
-#endif
-
 #if ! defined(TELEIOS_BUILD_RELEASE)
-#include <stdio.h>
-#include <stdarg.h>
-#include "teleios/globals.h"
+#   include "teleios/defines.h"
+#   include "teleios/core/logger.h"
+#   include "teleios/core/meta/trace.h"
+#   if defined(TLPLATFORM_LINUX)
+#       include <sys/time.h>
+#   endif
+#   include <stdio.h>
+#   include <stdarg.h>
+#   include "teleios/globals.h"
+#   include "teleios/core/platform/memory.h"
 #endif
 
-void tl_meta_frame_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
+void tl_trace_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
 #if ! defined(TELEIOS_BUILD_RELEASE)
     if (global->stack_index >= sizeof(global->stack) / sizeof(TLStackFrame)) {
         TLFATAL("global->stack_index exceeded")
@@ -97,7 +98,7 @@ void tl_meta_frame_push(const char* filename, const u64 lineno, const char* func
 #endif
 }
 
-void tl_meta_frame_pop() {
+void tl_trace_pop() {
 #if ! defined(TELEIOS_BUILD_RELEASE)
     if (global->stack_index == 0) TLWARN("global->stack_index is zero");
 

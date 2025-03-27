@@ -34,6 +34,12 @@ add_subdirectory(engine/libs/libyaml)
 include_directories(engine/libs/libyaml/include)
 # ==========================================
 #
+#                   PYTHON
+#
+# ==========================================
+
+# ==========================================
+#
 #                   TELIOS
 #
 # ==========================================
@@ -44,25 +50,26 @@ add_executable(${PROJECT_NAME}
         engine/src/main/main.c
         engine/src/main/glad/glad.c
 
-        engine/src/main/teleios/core/event.c
-        engine/src/main/teleios/core/string.c
-        engine/src/main/teleios/core/logger.c
-        engine/src/main/teleios/core/graphics.c
-        engine/src/main/teleios/core/container_list.c
-        engine/src/main/teleios/core/container_stack.c
-        engine/src/main/teleios/core/platform_agnostic.c
-        engine/src/main/teleios/core/platform_linux.c
-        engine/src/main/teleios/core/platform_windows.c
-        engine/src/main/teleios/core/profiler.c
-        engine/src/main/teleios/core/meta.c
-        engine/src/main/teleios/core/ulid.c
-        engine/src/main/teleios/core/serializer.c
+        engine/src/main/teleios/core/event/event.c
+        engine/src/main/teleios/core/utils/string.c
+        engine/src/main/teleios/core/utils/logger.c
+        engine/src/main/teleios/core/graphics/graphics.c
+        engine/src/main/teleios/core/container/container_list.c
+        engine/src/main/teleios/core/container/container_stack.c
+        engine/src/main/teleios/core/platform/platform_agnostic.c
+        engine/src/main/teleios/core/platform/platform_linux.c
+        engine/src/main/teleios/core/platform/platform_windows.c
+        engine/src/main/teleios/core/meta/profiler.c
+        engine/src/main/teleios/core/meta/trace.c
+        engine/src/main/teleios/core/utils/ulid.c
+        engine/src/main/teleios/core/utils/serializer.c
 
         engine/src/main/teleios/runtime/scene.c
         engine/src/main/teleios/runtime/layer.c
         engine/src/main/teleios/runtime/engine.c
 
         engine/src/main/teleios/application/application.c
+        engine/src/main/teleios/core/memory/memory.c
 )
 
 target_link_libraries(${PROJECT_NAME} glfw)

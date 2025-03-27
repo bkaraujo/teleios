@@ -1,21 +1,13 @@
-#include "teleios/core.h"
+#include "teleios/core/meta.h"
+#include "teleios/core/memory.h"
+#include "teleios/core/logger.h"
+#include "teleios/core/container/types.h"
+#include "teleios/core/container/list.h"
 
-struct TLNode {
-    void *payload;
-    struct TLNode* next;
-    struct TLNode* previous;
-};
-
-struct TLList {
-    u64 length;
-    struct TLNode* head;
-    struct TLNode* tail;
-    TLMemoryArena *arena;
-} ;
 
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
     TLSTACKPUSHA("0x%p, 0X%p", arena, value)
-    
+
     struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
     if (created == NULL) TLFATAL("Failed to allocate struct TLNode")
     created->payload = value;
@@ -52,7 +44,7 @@ void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value)) {
     if (PFN_filter == NULL) {
         TLERROR("PFN_filter is null")
         TLSTACKPOPV(NULL)
-    } 
+    }
 
     struct TLNode* node = list->head;
     while (node != NULL) {

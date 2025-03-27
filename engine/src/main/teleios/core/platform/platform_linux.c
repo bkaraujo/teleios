@@ -3,11 +3,29 @@
 #include "teleios/core.h"
 
 // ########################################################
+//                    MEMORY FUNCTIONS
+// ########################################################
+#include "teleios/core/platform/memory.h"
+void* tl_platform_memory_alloc(u64 size) {
+    return malloc(size);
+}
+
+void tl_platform_memory_free(void *block) {
+    free(block);
+}
+void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
+    memset(block, value, size);
+}
+
+void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
+    memcpy(target, source, size);
+}
+
+// ########################################################
 //                    TIME FUNCTIONS
 // ########################################################
 #include <time.h>
 #include <sys/time.h>
-#include "teleios/core/time.h"
 
 void tl_time_clock(TLClock* clock) {
     TLSTACKPUSHA("0x%p", clock)

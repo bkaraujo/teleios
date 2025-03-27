@@ -5,6 +5,7 @@
 #include "teleios/runtime/types.h"
 #include "teleios/core/libs.h"
 
+#include "teleios/core/memory/types.h"
 #define STACK_SIZE_MAXIMUM 10
 
 typedef struct {

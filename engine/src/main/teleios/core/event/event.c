@@ -1,5 +1,9 @@
-#include "teleios/core.h"
 #include "teleios/globals.h"
+#include "teleios/core/meta.h"
+#include "teleios/core/logger.h"
+#include "teleios/core/string.h"
+#include "teleios/core/event/consumer.h"
+#include "teleios/core/event/producer.h"
 
 static PFN_handler subscribers[TL_EVENT_MAXIMUM][U8_MAX] = { 0 };
 
