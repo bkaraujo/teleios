@@ -73,6 +73,10 @@ add_executable(${PROJECT_NAME}
 
         engine/src/main/teleios/application/application.c
         engine/src/main/teleios/core/memory/memory.c
+        engine/src/main/teleios/runtime/input.c
+        engine/src/main/teleios/runtime/input.h
+        engine/src/main/teleios/core.c
+        engine/src/main/teleios/runtime.c
 )
 
 

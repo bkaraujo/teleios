@@ -39,11 +39,11 @@ static TLEventStatus tl_process_window_restored(const TLEvent *event) {
 b8 tl_engine_initialize(void) {
     TLSTACKPUSH
 
-    global->application.frame.current = 0;
+    global->application.frame.number = 0;
     global->application.frame.overflow = 0;
     global->application.frame.per_second = 0;
 
-    global->application.simulation.current = 0;
+    global->application.simulation.number = 0;
     global->application.simulation.overflow = 0;
     global->application.simulation.per_second = 0;
 
@@ -72,8 +72,8 @@ b8 tl_engine_run(void) {
         lastTime += deltaTime;
 
         if (!paused) {
-            global->application.frame.current++;
-            if (global->application.frame.current == 0) {
+            global->application.frame.number++;
+            if (global->application.frame.number == 0) {
                 global->application.frame.overflow++;
                 TLWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
             }
@@ -83,8 +83,8 @@ b8 tl_engine_run(void) {
             // =========================================================
             accumulator += deltaTime;
             while (accumulator >= global->application.simulation.step) {
-                global->application.simulation.current++;
-                if (global->application.simulation.current == 0) {
+                global->application.simulation.number++;
+                if (global->application.simulation.number == 0) {
                     global->application.simulation.overflow++;
                     TLWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
                 }

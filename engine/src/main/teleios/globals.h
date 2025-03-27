@@ -69,7 +69,7 @@ typedef struct {
 
         struct {
             f64 step;
-            u32 current;
+            u32 number;
             u16 overflow;
             u16 per_second;
         } simulation;
@@ -112,7 +112,7 @@ typedef struct {
 
         struct {
             TLMemoryArena *arena;
-            u32 current;
+            u32 number;
             u16 overflow;
             u16 per_second;
 
@@ -131,6 +131,22 @@ typedef struct {
                     } cursor;
                 } input;
             } last;
+
+            struct {
+                struct {
+                    struct {
+                        b8 key[GLFW_KEY_LAST + 1];
+                    } keyboard;
+                    struct {
+                        b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
+                        u32 position_x;
+                        u32 position_y;
+                        u8 scroll_x;
+                        u8 scroll_y;
+                        b8 hoover;
+                    } cursor;
+                } input;
+            } current;
         } frame;
     } application;
 

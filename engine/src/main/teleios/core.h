@@ -15,4 +15,7 @@
 #include "teleios/core/libs.h"
 #include "teleios/core/script.h"
 
+b8 tl_core_initialize(void);
+b8 tl_core_terminate(void);
+
 #endif // __TELEIOS_CORE__
