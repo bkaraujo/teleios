@@ -3,6 +3,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_BUILD_TYPE debug)
 
 project(teleios C)
+
 # ==========================================
 #
 #                   GLFW
@@ -34,9 +35,10 @@ add_subdirectory(engine/libs/libyaml)
 include_directories(engine/libs/libyaml/include)
 # ==========================================
 #
-#                   PYTHON
+#                   LUA
 #
 # ==========================================
+add_subdirectory(engine/libs/liblua)
 
 # ==========================================
 #
@@ -63,6 +65,7 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/core/meta/trace.c
         engine/src/main/teleios/core/utils/ulid.c
         engine/src/main/teleios/core/utils/serializer.c
+        engine/src/main/teleios/core/script/scrpit.c
 
         engine/src/main/teleios/runtime/scene.c
         engine/src/main/teleios/runtime/layer.c
@@ -72,7 +75,16 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/core/memory/memory.c
 )
 
+
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PUBLIC /W4 /permissive)
+else ()
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra)
+endif()
+
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} cglm)
 target_link_libraries(${PROJECT_NAME} yaml)
+target_link_libraries(${PROJECT_NAME} lua_static)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "teleios")

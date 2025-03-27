@@ -11,7 +11,7 @@
         TLSTACKPOP                      \
 }
 
-static void tl_serializer_load_scene(const char *prefix, const char *element, const char *value, u64 length) {
+static void tl_serializer_load_scene(const char *prefix, const char *element, const char *value) {
     TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
 
     // Ensure the right [application.scenes.#] is being parsed
@@ -181,7 +181,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
     TLSTACKPOP
 }
 
-static void tl_serializer_find_scene(const char *prefix, const char *element, const char *value, u64 length) {
+static void tl_serializer_find_scene(const char *prefix, const char *element, const char *value) {
     TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
 
     if ( ! tl_char_equals(prefix, global->application.scene.prefix) ) TLSTACKPOP

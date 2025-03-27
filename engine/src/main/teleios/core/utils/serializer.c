@@ -14,7 +14,7 @@ typedef struct {
     u32 sequence;
 } TLTuple;
 
-void tl_serializer_walk(void (*processor)(const char* prefix, const char* block, const char *value, u64 length)) {
+void tl_serializer_walk(void (*processor)(const char* prefix, const char* block, const char *value)) {
     TLSTACKPUSHA("%s", tl_string(global->yaml))
     FILE* file = fopen(tl_string(global->yaml), "r");
     if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
@@ -138,7 +138,7 @@ void tl_serializer_walk(void (*processor)(const char* prefix, const char* block,
             // YAML_SCALAR_TOKEN
             // #########################################################################################################
             case YAML_SCALAR_TOKEN: {
-                processor(prefix, block, (const char*)token.data.scalar.value, token.data.scalar.length);
+                processor(prefix, block, (const char*)token.data.scalar.value);
             } break;
             // #########################################################################################################
             // YAML_BLOCK_END_TOKEN

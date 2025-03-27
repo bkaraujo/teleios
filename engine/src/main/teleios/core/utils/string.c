@@ -22,7 +22,7 @@ TLINLINE u32 tl_char_last_index(const char *string, const char token) {
     TLSTACKPUSHA("0x%p, %c", string, token)
     u32 index = 0;
     const char* s = string;
-    for (u16 i = 0; *s != '\0' ; ++s) {
+    for (u32 i = 0; *s != '\0' ; ++s) {
         if (*s == token) {
             index = i + 1;
         }
@@ -39,7 +39,7 @@ TLINLINE u32 tl_char_last_index(const char *string, const char token) {
 TLINLINE u32 tl_char_index_of(const char *string, const char token) {
     TLSTACKPUSHA("0x%p, %c", string, token)
     const char* s = string;
-    for (u16 i = 0; *s != '\0' ; ++s) {
+    for (u32 i = 0; *s != '\0' ; ++s) {
         if (*s == token) {
             TLSTACKPOPV(i)
         }

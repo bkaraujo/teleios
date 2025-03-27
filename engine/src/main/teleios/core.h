@@ -13,5 +13,6 @@
 #include "teleios/core/graphics.h"
 
 #include "teleios/core/libs.h"
+#include "teleios/core/script.h"
 
 #endif // __TELEIOS_CORE__

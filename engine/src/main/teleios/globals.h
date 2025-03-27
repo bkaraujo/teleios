@@ -57,6 +57,10 @@ typedef struct {
                 b8 hoover;
             } cursor;
         } input;
+
+        struct {
+            lua_State *state;
+        } script;
     } platform;
 
     struct {

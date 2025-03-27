@@ -4,7 +4,7 @@
 // ########################################################
 //                  WINDOWING FUNCTIONS
 // ########################################################
-static void tl_window_callback_window_closed(GLFWwindow* _) {
+static void tl_window_callback_window_closed(GLFWwindow* window) {
     tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
 }
 
@@ -19,7 +19,7 @@ static void tl_window_callback_window_pos(GLFWwindow* _, const int xPos, const i
     tl_event_submit(TL_EVENT_WINDOW_MOVED, &event);
 }
 
-static void tl_window_callback_window_size(GLFWwindow* _, const int width, const int height) {
+static void tl_window_callback_window_size(GLFWwindow* window, const int width, const int height) {
     global->platform.window.size.x = width;
     global->platform.window.size.y = height;
 
@@ -30,20 +30,20 @@ static void tl_window_callback_window_size(GLFWwindow* _, const int width, const
     tl_event_submit(TL_EVENT_WINDOW_RESIZED, &event);
 }
 
-static void tl_window_callback_window_focus(GLFWwindow* _, const i32 focused) {
+static void tl_window_callback_window_focus(GLFWwindow* window, const i32 focused) {
     global->platform.window.focused = focused;
 
     tl_event_submit(focused ? TL_EVENT_WINDOW_FOCUS_GAINED : TL_EVENT_WINDOW_FOCUS_LOST, NULL);
 }
 
-static void tl_window_callback_window_minimized(GLFWwindow* _, const i32 minimized) {
+static void tl_window_callback_window_minimized(GLFWwindow* window, const i32 minimized) {
     global->platform.window.maximized = FALSE;
     global->platform.window.minimized = minimized;
 
     tl_event_submit(minimized ? TL_EVENT_WINDOW_MINIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
 
-static void tl_window_callback_window_maximize(GLFWwindow* _, const i32 maximized) {
+static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 maximized) {
     global->platform.window.maximized = maximized;
     global->platform.window.minimized = FALSE;
 
@@ -52,7 +52,7 @@ static void tl_window_callback_window_maximize(GLFWwindow* _, const i32 maximize
 // ########################################################
 //                  INPUT FUNCTIONS
 // ########################################################
-static void tl_window_callback_input_keyboard(GLFWwindow* _, const int key, const int scancode, const int action, const int mods) {
+static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key, const int scancode, const int action, const int mods) {
     i32 type;
 
     if (action == GLFW_PRESS) {
@@ -68,7 +68,7 @@ static void tl_window_callback_input_keyboard(GLFWwindow* _, const int key, cons
     tl_event_submit(type, &event);
 }
 
-static void tl_window_callback_input_cursor_position(GLFWwindow* _, const double xpos, const double ypos) {
+static void tl_window_callback_input_cursor_position(GLFWwindow* window, const double xpos, const double ypos) {
     global->platform.input.cursor.position_x = (u32) xpos;
     global->platform.input.cursor.position_y = (u32) ypos;
 
@@ -79,7 +79,7 @@ static void tl_window_callback_input_cursor_position(GLFWwindow* _, const double
     tl_event_submit(TL_EVENT_INPUT_CURSOR_MOVED, &event);
 }
 
-static void tl_window_callback_input_cursor_button(GLFWwindow* _, const int button, const int action, const int mods) {
+static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int button, const int action, const int mods) {
     i32 type;
 
     if (action == GLFW_PRESS) {
@@ -98,7 +98,7 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* _, const int butt
     tl_event_submit(type, &event);
 }
 
-static void tl_window_callback_input_cursor_scroll(GLFWwindow* _, const double xoffset, const double yoffset) {
+static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const double xoffset, const double yoffset) {
     global->platform.input.cursor.scroll_x = xoffset > 0 ? 1 : xoffset < 0 ? -1 : 0;
     global->platform.input.cursor.scroll_y = yoffset > 0 ? 1 : yoffset < 0 ? -1 : 0;
 
@@ -109,7 +109,7 @@ static void tl_window_callback_input_cursor_scroll(GLFWwindow* _, const double x
     tl_event_submit(TL_EVENT_INPUT_CURSOR_SCROLLED, &event);
 }
 
-static void tl_window_callback_input_cursor_entered(GLFWwindow* _, const int entered) {
+static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const int entered) {
     global->platform.input.cursor.hoover = entered == GLFW_TRUE;
     tl_event_submit(entered ? TL_EVENT_INPUT_CURSOR_ENTERED : TL_EVENT_INPUT_CURSOR_EXITED, NULL);
 }
@@ -118,7 +118,7 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* _, const int ent
 // ########################################################
 #include "teleios/core/platform.h"
 
-static void tl_serializer_read(const char *prefix, const char *element, const char *value, u64 length);
+static void tl_serializer_read(const char *prefix, const char *element, const char *value);
 
 b8 tl_platform_initialize(void) {
     TLSTACKPUSH
@@ -208,38 +208,23 @@ b8 tl_platform_initialize(void) {
     // --------------------------------------------------------------------------------------
     // Initialize graphics
     // --------------------------------------------------------------------------------------
-    glfwMakeContextCurrent(global->platform.window.handle);
-
-    TLDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        TLERROR("Failed to initialize GLAD")
+    if (!tl_graphics_initialize()) {
+        TLERROR("Failed to initialize Graphics API")
         TLSTACKPOPV(FALSE)
     }
-
-    TLDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
-
-    if (global->platform.graphics.vsync) {
-        TLDEBUG("vsync: on")
-        glfwSwapInterval(1);
-    } else {
-        TLDEBUG("vsync: off")
-        glfwSwapInterval(0);
-    }
-
-    if (global->platform.graphics.wireframe) {
-        TLDEBUG("wireframe: on")
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    } else {
-        TLDEBUG("wireframe: off")
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // --------------------------------------------------------------------------------------
+    // Initialize graphics
+    // --------------------------------------------------------------------------------------
+    if (!tl_script_initialize()) {
+        TLERROR("Failed to initialize Script API")
+        TLSTACKPOPV(FALSE)
     }
 
     TLDEBUG("Platform initialized in %llu micros", TLPROFILER_MICROS);
     TLSTACKPOPV(TRUE)
 }
 
-static void tl_serializer_read(const char *prefix, const char *element, const char *value, const u64 length) {
+static void tl_serializer_read(const char *prefix, const char *element, const char *value) {
     TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
 
     if (tl_char_start_with(prefix, "application.")) {
@@ -281,7 +266,7 @@ static void tl_serializer_read(const char *prefix, const char *element, const ch
         }
 
         if (tl_char_equals(prefix, "engine.simulation.") && tl_char_equals(element, "step")) {
-            u8 step = strtol(value, (void*)(value + length), 10);
+            u8 step = strtol(value, (void*)(value + tl_char_length(value)), 10);
             if (step == 0) {
                 TLWARN("Failed to read [%s%s] assuming 24", prefix, value);
                 step = 24;
@@ -322,7 +307,9 @@ static void tl_serializer_read(const char *prefix, const char *element, const ch
 b8 tl_platform_terminate(void) {
     TLSTACKPUSH
 
-    tl_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
+    if (!tl_script_terminate()) TLERROR("Failed to terminate script engine");
+    if (!tl_graphics_terminate()) TLERROR("Failed to terminate graphics engine");
+
     glfwTerminate();
 
     TLSTACKPOPV(TRUE)
