@@ -6,7 +6,8 @@
 //                    MEMORY FUNCTIONS
 // ########################################################
 #include "teleios/core/platform/memory.h"
-void* tl_platform_memory_alloc(u64 size) {
+
+void* tl_platform_memory_alloc(const u64 size) {
     return malloc(size);
 }
 

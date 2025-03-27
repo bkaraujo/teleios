@@ -54,12 +54,12 @@ void tl_trace_push(const char* filename, const u64 lineno, const char* function,
             global->stack[global->stack_index].function[i] = function[i];
         }
 
-        TLMEMSET(&global->stack[global->stack_index].function[i], 0, STACK_SIZE_MAXIMUM - i);
+        tl_platform_memory_set(&global->stack[global->stack_index].function[i], 0, STACK_SIZE_MAXIMUM - i);
     }
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
     // ----------------------------------------------------------------
-    TLMEMSET(global->stack[global->stack_index].arguments, 0, 1024);
+    tl_platform_memory_set(global->stack[global->stack_index].arguments, 0, 1024);
     if (arguments != NULL){
         __builtin_va_list arg_ptr;
         va_start(arg_ptr, arguments);
@@ -83,7 +83,7 @@ void tl_trace_push(const char* filename, const u64 lineno, const char* function,
             global->stack[global->stack_index].filename[i] = filename[index + i];
         }
 
-        TLMEMSET(&global->stack[global->stack_index].filename[i], 0, STACK_SIZE_MAXIMUM - i);
+        tl_platform_memory_set(&global->stack[global->stack_index].filename[i], 0, STACK_SIZE_MAXIMUM - i);
     }
 
     global->stack_index++;

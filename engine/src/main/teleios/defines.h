@@ -162,22 +162,6 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #   define TLINLINE static inline
 #   define TLNOINLINE
 #endif
-
-#if defined(__GNUC__)
-#   define TLALLOCA(s) __builtin_alloca(s)
-#   define TLMALLOC(s) __builtin_malloc(s)
-#   define TLFREE(p) __builtin_free(p)
-#   define TLMEMSET(p,v,s) __builtin_memset(p, v, s)
-#   define TLMEMCPY(p,s,sx) __builtin_memcpy(p, s, sx)
-#elif defined(_MSC_VER)
-#   define TLALLOCA(s) alloca(s)
-#   define TLMALLOC(s) malloc(s)
-#   define TLFREE(p) free(p)
-#   define TLMEMSET(p,v,s) memset(p, v, s)
-#   define TLMEMCPY(p,s,sx) memcpy(p, s, sx)
-#else
-#   error "Unknown compiler!"
-#endif
 // ---------------------------------
 // Helper Functions
 // ---------------------------------

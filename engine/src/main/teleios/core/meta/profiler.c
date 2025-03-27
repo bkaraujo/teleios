@@ -1,5 +1,6 @@
 #include "teleios/core.h"
 #include "teleios/globals.h"
+#include "teleios/core/platform/memory.h"
 
 #if defined(TLPLATFORM_LINUX)
 #include <time.h>
@@ -87,5 +88,5 @@ u64 tl_profiler_ticks(const char *name) {
 
 void tl_profiler_end(const char *name) {
     const u8 index = tl_profiler_index(name);
-    TLMEMSET(&profile[index], 0, sizeof(TLProfile));
+    tl_platform_memory_set(&profile[index], 0, sizeof(TLProfile));
 }

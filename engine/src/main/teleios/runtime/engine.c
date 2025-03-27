@@ -1,3 +1,5 @@
+#include <teleios/core/platform/memory.h>
+
 #include "teleios/core.h"
 #include "teleios/runtime.h"
 #include "teleios/globals.h"
@@ -112,7 +114,7 @@ b8 tl_engine_run(void) {
         // =========================================================
         tl_time_clock(&t2);
         if (t1.second != t2.second) {
-            TLMEMCPY(&t1, &t2, sizeof(TLClock));
+            tl_platform_memory_copy(&t1, &t2, sizeof(TLClock));
             TLDEBUG("FPS %llu, UPS %llu", global->application.frame.per_second, global->application.simulation.per_second);
             global->application.frame.per_second = global->application.simulation.per_second = 0;
         }
