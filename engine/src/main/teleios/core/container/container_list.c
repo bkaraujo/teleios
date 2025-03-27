@@ -1,9 +1,5 @@
-#include "teleios/core/meta.h"
-#include "teleios/core/memory.h"
-#include "teleios/core/logger.h"
+#include "teleios/core.h"
 #include "teleios/core/container/types.h"
-#include "teleios/core/container/list.h"
-
 
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
     TLSTACKPUSHA("0x%p, 0X%p", arena, value)

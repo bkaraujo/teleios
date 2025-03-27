@@ -1,6 +1,5 @@
-#include "teleios/globals.h"
-#include "teleios/defines.h"
 #include "teleios/core.h"
+#include "teleios/globals.h"
 
 #include <ctype.h>
 #include <stdio.h>

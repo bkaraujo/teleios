@@ -1,8 +1,5 @@
 #include "teleios/globals.h"
-#include "teleios/core/logger.h"
-#include "teleios/core/meta.h"
-#include "teleios/core/memory/arena.h"
-#include "teleios/core/memory/operator.h"
+#include "teleios/core.h"
 #include "teleios/core/platform/memory.h"
 
 typedef struct {

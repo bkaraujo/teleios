@@ -1,7 +1,7 @@
 #ifndef __TELEIOS_CORE_CONTAINER_TYPES__
 #define __TELEIOS_CORE_CONTAINER_TYPES__
 
-#include "teleios/core/memory/types.h"
+#include "teleios/core/types.h"
 
 struct TLNode {
     void *payload;

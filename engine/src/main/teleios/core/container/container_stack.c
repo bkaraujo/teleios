@@ -1,9 +1,5 @@
-#include "teleios/core/meta.h"
-#include "teleios/core/memory.h"
-#include "teleios/core/logger.h"
+#include "teleios/core.h"
 #include "teleios/core/container/types.h"
-#include "teleios/core/container/list.h"
-#include "teleios/core/container/stack.h"
 
 TLStack* tl_stack_create(TLMemoryArena *arena)  {
     TLSTACKPUSHA("0x%p", arena)

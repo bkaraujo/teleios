@@ -1,7 +1,5 @@
 #if ! defined(TELEIOS_BUILD_RELEASE)
-#   include "teleios/defines.h"
-#   include "teleios/core/logger.h"
-#   include "teleios/core/meta/trace.h"
+#   include "teleios/core.h"
 #   if defined(TLPLATFORM_LINUX)
 #       include <sys/time.h>
 #   endif
