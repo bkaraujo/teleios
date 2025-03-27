@@ -7,18 +7,18 @@
 // ########################################################
 #include "teleios/core/platform/memory.h"
 
-void* tl_platform_memory_alloc(const u64 size) {
+TLINLINE void* tl_platform_memory_alloc(const u64 size) {
     return malloc(size);
 }
 
-void tl_platform_memory_free(void *block) {
+TLINLINE void tl_platform_memory_free(void *block) {
     free(block);
 }
-void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
+TLINLINE void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
     memset(block, value, size);
 }
 
-void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
+TLINLINE void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
     memcpy(target, source, size);
 }
 
