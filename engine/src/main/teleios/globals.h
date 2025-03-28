@@ -1,9 +1,9 @@
 #ifndef __TELEIOS_GLOBALS__
 #define __TELEIOS_GLOBALS__
 
-#include "teleios/core/types.h"
-#include "teleios/runtime/types.h"
+#include "teleios/runtime.h"
 #include "teleios/core/libs.h"
+#include "teleios/runtime/libs.h"
 
 #define STACK_SIZE_MAXIMUM 10
 

@@ -52,31 +52,10 @@ add_executable(${PROJECT_NAME}
         engine/src/main/main.c
         engine/src/main/glad/glad.c
 
-        engine/src/main/teleios/core/event/event.c
-        engine/src/main/teleios/core/utils/string.c
-        engine/src/main/teleios/core/utils/logger.c
-        engine/src/main/teleios/core/graphics/graphics.c
-        engine/src/main/teleios/core/container/container_list.c
-        engine/src/main/teleios/core/container/container_stack.c
-        engine/src/main/teleios/core/platform/platform_agnostic.c
-        engine/src/main/teleios/core/platform/platform_linux.c
-        engine/src/main/teleios/core/platform/platform_windows.c
-        engine/src/main/teleios/core/meta/profiler.c
-        engine/src/main/teleios/core/meta/trace.c
-        engine/src/main/teleios/core/utils/ulid.c
-        engine/src/main/teleios/core/utils/serializer.c
-        engine/src/main/teleios/core/script/scrpit.c
-
-        engine/src/main/teleios/runtime/scene.c
-        engine/src/main/teleios/runtime/layer.c
-        engine/src/main/teleios/runtime/engine.c
-
-        engine/src/main/teleios/application/application.c
-        engine/src/main/teleios/core/memory/memory.c
-        engine/src/main/teleios/runtime/input.c
-        engine/src/main/teleios/runtime/input.h
         engine/src/main/teleios/core.c
         engine/src/main/teleios/runtime.c
+        engine/src/main/teleios/system.c
+        engine/src/main/teleios/application.c
 )
 
 

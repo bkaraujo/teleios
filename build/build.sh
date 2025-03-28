@@ -32,8 +32,8 @@ done
 # -----------------------------------------
 # Build the target
 # -----------------------------------------
-echo "cmake --build $BUILDFS -j$(expr $(hwinfo --cpu --short | wc -l) - 1)"
-cmake --build $BUILDFS -j$(expr $(hwinfo --cpu --short | wc -l) - 1)
+echo "cmake --build $BUILDFS -j$(expr $(cat /proc/cpuinfo | grep 'model name' | wc -l) - 1)"
+cmake --build $BUILDFS -j$(expr $(cat /proc/cpuinfo | grep 'model name' | wc -l) - 1)
 RESULT=$?
 
 if [[ $RESULT -ne 0 ]]; then

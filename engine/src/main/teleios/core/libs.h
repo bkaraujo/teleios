@@ -1,5 +1,5 @@
-#ifndef __TELEIOS__LIBS__
-#define __TELEIOS__LIBS__
+#ifndef __TELEIOS_CORE_LIBS__
+#define __TELEIOS_CORE_LIBS__
 
 #include <glad/glad.h>
 
@@ -11,8 +11,4 @@
 
 #include <yaml.h>
 
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
-#endif //__TELEIOS__LIBS__
+#endif //__TELEIOS_CORE_LIBS__

@@ -178,5 +178,25 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 // Globals
 // ---------------------------------
+
+typedef struct TLList TLStack;
+typedef struct TLList TLList;
+typedef struct TLIterator TLIterator;
+typedef struct TLString TLString;
+typedef struct TLUlid TLUlid;
+typedef struct TLUlidGenerator TLUlidGenerator;
+typedef struct TLMemoryArena TLMemoryArena;
+
+#if ! defined(TELEIOS_BUILD_RELEASE)
+typedef struct TLStackFrame {
+    u64 timestamp;
+    char filename[100];
+    char function[100];
+    char arguments[1024];
+    u32 lineno;
+} TLStackFrame;
+#endif
+
 #define TL_YAML_PROPERTY_MAX_SIZE 1024
+
 #endif // __TELEIOS_DEFINES__

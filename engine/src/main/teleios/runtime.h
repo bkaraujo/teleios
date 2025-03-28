@@ -2,10 +2,13 @@
 #define __TELEIOS_RUNTIME__
 
 #include "teleios/defines.h"
-#include "teleios/runtime/types.h"
-#include "teleios/runtime/scene.h"
-#include "teleios/runtime/engine.h"
-#include "teleios/runtime/layer.h"
+#include "teleios/runtime/memory.h"
+#include "teleios/runtime/container.h"
+#include "teleios/runtime/serializer.h"
+#include "teleios/runtime/script.h"
+#include "teleios/runtime/input.h"
+#include "teleios/runtime/ulid.h"
+#include "teleios/runtime/string.h"
 
 b8 tl_runtime_initialize(void);
 b8 tl_runtime_terminate(void);
