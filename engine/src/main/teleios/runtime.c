@@ -539,32 +539,43 @@ u64 tl_stack_length(TLStack* stack) {
     TLSTACKPUSHA("0x%p", stack)
     TLSTACKPOPV(tl_list_length(stack))
 }
-
 // #####################################################################################################################
 //
 //                                                     INPUT
 //
 // #####################################################################################################################
+void tl_input_update() {
+    tl_memory_copy(
+        &global->application.frame.last.input,
+        &global->application.frame.current.input,
+        sizeof(global->platform.input)
+    );
+
+    tl_memory_copy(
+        &global->application.frame.current.input,
+        &global->platform.input,
+        sizeof(global->platform.input)
+    );
+}
 
 b8 tl_input_is_key_active(const i32 key) {
     TLSTACKPUSHA("%d", key)
-    const b8 result = global->platform.input.keyboard.key[key];
-    TLSTACKPOPV(result)
+    const b8 is_active = global->application.frame.current.input.keyboard.key[key];
+    TLSTACKPOPV(is_active)
 }
 
 b8 tl_input_is_key_pressed(const i32 key) {
     TLSTACKPUSHA("%d", key)
-    TLINFO("????")
-    const b8 frame_previous = global->application.frame.last.input.keyboard.key[key];
-    const b8 frame_current = global->application.frame.current.input.keyboard.key[key];
-    TLSTACKPOPV(!frame_previous && frame_current)
+    const b8 is_active = global->application.frame.current.input.keyboard.key[key];
+    const b8 were_active = global->application.frame.last.input.keyboard.key[key];
+    TLSTACKPOPV(!were_active & is_active)
 }
 
 b8 tl_input_is_key_released(const i32 key) {
     TLSTACKPUSHA("%d", key)
-    const b8 frame_previous = global->application.frame.last.input.keyboard.key[key];
-    const b8 frame_current = global->application.frame.current.input.keyboard.key[key];
-    TLSTACKPOPV(frame_previous && !frame_current)
+    const b8 is_active = global->application.frame.current.input.keyboard.key[key];
+    const b8 were_active = global->application.frame.last.input.keyboard.key[key];
+    TLSTACKPOPV(were_active & !is_active)
 }
 // #####################################################################################################################
 //
@@ -967,38 +978,54 @@ void tl_serializer_walk(void (*processor)(const char* prefix, const char* block,
 //                                                     SCRIPT
 //
 // #####################################################################################################################
-#define ERROR(s) TLSTACKPOPV(luaL_error(state, s))
+#define TLSCRIPTERR(s) TLSTACKPOPV(luaL_error(state, s))
 
-i32 tl_script_api__is_key_pressed(lua_State *state) {
+static i32 tl_script__application_exit(lua_State *state) {
     TLSTACKPUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
-    if (lua_gettop(state) != 1) ERROR("Expected a single value: isKeyPressed(KEY)")
-    if (!lua_isnumber(state, 1)) ERROR("parameter [KEY] must be a valid key")
+    if (lua_gettop(state) != 0) TLSCRIPTERR("No parameter were expected.")
+    // =========================================================================
+    // Request execution
+    // =========================================================================
+    tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
+    // =========================================================================
+    // LUA stack push
+    // =========================================================================
+    TLSTACKPOPV(0)
+}
+
+static i32 tl_script__is_key_pressed(lua_State *state) {
+    TLSTACKPUSHA("0x%p", state)
+    // =========================================================================
+    // Parameters validation
+    // =========================================================================
+    if (lua_gettop(state) != 1) TLSCRIPTERR("Expected a single value: isKeyPressed(KEY)")
+    if (!lua_isinteger(state, 1)) TLSCRIPTERR("parameter [KEY] must be a valid key")
     // =========================================================================
     // Request execution
     // =========================================================================
     const i32 key = lua_tonumber(state, 1);
-    lua_pushnumber(state, tl_input_is_key_pressed(key));
+    lua_pushboolean(state, tl_input_is_key_pressed(key));
     // =========================================================================
     // LUA stack push
     // =========================================================================
     TLSTACKPOPV(1)
 }
 
-i32 tl_script_api__is_key_released(lua_State *state) {
+static i32 tl_script__is_key_released(lua_State *state) {
     TLSTACKPUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
-    if (lua_gettop(state) != 1) ERROR("Expected a single value: isKeyReleased(KEY)")
-    if (!lua_isnumber(state, 1)) ERROR("parameter [KEY] must be a valid key")
+    if (lua_gettop(state) != 1) TLSCRIPTERR("Expected a single value: isKeyReleased(KEY)")
+    if (!lua_isinteger(state, 1)) TLSCRIPTERR("parameter [KEY] must be a valid key")
     // =========================================================================
     // Request execution
     // =========================================================================
     const i32 key = lua_tonumber(state, 1);
-    lua_pushnumber(state, tl_input_is_key_released(key));
+    lua_pushboolean(state, tl_input_is_key_released(key));
     // =========================================================================
     // LUA stack push
     // =========================================================================
@@ -1016,22 +1043,22 @@ b8 tl_script_initialize(void) {
 
     luaL_openlibs(global->platform.script.state);
 
-    // Tabela para registrar as funções
-    static const luaL_Reg functions[] = {
-        {"isKeyPressed", tl_script_api__is_key_pressed},
-        {"isKeyReleased", tl_script_api__is_key_released},
+    const luaL_Reg teleios_input[] = {
+        {"isKeyPressed", tl_script__is_key_pressed},
+        {"isKeyReleased", tl_script__is_key_released},
         {NULL, NULL}
     };
 
-    luaL_newlib(global->platform.script.state, functions);
+    luaL_newlib(global->platform.script.state, teleios_input);
     lua_setglobal(global->platform.script.state, "teleios_input");
 
-    {
-        if (luaL_dofile(global->platform.script.state, "/mnt/nvme1/Cloud/Google/Trabalho/bkraujo/teleios/sandbox/assets/scripts/environment.lua") != LUA_OK) {
-            fprintf(stderr, "Erro ao executar arquivo: %s\n", lua_tostring(global->platform.script.state, -1));
-        }
-    }
+    const luaL_Reg teleios_application[] = {
+        {"exit", tl_script__application_exit},
+        {NULL, NULL}
+    };
 
+    luaL_newlib(global->platform.script.state, teleios_application);
+    lua_setglobal(global->platform.script.state, "teleios_application");
 
     TLSTACKPOPV(TRUE)
 }
@@ -1468,8 +1495,9 @@ static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 max
 }
 
 static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key, const int scancode, const int action, const int mods) {
-    i32 type;
+    if (action == GLFW_REPEAT) return;
 
+    i32 type;
     if (action == GLFW_PRESS) {
         type = TL_EVENT_INPUT_KEY_PRESSED;
         global->platform.input.keyboard.key[key] = TRUE;

@@ -141,6 +141,13 @@ b8 tl_application_run(void) {
             global->application.frame.per_second++;
             glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+            {
+                if (luaL_dofile(global->platform.script.state, "/mnt/nvme1/Cloud/Google/Trabalho/bkraujo/teleios/sandbox/assets/scripts/environment.lua") != LUA_OK) {
+                    fprintf(stderr, "Erro ao executar arquivo: %s\n", lua_tostring(global->platform.script.state, -1));
+                }
+            }
+
             // =========================================================
             // Rendering Pass
             // =========================================================
@@ -164,6 +171,8 @@ b8 tl_application_run(void) {
         // Cleanup Pass
         // =========================================================
         glfwPollEvents();
+        tl_input_update();
+
         tl_memory_arena_reset(global->application.frame.arena);
     }
 

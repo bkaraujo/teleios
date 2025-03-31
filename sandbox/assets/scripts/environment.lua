@@ -1,2 +1,3 @@
- print("Lua SCRIPT")
-teleios_input.isKeyPressed(17)
+if (teleios_input.isKeyReleased(256)) then
+    teleios_application.exit()
+end

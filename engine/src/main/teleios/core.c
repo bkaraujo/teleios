@@ -107,7 +107,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     const char* character = filename;
     for (u16 i = 0; *character != '\0' ; ++character) {
         if (*character == '/') { index = i + 1; }
-        if (++i == U32_MAX) { i = 0; }
+        if (i++ == U32_MAX) { i = 0; }
     }
 
     TLClock clock; tl_time_clock(&clock);
