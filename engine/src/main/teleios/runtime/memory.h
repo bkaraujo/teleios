@@ -1,6 +1,8 @@
 #ifndef __TELEIOS_RUNTIME_MEMORY__
 #define __TELEIOS_RUNTIME_MEMORY__
 
+#include "teleios/defines.h"
+
 typedef enum {
     TL_MEMORY_BLOCK,
     TL_MEMORY_SERIALIZER,
@@ -14,8 +16,6 @@ typedef enum {
     TL_MEMORY_SCENE,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
-
-#include "teleios/defines.h"
 
 TLMemoryArena* tl_memory_arena_create(u64 size);
 void tl_memory_arena_destroy(TLMemoryArena *arena);

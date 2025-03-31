@@ -6,7 +6,6 @@
 //                                                     MEMORY
 //
 // #####################################################################################################################
-
 typedef struct {
     u64 index;
     char *payload;
@@ -196,7 +195,6 @@ void tl_memory_copy(void *target, void *source, const u64 size) {
 //                                                     CONTAINER
 //
 // #####################################################################################################################
-
 struct TLNode {
     void *payload;
     struct TLNode* next;
@@ -556,6 +554,7 @@ b8 tl_input_is_key_active(const i32 key) {
 
 b8 tl_input_is_key_pressed(const i32 key) {
     TLSTACKPUSHA("%d", key)
+    TLINFO("????")
     const b8 frame_previous = global->application.frame.last.input.keyboard.key[key];
     const b8 frame_current = global->application.frame.current.input.keyboard.key[key];
     TLSTACKPOPV(!frame_previous && frame_current)
@@ -707,7 +706,7 @@ u32 tl_string_length(TLString *string) {
 
 u32 tl_string_index_of(TLString* string, const char token) {
     TLSTACKPUSHA("0x%p, %s", string, token)
-    for (u64 i = 0; i < string->length; i++) {
+    for (u64 i = 0; i < string->length; ++i) {
         if (string->text[i] == token) TLSTACKPOPV(i);
     }
     TLSTACKPOPV(U32_MAX)
@@ -972,20 +971,38 @@ void tl_serializer_walk(void (*processor)(const char* prefix, const char* block,
 
 i32 tl_script_api__is_key_pressed(lua_State *state) {
     TLSTACKPUSHA("0x%p", state)
-
+    // =========================================================================
+    // Parameters validation
+    // =========================================================================
     if (lua_gettop(state) != 1) ERROR("Expected a single value: isKeyPressed(KEY)")
     if (!lua_isnumber(state, 1)) ERROR("parameter [KEY] must be a valid key")
-
+    // =========================================================================
+    // Request execution
+    // =========================================================================
     const i32 key = lua_tonumber(state, 1);
-    lua_pushnumber(state, global->platform.input.keyboard.key[key]);
-
+    lua_pushnumber(state, tl_input_is_key_pressed(key));
+    // =========================================================================
+    // LUA stack push
+    // =========================================================================
     TLSTACKPOPV(1)
 }
 
 i32 tl_script_api__is_key_released(lua_State *state) {
     TLSTACKPUSHA("0x%p", state)
-
-    TLSTACKPOPV(0)
+    // =========================================================================
+    // Parameters validation
+    // =========================================================================
+    if (lua_gettop(state) != 1) ERROR("Expected a single value: isKeyReleased(KEY)")
+    if (!lua_isnumber(state, 1)) ERROR("parameter [KEY] must be a valid key")
+    // =========================================================================
+    // Request execution
+    // =========================================================================
+    const i32 key = lua_tonumber(state, 1);
+    lua_pushnumber(state, tl_input_is_key_released(key));
+    // =========================================================================
+    // LUA stack push
+    // =========================================================================
+    TLSTACKPOPV(1)
 }
 
 b8 tl_script_initialize(void) {
@@ -1008,6 +1025,13 @@ b8 tl_script_initialize(void) {
 
     luaL_newlib(global->platform.script.state, functions);
     lua_setglobal(global->platform.script.state, "teleios_input");
+
+    {
+        if (luaL_dofile(global->platform.script.state, "/mnt/nvme1/Cloud/Google/Trabalho/bkraujo/teleios/sandbox/assets/scripts/environment.lua") != LUA_OK) {
+            fprintf(stderr, "Erro ao executar arquivo: %s\n", lua_tostring(global->platform.script.state, -1));
+        }
+    }
+
 
     TLSTACKPOPV(TRUE)
 }
@@ -1094,7 +1118,7 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
     u8 key[256] = {0};
     if (!platform_entropy(key, 256)) {
         /* Mix entropy into the RC4 state. */
-        for (i32 i = 0, j = 0; i < 256; i++) {
+        for (i32 i = 0, j = 0; i < 256; ++i) {
             j = (j + generator->s[i] + key[i]) & 0xff;
 
             const i32 tmp = generator->s[i];
@@ -1124,7 +1148,7 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
             noise.n = (i64) n;
 
             const u8 *k = (u8 *)&noise;
-            for (i32 i = 0, j = 0; i < 256; i++) {
+            for (i32 i = 0, j = 0; i < 256; ++i) {
                 j = (j + generator->s[i] + k[i % sizeof(noise)]) & 0xff;
                 const i32 tmp = generator->s[i];
                 generator->s[i] = generator->s[j];
@@ -1314,10 +1338,9 @@ TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid) {
 }
 // #####################################################################################################################
 //
-//                                                     LIFECYCLE
+//                                                     SERIALIZER
 //
 // #####################################################################################################################
-
 static void tl_serializer_read(const char *prefix, const char *element, const char *value) {
     TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
 
@@ -1507,6 +1530,8 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
 }
 
 b8 tl_runtime_initialize(void) {
+    TLSTACKPUSH
+
     tl_serializer_walk(tl_serializer_read);
 
     glfwDefaultWindowHints();
@@ -1579,17 +1604,22 @@ b8 tl_runtime_initialize(void) {
     // --------------------------------------------------------------------------------------
     // Initialize graphics
     // --------------------------------------------------------------------------------------
+    if (!tl_script_initialize()) {
+        TLERROR("Failed to initialize script engine");
+        TLSTACKPOPV(FALSE)
+    }
+
     if (!tl_graphics_initialize()) {
         TLERROR("Failed to initialize Graphics API")
         TLSTACKPOPV(FALSE)
     }
 
-    return true;
+    TLSTACKPOPV(TRUE)
 }
 
 b8 tl_runtime_terminate(void) {
-
+    if (!tl_script_terminate()) return FALSE;
     if (!tl_graphics_terminate()) TLERROR("Failed to terminate graphics engine");
 
-    return true;
+    return TRUE;
 }

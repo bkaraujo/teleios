@@ -9,6 +9,4 @@
 #include <cglm/cglm.h>
 #include <cglm/version.h>
 
-#include <yaml.h>
-
 #endif //__TELEIOS_CORE_LIBS__

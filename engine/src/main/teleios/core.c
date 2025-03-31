@@ -1,4 +1,57 @@
 #include "core.h"
+// ########################################################
+//                    TIME FUNCTIONS
+// ########################################################
+#include <time.h>
+
+#if defined(TLPLATFORM_LINUX)
+#include <sys/time.h>
+#endif
+
+void tl_time_clock(TLClock* clock) {
+    struct timespec now = { 0 };
+    if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) return;
+
+    struct tm localtime = { 0 };
+    if (localtime_r(&now.tv_sec, &localtime) == NULL) return;
+
+    clock->year = localtime.tm_year + 1900;
+    clock->month = localtime.tm_mon + 1;
+    clock->day = localtime.tm_mday;
+    clock->hour = localtime.tm_hour;
+    clock->minute = localtime.tm_min;
+    clock->second = localtime.tm_sec;
+    clock->millis = now.tv_nsec / 1000;
+}
+
+u64 tl_time_epoch_millis(void) {
+    struct timespec now = { 0 };
+    clock_gettime(CLOCK_REALTIME_COARSE, &now);
+    return (uint64_t) now.tv_sec * 1000000 + now.tv_nsec;
+}
+
+u64 tl_time_epoch_micros(void) {
+    u64 micros = 0;
+#if defined(TLPLATFORM_LINUX)
+    struct timeval now = { 0 };
+    gettimeofday(&now, NULL);
+    micros = (uint64_t) now.tv_sec * 1000000 + now.tv_usec;
+#elif defined(TLPLATFORM_WINDOWS)
+    FILETIME ft; GetSystemTimeAsFileTime(&ft);
+
+    ULARGE_INTEGER uli;
+    uli.LowPart = ft.dwLowDateTime;
+    uli.HighPart = ft.dwHighDateTime;
+
+    // FILETIME is in 100-nanosecond intervals since January 1, 1601 (UTC).
+    // We need to convert it to microseconds since January 1, 1970 (UTC).
+
+    // Subtract the number of 100-nanosecond intervals between the two dates.
+    // The value is 116444736000000000 (obtained from various sources).
+    micros = (uli.QuadPart - 116444736000000000ULL) / 10; // Convert to microseconds
+#endif
+    return micros;
+}
 // #####################################################################################################################
 //
 //                                                     LOGGER
@@ -57,22 +110,15 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
         if (++i == U32_MAX) { i = 0; }
     }
 
-#ifdef TLPLATFORM_LINUX
-    struct timespec now = { 0 };
-    if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) return;
-
-    struct tm localtime = { 0 };
-    if (localtime_r(&now.tv_sec, &localtime) == NULL) return;
-
-    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06ld %20s:%04d %s %s\n\033[1;30m",
+    TLClock clock; tl_time_clock(&clock);
+    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06u %20s:%04d %s %s\n\033[1;30m",
         colors[level],
-        localtime.tm_year + 1900, localtime.tm_mon + 1, localtime.tm_mday,
-        localtime.tm_hour, localtime.tm_min, localtime.tm_sec, now.tv_nsec / 1000,
+        clock.year, clock.month, clock.day,
+        clock.hour, clock.minute, clock.second, clock.millis,
         filename + index, lineno,
         strings[level],
         output
     );
-#endif
 
     fflush(stdout);
 #if ! defined(TELEIOS_BUILD_RELEASE)
@@ -96,10 +142,6 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
 // #####################################################################################################################
 #if ! defined(TELEIOS_BUILD_RELEASE)
 #   include <stdio.h>
-#   if defined(TLPLATFORM_LINUX)
-#        include <time.h>
-#       include <sys/time.h>
-#   endif
 #endif
 
 void tl_trace_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
@@ -109,32 +151,7 @@ void tl_trace_push(const char* filename, const u64 lineno, const char* function,
     }
 
     global->stack[global->stack_index].lineno = lineno;
-
-#if defined(TLPLATFORM_LINUX)
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    const u64 micros = (uint64_t) tv.tv_sec * 1000000 + tv.tv_usec;
-
-    global->stack[global->stack_index].timestamp =  micros;
-#elif defined(TLPLATFORM_WINDOWS)
-    FILETIME ft;
-    ULARGE_INTEGER uli;
-    uint64_t epoch_microseconds;
-
-    GetSystemTimeAsFileTime(&ft);
-    uli.LowPart = ft.dwLowDateTime;
-    uli.HighPart = ft.dwHighDateTime;
-
-    // FILETIME is in 100-nanosecond intervals since January 1, 1601 (UTC).
-    // We need to convert it to microseconds since January 1, 1970 (UTC).
-
-    // Subtract the number of 100-nanosecond intervals between the two dates.
-    // The value is 116444736000000000 (obtained from various sources).
-    epoch_microseconds = (uli.QuadPart - 116444736000000000ULL) / 10; // Convert to microseconds
-
-    global->stack[global->stack_index].timestamp = epoch_microseconds
-#endif
-
+    global->stack[global->stack_index].timestamp = tl_time_epoch_micros();
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
     // ----------------------------------------------------------------
@@ -181,23 +198,12 @@ void tl_trace_push(const char* filename, const u64 lineno, const char* function,
     if (global->stack_index > global->stack_maximum) {
         global->stack_maximum = global->stack_index;
     }
-
-    // TLVERBOSE("STACK PUSH :: %s:%d %s(%s)",
-    //     global->stack[global->stack_index].filename, global->stack[global->stack_index].lineno,
-    //     global->stack[global->stack_index].function, global->stack[global->stack_index].arguments
-    // )
 #endif
 }
 
 void tl_trace_pop() {
 #if ! defined(TELEIOS_BUILD_RELEASE)
     if (global->stack_index == 0) TLWARN("global->stack_index is zero");
-
-    // TLVERBOSE("STACK POP :: %s:%d %s(%s)",
-    //     global->stack[global->stack_index].filename, global->stack[global->stack_index].lineno,
-    //     global->stack[global->stack_index].function, global->stack[global->stack_index].arguments
-    // )
-
     global->stack_index--;
 #endif
 }
@@ -221,12 +227,7 @@ void tl_profiler_begin(const char *name) {
     }
 
     profile[index].name = name;
-#if defined(TLPLATFORM_LINUX)
-    struct timeval now; gettimeofday(&now, NULL);
-    profile[index].timestamp = (u64) now.tv_sec * 1000000 + now.tv_usec;
-#elif defined(TLPLATFORM_WINDOWS)
-#erro "!!!"
-#endif
+    profile[index].timestamp = tl_time_epoch_micros();
 #endif
 }
 
@@ -253,15 +254,7 @@ static u8 tl_profiler_index(const char *name) {
 u64 tl_profiler_time(const char *name) {
 #if ! defined(TELEIOS_BUILD_RELEASE)
     const u8 index = tl_profiler_index(name);
-#if defined(TLPLATFORM_LINUX)
-    struct timeval now = { 0 };
-    gettimeofday(&now, NULL);
-    return (uint64_t) now.tv_sec * 1000000 + now.tv_usec - profile[index].timestamp;
-#elif defined(TLPLATFORM_WINDOWS)
-#erro "!!!"
-#else
-    return U64_MAX;
-#endif
+    return tl_time_epoch_micros() - profile[index].timestamp;
 #endif
 }
 
@@ -282,44 +275,16 @@ u64 tl_profiler_ticks(const char *name) {
 }
 
 void tl_profiler_end(const char *name) {
+#if ! defined(TELEIOS_BUILD_RELEASE)
     const u8 index = tl_profiler_index(name);
     tl_platform_memory_set(&profile[index], 0, sizeof(TLProfile));
+#endif
 }
 // #####################################################################################################################
 //
 //                                                     PLATFORM
 //
 // #####################################################################################################################
-
-
-
-b8 tl_platform_initialize(void) {
-    TLSTACKPUSH
-
-    TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
-    // --------------------------------------------------------------------------------------
-    // Initialize GLFW
-    // --------------------------------------------------------------------------------------
-    TLTRACE("Initializing GLFW");
-    if (!glfwInit()) {
-        TLERROR("Failed to initialize GLFW")
-        TLSTACKPOPV(FALSE)
-    }
-
-
-    TLDEBUG("Platform initialized in %llu micros", TLPROFILER_MICROS);
-    TLSTACKPOPV(TRUE)
-}
-
-b8 tl_platform_terminate(void) {
-    TLSTACKPUSH
-
-    glfwTerminate();
-
-    TLSTACKPOPV(TRUE)
-}
-
-#if defined(TLPLATFORM_LINUX)
 // ########################################################
 //                    MEMORY FUNCTIONS
 // ########################################################
@@ -338,71 +303,30 @@ TLINLINE void tl_platform_memory_copy(void *target, const void *source, const u6
     memcpy(target, source, size);
 }
 
-// ########################################################
-//                    TIME FUNCTIONS
-// ########################################################
-void tl_time_clock(TLClock* clock) {
-    TLSTACKPUSHA("0x%p", clock)
-    struct timespec now = { 0 };
-    if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) TLSTACKPOP
-
-    struct tm localtime = { 0 };
-    if (localtime_r(&now.tv_sec, &localtime) == NULL) TLSTACKPOP
-
-    clock->year = localtime.tm_year + 1900;
-    clock->month = localtime.tm_mon + 1;
-    clock->day = localtime.tm_mday;
-    clock->hour = localtime.tm_hour;
-    clock->minute = localtime.tm_min;
-    clock->second = localtime.tm_sec;
-    clock->millis = now.tv_nsec / 1000;
-
-    TLSTACKPOP
-}
-
-u64 tl_time_epoch_millis(void) {
-    TLSTACKPUSH
-    struct timespec now = { 0 };
-    clock_gettime(CLOCK_REALTIME_COARSE, &now);
-    const u64 micros = (uint64_t) now.tv_sec * 1000000 + now.tv_nsec;
-    TLSTACKPOPV(micros);
-}
-
-u64 tl_time_epoch_micros(void) {
-    TLSTACKPUSH
-    struct timeval now = { 0 };
-    gettimeofday(&now, NULL);
-    const u64 micros = (uint64_t) now.tv_sec * 1000000 + now.tv_usec;
-    TLSTACKPOPV(micros);
-}
-#elif defined(TLPLATFORM_WINDOWS)
-#include "teleios/core.h"
-
-// ########################################################
-//                    TIME FUNCTIONS
-// ########################################################
-u64 tl_time_epoch(void) {
+b8 tl_platform_initialize(void) {
     TLSTACKPUSH
 
-    FILETIME ft;
-    ULARGE_INTEGER uli;
-    uint64_t epoch_microseconds;
+    TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
+    // --------------------------------------------------------------------------------------
+    // Initialize GLFW
+    // --------------------------------------------------------------------------------------
+    TLTRACE("Initializing GLFW");
+    if (!glfwInit()) {
+        TLERROR("Failed to initialize GLFW")
+        TLSTACKPOPV(FALSE)
+    }
 
-    GetSystemTimeAsFileTime(&ft);
-    uli.LowPart = ft.dwLowDateTime;
-    uli.HighPart = ft.dwHighDateTime;
-
-    // FILETIME is in 100-nanosecond intervals since January 1, 1601 (UTC).
-    // We need to convert it to microseconds since January 1, 1970 (UTC).
-
-    // Subtract the number of 100-nanosecond intervals between the two dates.
-    // The value is 116444736000000000 (obtained from various sources).
-    epoch_microseconds = (uli.QuadPart - 116444736000000000ULL) / 10; // Convert to microseconds
-
-    TLSTACKPOPV(epoch_microseconds)
+    TLDEBUG("Platform initialized in %llu micros", TLPROFILER_MICROS);
+    TLSTACKPOPV(TRUE)
 }
 
-#endif
+b8 tl_platform_terminate(void) {
+    TLSTACKPUSH
+
+    glfwTerminate();
+
+    TLSTACKPOPV(TRUE)
+}
 // #####################################################################################################################
 //
 //                                                     EVENT
@@ -460,7 +384,7 @@ void tl_event_submit(const u16 event, const TLEvent* data) {
     TLSTACKPUSHA("%u, 0x%p", event, data)
 
     if (event >= TL_EVENT_MAXIMUM) {
-        TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
+        TLWARN("Event type beyond %d", TL_EVENT_MAXIMUM);
         TLSTACKPOP
     }
 
@@ -508,12 +432,14 @@ b8 tl_graphics_initialize(void) {
         TLDEBUG("wireframe: off")
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+
     TLSTACKPOPV(TRUE)
 }
 
 b8 tl_graphics_terminate(void) {
     TLSTACKPUSH
     tl_platform_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
+    glfwMakeContextCurrent(NULL);
     TLSTACKPOPV(TRUE)
 }
 // #####################################################################################################################
@@ -525,11 +451,11 @@ TLINLINE u16 tl_number_i32_digits(const i32 number) {
     TLSTACKPUSHA("%d", number)
     u16 digits = 0;
     i32 desired = number;
+
     do {
         digits++;
         desired = desired / 10;
     } while(desired > 0);
-
     TLSTACKPOPV(digits)
 }
 // #####################################################################################################################
@@ -537,7 +463,6 @@ TLINLINE u16 tl_number_i32_digits(const i32 number) {
 //                                                     STRING
 //
 // #####################################################################################################################
-
 TLINLINE u32 tl_char_length(const char *string) {
     TLSTACKPUSHA("0x%p", string)
     if (string == NULL ) TLSTACKPOPV(U32_MAX);
@@ -564,8 +489,7 @@ TLINLINE u32 tl_char_last_index(const char *string, const char token) {
             index = i + 1;
         }
 
-        i++;
-        if (i == U32_MAX) {
+        if (++i == U32_MAX) {
             TLFATAL("Failed to find string length")
         }
     }
@@ -581,8 +505,7 @@ TLINLINE u32 tl_char_index_of(const char *string, const char token) {
             TLSTACKPOPV(i)
         }
 
-        i++;
-        if (i == U32_MAX) {
+        if (++i == U32_MAX) {
             TLFATAL("Failed to find string length")
         }
     }
@@ -601,7 +524,7 @@ b8 tl_char_equals(const char *string, const char *guess) {
         TLSTACKPOPV(FALSE)
     }
 
-    for (u64 i = 0; i < length; i++) {
+    for (u64 i = 0; i < length; ++i) {
         if (string[i] != guess[i]) {
             TLSTACKPOPV(FALSE)
         }
@@ -621,7 +544,7 @@ b8 tl_char_start_with(const char *string, const char *guess) {
         TLSTACKPOPV(FALSE)
     }
 
-    for (u64 i = 0; i < length; i++) {
+    for (u64 i = 0; i < length; ++i) {
         if (string[i] != guess[i]) {
             TLSTACKPOPV(FALSE)
         }
@@ -690,17 +613,4 @@ TLINLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
     }
 
     TLSTACKPOP
-}
-
-// #####################################################################################################################
-//
-//                                                     LIFECYCLE
-//
-// #####################################################################################################################
-b8 tl_core_initialize(void) {
-    return TRUE;
-}
-
-b8 tl_core_terminate(void) {
-    return TRUE;
 }

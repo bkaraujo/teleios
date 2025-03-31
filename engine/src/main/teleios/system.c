@@ -213,7 +213,7 @@ b8 tl_scene_load(const char* name) {
         snprintf(global->application.scene.prefix, U8_MAX, "application.scenes.%d.", sequence);
         tl_serializer_walk(tl_serializer_find_scene);
         if (global->application.scene.found) {
-            TLDEBUG("Found scene [%s] at position [%u]", name, sequence)
+            TLTRACE("Found scene [%s] at position [%u]", name, sequence)
             break;
         }
     }
@@ -225,6 +225,7 @@ b8 tl_scene_load(const char* name) {
     // --------------------------------------------------------
     // Load the scene with the desired name
     // --------------------------------------------------------
+    TLTRACE("Loading scene with prefix [%s]", global->application.scene.prefix)
     tl_serializer_walk(tl_serializer_load_scene);
     TLSTACKPOPV(TRUE)
 }
