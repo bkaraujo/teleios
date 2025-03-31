@@ -195,7 +195,13 @@ static void tl_serializer_find_scene(const char *prefix, const char *element, co
 b8 tl_scene_load(const char* name) {
     TLSTACKPUSHA("%s", name)
     TLDEBUG("Loading scene [%s]", name);
-    tl_memory_arena_reset(global->application.scene.arena);
+
+    if (global->application.scene.arena == NULL) {
+        global->application.scene.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    } else {
+        tl_memory_arena_reset(global->application.scene.arena);
+    }
+
     global->application.scene.name = tl_string_clone(global->application.scene.arena, name);
     // --------------------------------------------------------
     // Sequentially search for the scene with the desired name

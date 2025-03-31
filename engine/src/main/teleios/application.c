@@ -87,7 +87,7 @@ b8 tl_application_initialize(void) {
     global->application.simulation.overflow = 0;
     global->application.simulation.per_second = 0;
 
-    tl_memory_arena_reset(global->application.frame.arena);
+    global->application.arena = tl_memory_arena_create(TLMEBIBYTES(10));
 
     tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
     tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
@@ -105,6 +105,8 @@ b8 tl_application_run(void) {
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
+
+    global->application.frame.arena = tl_memory_arena_create(TLMEBIBYTES(10));
 
     glfwShowWindow(global->platform.window.handle);
     while (running) {
@@ -169,11 +171,21 @@ b8 tl_application_run(void) {
     global->application.simulation.per_second = 0;
     glfwHideWindow(global->platform.window.handle);
 
+    if (global->application.frame.arena != NULL) {
+        tl_memory_arena_destroy(global->application.frame.arena);
+        global->application.frame.arena = NULL;
+    }
+
     TLSTACKPOPV(TRUE)
 }
 
 b8 tl_application_terminate(void) {
     TLSTACKPUSH
+
+    if (global->application.arena != NULL) {
+        tl_memory_arena_destroy(global->application.arena);
+        global->application.arena = NULL;
+    }
 
     TLDEBUG("Engine terminated in %llu micros", TLPROFILER_MICROS);
     TLSTACKPOPV(TRUE)

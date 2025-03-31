@@ -3,7 +3,7 @@
 #include "teleios/application/loader.h"
 #include "teleios/globals.h"
 #include "teleios/application.h"
-
+    
 TLGlobal *global;
 
 int main (const int argc, const char *argv[]) {
@@ -11,6 +11,8 @@ int main (const int argc, const char *argv[]) {
         TLERROR("argc != 2")
         TLSTACKPOPV(99)
     }
+
+    TLINFO("Initializing %s", argv[1]);
 
     TLGlobal local = { 0 };
     global = &local;
@@ -53,13 +55,10 @@ int main (const int argc, const char *argv[]) {
     //     }
     // }
 
-    // if (!tl_application_run         ()) TLERROR("Application failed to execute")
+    if (!tl_application_run         ()) TLERROR("Application failed to execute")
     if (!tl_application_terminate   ()) TLERROR("Application failed to terminate")
     if (!tl_runtime_terminate       ()) TLERROR("Runtime failed to terminate")
 
-    tl_memory_arena_destroy(global->application.frame.arena);
-    tl_memory_arena_destroy(global->application.scene.arena);
-    tl_memory_arena_destroy(global->application.arena);
     tl_memory_arena_destroy(global->platform.arena);
 
     if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
@@ -69,5 +68,6 @@ int main (const int argc, const char *argv[]) {
     TLDEBUG("global->stack reserved: %u", TLARRSIZE(global->stack, TLStackFrame));
 #endif
 
+    TLINFO("Exiting")
     TLSTACKPOPV(0)
 }
