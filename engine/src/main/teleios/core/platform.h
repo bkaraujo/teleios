@@ -18,12 +18,6 @@ void tl_time_clock(TLClock* clock);
 u64 tl_time_epoch_millis(void);
 u64 tl_time_epoch_micros(void);
 
-void tl_window_create();
-void tl_window_show();
-void tl_window_hide();
-void tl_window_set_title(TLString *title);
-void tl_window_destroy();
-
 b8 tl_platform_initialize(void);
 b8 tl_platform_terminate(void);
 

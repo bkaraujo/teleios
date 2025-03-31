@@ -285,9 +285,6 @@ void tl_profiler_end(const char *name) {
 //                                                     PLATFORM
 //
 // #####################################################################################################################
-// ########################################################
-//                    MEMORY FUNCTIONS
-// ########################################################
 TLINLINE void* tl_platform_memory_alloc(const u64 size) {
     return malloc(size);
 }
@@ -305,11 +302,7 @@ TLINLINE void tl_platform_memory_copy(void *target, const void *source, const u6
 
 b8 tl_platform_initialize(void) {
     TLSTACKPUSH
-
     TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
-    // --------------------------------------------------------------------------------------
-    // Initialize GLFW
-    // --------------------------------------------------------------------------------------
     TLTRACE("Initializing GLFW");
     if (!glfwInit()) {
         TLERROR("Failed to initialize GLFW")
@@ -322,9 +315,7 @@ b8 tl_platform_initialize(void) {
 
 b8 tl_platform_terminate(void) {
     TLSTACKPUSH
-
     glfwTerminate();
-
     TLSTACKPOPV(TRUE)
 }
 // #####################################################################################################################

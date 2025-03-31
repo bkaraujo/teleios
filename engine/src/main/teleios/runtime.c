@@ -1529,10 +1529,8 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
     tl_event_submit(entered ? TL_EVENT_INPUT_CURSOR_ENTERED : TL_EVENT_INPUT_CURSOR_EXITED, NULL);
 }
 
-b8 tl_runtime_initialize(void) {
+static b8 tl_window_create(void) {
     TLSTACKPUSH
-
-    tl_serializer_walk(tl_serializer_read);
 
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -1545,8 +1543,9 @@ b8 tl_runtime_initialize(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    // --------------------------------------------------------------------------------------
     // Disable window framebuffer bits we don't need, because we render into offscreen FBO and blit to window.
-
+    // --------------------------------------------------------------------------------------
     glfwWindowHint(GLFW_DEPTH_BITS, 0);
     glfwWindowHint(GLFW_STENCIL_BITS, 0);
     glfwWindowHint(GLFW_ALPHA_BITS, 0);
@@ -1587,23 +1586,36 @@ b8 tl_runtime_initialize(void) {
 
     glfwSetWindowPos(global->platform.window.handle, global->platform.window.position.x, global->platform.window.position.y);
     // --------------------------------------------------------------------------------------
-    // Register callbacks
+    // Window callbacks
     // --------------------------------------------------------------------------------------
-    glfwSetWindowCloseCallback(global->platform.window.handle, tl_window_callback_window_closed);
-    glfwSetWindowPosCallback(global->platform.window.handle, tl_window_callback_window_pos);
-    glfwSetWindowSizeCallback(global->platform.window.handle, tl_window_callback_window_size);
-    glfwSetWindowFocusCallback(global->platform.window.handle, tl_window_callback_window_focus);
-    glfwSetWindowIconifyCallback(global->platform.window.handle, tl_window_callback_window_minimized);
-    glfwSetWindowMaximizeCallback(global->platform.window.handle, tl_window_callback_window_maximize);
+    glfwSetWindowCloseCallback      (global->platform.window.handle, tl_window_callback_window_closed);
+    glfwSetWindowPosCallback        (global->platform.window.handle, tl_window_callback_window_pos);
+    glfwSetWindowSizeCallback       (global->platform.window.handle, tl_window_callback_window_size);
+    glfwSetWindowFocusCallback      (global->platform.window.handle, tl_window_callback_window_focus);
+    glfwSetWindowIconifyCallback    (global->platform.window.handle, tl_window_callback_window_minimized);
+    glfwSetWindowMaximizeCallback   (global->platform.window.handle, tl_window_callback_window_maximize);
+    // --------------------------------------------------------------------------------------
+    // Input callbacks
+    // --------------------------------------------------------------------------------------
+    glfwSetKeyCallback              (global->platform.window.handle, tl_window_callback_input_keyboard);
+    glfwSetMouseButtonCallback      (global->platform.window.handle, tl_window_callback_input_cursor_button);
+    glfwSetCursorPosCallback        (global->platform.window.handle, tl_window_callback_input_cursor_position);
+    glfwSetScrollCallback           (global->platform.window.handle, tl_window_callback_input_cursor_scroll);
+    glfwSetCursorEnterCallback      (global->platform.window.handle, tl_window_callback_input_cursor_entered);
 
-    glfwSetKeyCallback(global->platform.window.handle, tl_window_callback_input_keyboard);
-    glfwSetMouseButtonCallback(global->platform.window.handle, tl_window_callback_input_cursor_button);
-    glfwSetCursorPosCallback(global->platform.window.handle, tl_window_callback_input_cursor_position);
-    glfwSetScrollCallback(global->platform.window.handle, tl_window_callback_input_cursor_scroll);
-    glfwSetCursorEnterCallback(global->platform.window.handle, tl_window_callback_input_cursor_entered);
-    // --------------------------------------------------------------------------------------
-    // Initialize graphics
-    // --------------------------------------------------------------------------------------
+    TLSTACKPOPV(TRUE)
+}
+
+b8 tl_runtime_initialize(void) {
+    TLSTACKPUSH
+
+    tl_serializer_walk(tl_serializer_read);
+
+    if (!tl_window_create()) {
+        TLERROR("Failed to create application window");
+        TLSTACKPOPV(FALSE)
+    }
+
     if (!tl_script_initialize()) {
         TLERROR("Failed to initialize script engine");
         TLSTACKPOPV(FALSE)
