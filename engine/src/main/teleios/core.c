@@ -404,7 +404,7 @@ b8 tl_graphics_terminate(void) {
 //                                                     NUMBER
 //
 // #####################################################################################################################
-TLINLINE u16 tl_number_i32_digits(const i32 number) {
+TL_INLINE u16 tl_number_i32_digits(const i32 number) {
     TL_STACK_PUSHA("%d", number)
     u16 digits = 0;
     i32 desired = number;
@@ -420,7 +420,7 @@ TLINLINE u16 tl_number_i32_digits(const i32 number) {
 //                                                     STRING
 //
 // #####################################################################################################################
-TLINLINE u32 tl_char_length(const char *string) {
+TL_INLINE u32 tl_char_length(const char *string) {
     TL_STACK_PUSHA("0x%p", string)
     if (string == NULL ) TL_STACK_POPV(U32_MAX);
     if (*string == '\0') TL_STACK_POPV(0);
@@ -437,7 +437,7 @@ TLINLINE u32 tl_char_length(const char *string) {
     TL_STACK_POPV(index)
 }
 
-TLINLINE u32 tl_char_last_index_of(const char *string, const char character) {
+TL_INLINE u32 tl_char_last_index_of(const char *string, const char character) {
     TL_STACK_PUSHA("0x%p, %c", string, character)
     u32 index = 0;
     const char* s = string;
@@ -454,7 +454,7 @@ TLINLINE u32 tl_char_last_index_of(const char *string, const char character) {
     TL_STACK_POPV(index)
 }
 
-TLINLINE u32 tl_char_index_of(const char *string, const char token) {
+TL_INLINE u32 tl_char_index_of(const char *string, const char token) {
     TL_STACK_PUSHA("0x%p, %c", string, token)
     const char* s = string;
     for (u32 i = 0; *s != '\0' ; ++s) {
@@ -522,14 +522,14 @@ u32 tl_char_copy(char *target, const char *source, const u32 length) {
     TL_STACK_POPV(copied)
 }
 
-TLINLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const char *str1) {
+TL_INLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const char *str1) {
     TL_STACK_PUSHA("0x%p, %d, %s, %s", buffer, size, str0, str1)
     if (tl_char_length(str0) + tl_char_length(str1) > size) TL_STACK_POP
     sprintf(buffer, "%s%s", str0, str1);
     TL_STACK_POP
 }
 
-TLINLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
+TL_INLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
     TL_STACK_PUSHA("0x%p, 0x%p, %d, %d", buffer, value, base)
 
     // check that the base if valid
@@ -563,18 +563,18 @@ TLINLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
 //                                                     PLATFORM
 //
 // #####################################################################################################################
-TLINLINE void* tl_platform_memory_alloc(const u64 size) {
+TL_INLINE void* tl_platform_memory_alloc(const u64 size) {
     return malloc(size);
 }
 
-TLINLINE void tl_platform_memory_free(void *block) {
+TL_INLINE void tl_platform_memory_free(void *block) {
     free(block);
 }
-TLINLINE void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
+TL_INLINE void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
     memset(block, value, size);
 }
 
-TLINLINE void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
+TL_INLINE void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
     memcpy(target, source, size);
 }
 

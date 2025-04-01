@@ -87,7 +87,7 @@ b8 tl_application_initialize(void) {
     global->application.simulation.overflow = 0;
     global->application.simulation.per_second = 0;
 
-    global->application.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
 
     tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
     tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
@@ -106,7 +106,7 @@ b8 tl_application_run(void) {
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
 
-    global->application.frame.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->application.frame.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
 
     glfwShowWindow(global->platform.window.handle);
     while (running) {

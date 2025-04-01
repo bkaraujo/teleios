@@ -61,7 +61,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     TLFATAL("Failed to allocate TLMemoryArena");
 }
 
-TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
+TL_INLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
     TL_STACK_PUSHA("0x%p", arena)
 
     if (arena == NULL) {
@@ -79,10 +79,10 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
     TLFATAL("TLMemoryArena 0x%p not found", arena)
 }
 
-TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
+TL_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TL_STACK_PUSHA("%d", index)
     TLMemoryArena *arena = global->platform.memory.arenas[index];
-    for (u32 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
+    for (u32 i = 0 ; i < TL_ARR_SIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
             tl_platform_memory_free(arena->page[i].payload);
@@ -104,7 +104,7 @@ TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
 
 void tl_memory_arena_reset(TLMemoryArena *arena) {
     TL_STACK_PUSHA("0x%p", arena)
-    for (u32 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
+    for (u32 i = 0 ; i < TL_ARR_SIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
@@ -589,7 +589,7 @@ struct TLString {
     b8 is_view;
 };
 
-TLINLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
+TL_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
     TL_STACK_PUSHA("0x%p, %d", arena, size)
     TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
     string->is_view = false;
@@ -684,7 +684,7 @@ void tl_string_join(const TLString *string, const char *other) {
     TL_STACK_POP
 }
 
-TLINLINE const char * tl_string(TLString *string) {
+TL_INLINE const char * tl_string(TLString *string) {
     TL_STACK_PUSHA("0x%p", string)
     TL_STACK_POPV(string->text)
 }
@@ -802,7 +802,7 @@ TLString * tl_filesystem_get_parent(TLString *path) {
 
     TLString *parent = tl_string_reserve(path->arena, index + 1);
 
-    TLCHAR(value, parent->size)
+    TL_CREATE_CHAR(value, parent->size)
     tl_char_copy(value, path->text, index);
     tl_char_copy((void*) parent->text, value, index);
 
@@ -838,7 +838,7 @@ void tl_serializer_walk(void (*processor)(const char* prefix, const char* block,
     u8 block_index = 0;
     u16 prefix_index = 0;
     yaml_token_t token;
-    TLMemoryArena *arena = tl_memory_arena_create(TLKIBIBYTES(4));
+    TLMemoryArena *arena = tl_memory_arena_create(TL_KIBI_BYTES(4));
     TLList *sequences = tl_list_create(arena);
     char block[U8_MAX]; // current YAML_KEY_TOKEN
     char prefix[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value

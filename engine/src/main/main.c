@@ -20,7 +20,7 @@ int main (const int argc, const char *argv[]) {
 
     TL_STACK_PUSHA("%i, 0%xp", argc, argv)
 
-    global->platform.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+    global->platform.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
     global->yaml = tl_string_clone(global->platform.arena, argv[1]);
 
     if (!tl_platform_initialize()) {
@@ -62,7 +62,7 @@ int main (const int argc, const char *argv[]) {
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     TLDEBUG("global->stack used: %u", global->stack_maximum);
-    TLDEBUG("global->stack reserved: %u", TLARRSIZE(global->stack, TLStackFrame));
+    TLDEBUG("global->stack reserved: %u", TL_ARR_SIZE(global->stack, TLStackFrame));
 #endif
 
     TLINFO("Exiting")

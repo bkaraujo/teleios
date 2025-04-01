@@ -197,7 +197,7 @@ b8 tl_scene_load(const char* name) {
     TLDEBUG("Loading scene [%s]", name);
 
     if (global->application.scene.arena == NULL) {
-        global->application.scene.arena = tl_memory_arena_create(TLMEBIBYTES(10));
+        global->application.scene.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
     } else {
         tl_memory_arena_reset(global->application.scene.arena);
     }

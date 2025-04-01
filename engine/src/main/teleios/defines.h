@@ -148,30 +148,30 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // Compiler specifics
 // ---------------------------------
 #if defined(__clang__) || defined(__GNUC__)
-#   define TLINLINE __attribute__((always_inline)) inline
-#   define TLNOINLINE __attribute__((noinline))
-#   define TLDEPRECATED(message) __attribute__((deprecated(message)))
+#   define TL_INLINE __attribute__((always_inline)) inline
+#   define TL_NOINLINE __attribute__((noinline))
+#   define TL_DEPRECATED(message) __attribute__((deprecated(message)))
 #elif defined(_MSC_VER)
-#   define TLINLINE __forceinline
-#   define TLNOINLINE __declspec(noinline)
-#   define TLDEPRECATED(message) __declspec(deprecated(message))
+#   define TL_INLINE __forceinline
+#   define TL_NOINLINE __declspec(noinline)
+#   define TL_DEPRECATED(message) __declspec(deprecated(message))
 #else
-#   define TLINLINE static inline
-#   define TLNOINLINE
+#   define TL_INLINE static inline
+#   define TL_NOINLINE
 #endif
 // ---------------------------------
 // Helper Functions
 // ---------------------------------
-#define TLGIBIBYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
-#define TLMEBIBYTES(amount) ((amount) * 1024ULL * 1024ULL)
-#define TLKIBIBYTES(amount) ((amount) * 1024ULL)
+#define TL_GIBI_BYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
+#define TL_MEBI_BYTES(amount) ((amount) * 1024ULL * 1024ULL)
+#define TL_KIBI_BYTES(amount) ((amount) * 1024ULL)
 
-#define TLGIGABYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
-#define TLMEGABYTES(amount) ((amount) * 1000ULL * 1000ULL)
-#define TLKILOBYTES(amount) ((amount) * 1000ULL)
+#define TL_GIGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
+#define TL_MEGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL)
+#define TL_KILO_BYTES(amount) ((amount) * 1000ULL)
 
-#define TLARRSIZE(a,t) (sizeof(a) / sizeof(t))
-#define TLCHAR(name, size) char name[size]; tl_memory_set(name, 0 , size);
+#define TL_ARR_SIZE(a,t) (sizeof(a) / sizeof(t))
+#define TL_CREATE_CHAR(name, size) char name[size]; tl_memory_set(name, 0 , size);
 // ---------------------------------
 // Globals
 // ---------------------------------
