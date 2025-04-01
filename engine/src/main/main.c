@@ -9,7 +9,7 @@ TLGlobal *global;
 int main (const int argc, const char *argv[]) {
     if (argc != 2) {
         TLERROR("argc != 2")
-        TLSTACKPOPV(99)
+        TL_STACK_POPV(99)
     }
 
     TLINFO("Initializing %s", argv[1]);
@@ -18,7 +18,7 @@ int main (const int argc, const char *argv[]) {
     global = &local;
     global->stack_index = U8_MAX;
 
-    TLSTACKPUSHA("%i, 0%xp", argc, argv)
+    TL_STACK_PUSHA("%i, 0%xp", argc, argv)
 
     global->platform.arena = tl_memory_arena_create(TLMEBIBYTES(10));
     global->yaml = tl_string_clone(global->platform.arena, argv[1]);
@@ -66,5 +66,5 @@ int main (const int argc, const char *argv[]) {
 #endif
 
     TLINFO("Exiting")
-    TLSTACKPOPV(0)
+    TL_STACK_POPV(0)
 }

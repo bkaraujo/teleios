@@ -1,5 +1,5 @@
-#ifndef __TELEIOS_LOGGER__
-#define __TELEIOS_LOGGER__
+#ifndef __TELEIOS_CORE_LOGGER__
+#define __TELEIOS_CORE_LOGGER__
 
 #include "teleios/defines.h"
 #include <stdlib.h>
@@ -26,4 +26,4 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
 #define   TLERROR(m, ...) { tl_logger_write(TL_LOG_LEVEL_ERROR  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #define   TLFATAL(m, ...) { tl_logger_write(TL_LOG_LEVEL_FATAL  , __FILE__, __LINE__, m, ##__VA_ARGS__); exit(99); }
 
-#endif // __TELEIOS_LOGGER__
+#endif // __TELEIOS_CORE_LOGGER__

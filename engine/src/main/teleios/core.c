@@ -236,10 +236,10 @@ static u8 tl_profiler_index(const char *name) {
     for (u8 i = 0; i < U8_MAX; ++i) {
         if (profile[i].name == NULL) continue;
 
-        b8 found = TRUE;
+        b8 found = true;
         for (u64 j = 0; j < U64_MAX; ++j) {
             if (profile[i].name[j] != name[j]) {
-                found = FALSE;
+                found = false;
                 break;
             }
 
@@ -283,81 +283,43 @@ void tl_profiler_end(const char *name) {
 }
 // #####################################################################################################################
 //
-//                                                     PLATFORM
-//
-// #####################################################################################################################
-TLINLINE void* tl_platform_memory_alloc(const u64 size) {
-    return malloc(size);
-}
-
-TLINLINE void tl_platform_memory_free(void *block) {
-    free(block);
-}
-TLINLINE void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
-    memset(block, value, size);
-}
-
-TLINLINE void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
-    memcpy(target, source, size);
-}
-
-b8 tl_platform_initialize(void) {
-    TLSTACKPUSH
-    TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
-    TLTRACE("Initializing GLFW");
-    if (!glfwInit()) {
-        TLERROR("Failed to initialize GLFW")
-        TLSTACKPOPV(FALSE)
-    }
-
-    TLDEBUG("Platform initialized in %llu micros", TLPROFILER_MICROS);
-    TLSTACKPOPV(TRUE)
-}
-
-b8 tl_platform_terminate(void) {
-    TLSTACKPUSH
-    glfwTerminate();
-    TLSTACKPOPV(TRUE)
-}
-// #####################################################################################################################
-//
 //                                                     EVENT
 //
 // #####################################################################################################################
 static PFN_handler subscribers[TL_EVENT_MAXIMUM][U8_MAX] = { 0 };
 
 static const char* tl_event_name(const TLEventCodes code) {
-    TLSTACKPUSHA("%d", code)
+    TL_STACK_PUSHA("%d", code)
     switch (code) {
         default                             : {
                 u16 digits = tl_number_i32_digits(code);
                 char buffer[digits + 1]; tl_char_from_i32(buffer, code, 10);
-                TLSTACKPOPV(buffer);
+                TL_STACK_POPV(buffer);
         }
-        case TL_EVENT_WINDOW_CREATED        : TLSTACKPOPV("TL_EVENT_WINDOW_CREATED")
-        case TL_EVENT_WINDOW_RESIZED        : TLSTACKPOPV("TL_EVENT_WINDOW_RESIZED")
-        case TL_EVENT_WINDOW_CLOSED         : TLSTACKPOPV("TL_EVENT_WINDOW_CLOSED")
-        case TL_EVENT_WINDOW_MOVED          : TLSTACKPOPV("TL_EVENT_WINDOW_MOVED")
-        case TL_EVENT_WINDOW_MINIMIZED      : TLSTACKPOPV("TL_EVENT_WINDOW_MINIMIZED")
-        case TL_EVENT_WINDOW_MAXIMIZED      : TLSTACKPOPV("TL_EVENT_WINDOW_MAXIMIZED")
-        case TL_EVENT_WINDOW_RESTORED       : TLSTACKPOPV("TL_EVENT_WINDOW_RESTORED")
-        case TL_EVENT_WINDOW_FOCUS_GAINED   : TLSTACKPOPV("TL_EVENT_WINDOW_FOCUS_GAINED")
-        case TL_EVENT_WINDOW_FOCUS_LOST     : TLSTACKPOPV("TL_EVENT_WINDOW_FOCUS_LOST")
-        case TL_EVENT_MAXIMUM               : TLSTACKPOPV("TL_EVENT_MAXIMUM")
+        case TL_EVENT_WINDOW_CREATED        : TL_STACK_POPV("TL_EVENT_WINDOW_CREATED")
+        case TL_EVENT_WINDOW_RESIZED        : TL_STACK_POPV("TL_EVENT_WINDOW_RESIZED")
+        case TL_EVENT_WINDOW_CLOSED         : TL_STACK_POPV("TL_EVENT_WINDOW_CLOSED")
+        case TL_EVENT_WINDOW_MOVED          : TL_STACK_POPV("TL_EVENT_WINDOW_MOVED")
+        case TL_EVENT_WINDOW_MINIMIZED      : TL_STACK_POPV("TL_EVENT_WINDOW_MINIMIZED")
+        case TL_EVENT_WINDOW_MAXIMIZED      : TL_STACK_POPV("TL_EVENT_WINDOW_MAXIMIZED")
+        case TL_EVENT_WINDOW_RESTORED       : TL_STACK_POPV("TL_EVENT_WINDOW_RESTORED")
+        case TL_EVENT_WINDOW_FOCUS_GAINED   : TL_STACK_POPV("TL_EVENT_WINDOW_FOCUS_GAINED")
+        case TL_EVENT_WINDOW_FOCUS_LOST     : TL_STACK_POPV("TL_EVENT_WINDOW_FOCUS_LOST")
+        case TL_EVENT_MAXIMUM               : TL_STACK_POPV("TL_EVENT_MAXIMUM")
     }
 }
 
 b8 tl_event_subscribe(const u16 event, const PFN_handler handler) {
-    TLSTACKPUSHA("%u, 0x%p", event, handler)
+    TL_STACK_PUSHA("%u, 0x%p", event, handler)
 
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (subscribers[event][U8_MAX - 1] != NULL) {
         TLWARN("Event %u reached maximum of %d handlers", event, U8_MAX - 1);
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     for (u8 i = 0; i < U8_MAX; ++i) {
@@ -369,15 +331,15 @@ b8 tl_event_subscribe(const u16 event, const PFN_handler handler) {
         }
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 void tl_event_submit(const u16 event, const TLEvent* data) {
-    TLSTACKPUSHA("%u, 0x%p", event, data)
+    TL_STACK_PUSHA("%u, 0x%p", event, data)
 
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Event type beyond %d", TL_EVENT_MAXIMUM);
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     for (u8 i = 0; i < U8_MAX; ++i) {
@@ -389,7 +351,7 @@ void tl_event_submit(const u16 event, const TLEvent* data) {
         }
     }
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 // #####################################################################################################################
 //
@@ -397,14 +359,16 @@ void tl_event_submit(const u16 event, const TLEvent* data) {
 //
 // #####################################################################################################################
 b8 tl_graphics_initialize(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
+
+    TLTRACE("Initializing Graphics Engine");
     glfwMakeContextCurrent(global->platform.window.handle);
 
     TLDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         TLERROR("Failed to initialize GLAD")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     TLDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
@@ -425,14 +389,15 @@ b8 tl_graphics_initialize(void) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_graphics_terminate(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
+    TLTRACE("Terminating Graphics Engine");
     tl_platform_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
     glfwMakeContextCurrent(NULL);
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 // #####################################################################################################################
 //
@@ -440,7 +405,7 @@ b8 tl_graphics_terminate(void) {
 //
 // #####################################################################################################################
 TLINLINE u16 tl_number_i32_digits(const i32 number) {
-    TLSTACKPUSHA("%d", number)
+    TL_STACK_PUSHA("%d", number)
     u16 digits = 0;
     i32 desired = number;
 
@@ -448,7 +413,7 @@ TLINLINE u16 tl_number_i32_digits(const i32 number) {
         digits++;
         desired = desired / 10;
     } while(desired > 0);
-    TLSTACKPOPV(digits)
+    TL_STACK_POPV(digits)
 }
 // #####################################################################################################################
 //
@@ -456,9 +421,9 @@ TLINLINE u16 tl_number_i32_digits(const i32 number) {
 //
 // #####################################################################################################################
 TLINLINE u32 tl_char_length(const char *string) {
-    TLSTACKPUSHA("0x%p", string)
-    if (string == NULL ) TLSTACKPOPV(U32_MAX);
-    if (*string == '\0') TLSTACKPOPV(0);
+    TL_STACK_PUSHA("0x%p", string)
+    if (string == NULL ) TL_STACK_POPV(U32_MAX);
+    if (*string == '\0') TL_STACK_POPV(0);
 
     u32 index = 0;
 
@@ -469,11 +434,11 @@ TLINLINE u32 tl_char_length(const char *string) {
         }
     }
 
-    TLSTACKPOPV(index)
+    TL_STACK_POPV(index)
 }
 
 TLINLINE u32 tl_char_last_index_of(const char *string, const char character) {
-    TLSTACKPUSHA("0x%p, %c", string, character)
+    TL_STACK_PUSHA("0x%p, %c", string, character)
     u32 index = 0;
     const char* s = string;
     for (u32 i = 0; *s != '\0' ; ++s) {
@@ -486,15 +451,15 @@ TLINLINE u32 tl_char_last_index_of(const char *string, const char character) {
         }
     }
 
-    TLSTACKPOPV(index)
+    TL_STACK_POPV(index)
 }
 
 TLINLINE u32 tl_char_index_of(const char *string, const char token) {
-    TLSTACKPUSHA("0x%p, %c", string, token)
+    TL_STACK_PUSHA("0x%p, %c", string, token)
     const char* s = string;
     for (u32 i = 0; *s != '\0' ; ++s) {
         if (*s == token) {
-            TLSTACKPOPV(i)
+            TL_STACK_POPV(i)
         }
 
         if (++i == U32_MAX) {
@@ -502,51 +467,51 @@ TLINLINE u32 tl_char_index_of(const char *string, const char token) {
         }
     }
 
-    TLSTACKPOPV(U32_MAX)
+    TL_STACK_POPV(U32_MAX)
 }
 
 b8 tl_char_equals(const char *string, const char *guess) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     const u64 length = tl_char_length(string);
     if (tl_char_length(guess) != length) {
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     for (u64 i = 0; i < length; ++i) {
         if (string[i] != guess[i]) {
-            TLSTACKPOPV(FALSE)
+            TL_STACK_POPV(false)
         }
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_char_start_with(const char *string, const char *guess) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     const u64 length = tl_char_length(guess);
     if (length > tl_char_length(string)) {
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     for (u64 i = 0; i < length; ++i) {
         if (string[i] != guess[i]) {
-            TLSTACKPOPV(FALSE)
+            TL_STACK_POPV(false)
         }
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 u32 tl_char_copy(char *target, const char *source, const u32 length) {
-    TLSTACKPUSHA("0x%p, 0x%p", target, source)
+    TL_STACK_PUSHA("0x%p, 0x%p", target, source)
 
     u32 copied = 0;
     for (u32 i = 0; i < length ; ++i) {
@@ -554,21 +519,21 @@ u32 tl_char_copy(char *target, const char *source, const u32 length) {
         copied++;
     }
 
-    TLSTACKPOPV(copied)
+    TL_STACK_POPV(copied)
 }
 
 TLINLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const char *str1) {
-    TLSTACKPUSHA("0x%p, %d, %s, %s", buffer, size, str0, str1)
-    if (tl_char_length(str0) + tl_char_length(str1) > size) TLSTACKPOP
+    TL_STACK_PUSHA("0x%p, %d, %s, %s", buffer, size, str0, str1)
+    if (tl_char_length(str0) + tl_char_length(str1) > size) TL_STACK_POP
     sprintf(buffer, "%s%s", str0, str1);
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 TLINLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
-    TLSTACKPUSHA("0x%p, 0x%p, %d, %d", buffer, value, base)
+    TL_STACK_PUSHA("0x%p, 0x%p, %d, %d", buffer, value, base)
 
     // check that the base if valid
-    if (base < 2 || base > 36) { TLSTACKPOP }
+    if (base < 2 || base > 36) { TL_STACK_POP }
 
     int tmp_value;
     char *ptr  = buffer;
@@ -591,5 +556,45 @@ TLINLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
         *ptr1++ = tmp_char;
     }
 
-    TLSTACKPOP
+    TL_STACK_POP
+}
+// #####################################################################################################################
+//
+//                                                     PLATFORM
+//
+// #####################################################################################################################
+TLINLINE void* tl_platform_memory_alloc(const u64 size) {
+    return malloc(size);
+}
+
+TLINLINE void tl_platform_memory_free(void *block) {
+    free(block);
+}
+TLINLINE void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
+    memset(block, value, size);
+}
+
+TLINLINE void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
+    memcpy(target, source, size);
+}
+
+b8 tl_platform_initialize(void) {
+    TL_STACK_PUSH
+    TLDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
+
+    TLTRACE("Initializing GLFW");
+    if (!glfwInit()) {
+        TLERROR("Failed to initialize GLFW")
+        TL_STACK_POPV(false)
+    }
+
+    TLDEBUG("Platform initialized in %llu micros", TL_PROFILER_MICROS);
+    TL_STACK_POPV(true)
+}
+
+b8 tl_platform_terminate(void) {
+    TL_STACK_PUSH
+
+    glfwTerminate();
+    TL_STACK_POPV(true)
 }

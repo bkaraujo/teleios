@@ -8,14 +8,14 @@
         if (tl_char_equals(value, f)) { \
         p = g;                          \
         TLTRACE("%s = GL_%s", #p, f)    \
-        TLSTACKPOP                      \
+        TL_STACK_POP                      \
 }
 
 static void tl_serializer_load_scene(const char *prefix, const char *element, const char *value) {
-    TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
+    TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
 
     // Ensure the right [application.scenes.#] is being parsed
-    if ( ! tl_char_start_with(prefix, global->application.scene.prefix) ) TLSTACKPOP
+    if ( ! tl_char_start_with(prefix, global->application.scene.prefix) ) TL_STACK_POP
 
     // String used to check if property is the desired key
     char buffer[TL_YAML_PROPERTY_MAX_SIZE];
@@ -34,7 +34,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             global->application.scene.graphics.clear_color.z = 0.75f;
             global->application.scene.graphics.clear_color.w = 1.0f;
             TLWARN("Failed to read [scene.clear_color.red] assuming magenta");
-            TLSTACKPOP
+            TL_STACK_POP
         }
 
         current_pos = endptr;
@@ -49,7 +49,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             global->application.scene.graphics.clear_color.z = 0.75f;
             global->application.scene.graphics.clear_color.w = 1.0f;
             TLWARN("Failed to read [scene.clear_color.green] assuming magenta");
-            TLSTACKPOP
+            TL_STACK_POP
         }
         current_pos = endptr;
         while (isspace(*current_pos) || *current_pos == ',') {
@@ -63,7 +63,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             global->application.scene.graphics.clear_color.z = 0.75f;
             global->application.scene.graphics.clear_color.w = 1.0f;
             TLWARN("Failed to read [scene.clear_color.blue] assuming magenta");
-            TLSTACKPOP
+            TL_STACK_POP
         }
         current_pos = endptr;
         while (isspace(*current_pos) || *current_pos == ',') {
@@ -77,7 +77,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             global->application.scene.graphics.clear_color.z = 0.75f;
             global->application.scene.graphics.clear_color.w = 1.0f;
             TLWARN("Failed to read [scene.clear_color.alpha] assuming magenta");
-            TLSTACKPOP
+            TL_STACK_POP
         }
     }
     // ----------------------------------------------------------------
@@ -87,9 +87,9 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
     tl_char_join(buffer, TL_YAML_PROPERTY_MAX_SIZE, global->application.scene.prefix, "depth.");
     if ( tl_char_equals(buffer, prefix)) {
         if (tl_char_equals(element, "enabled") ) {
-            global->application.scene.graphics.depth_enabled = TRUE;
+            global->application.scene.graphics.depth_enabled = true;
             TLTRACE("global->application.scene.graphics.depth_enabled = %d", global->application.scene.graphics.depth_enabled )
-            TLSTACKPOP
+            TL_STACK_POP
         }
 
         if (tl_char_equals(element, "function") ) {
@@ -110,9 +110,9 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
     tl_char_join(buffer, TL_YAML_PROPERTY_MAX_SIZE, global->application.scene.prefix, "blend.");
     if (tl_char_start_with(prefix, buffer)) {
         if (tl_char_equals(element, "enabled") ) {
-            global->application.scene.graphics.blend_enabled = TRUE;
+            global->application.scene.graphics.blend_enabled = true;
             TLTRACE("global->application.scene.graphics.blend_enabled = %d", global->application.scene.graphics.blend_enabled )
-            TLSTACKPOP
+            TL_STACK_POP
         }
 
         if (tl_char_equals(element, "equation") ) {
@@ -178,22 +178,22 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
     // ----------------------------------------------------------------
     //  application.scenes.#.actors
     // ----------------------------------------------------------------
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 static void tl_serializer_find_scene(const char *prefix, const char *element, const char *value) {
-    TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
+    TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
 
-    if ( ! tl_char_equals(prefix, global->application.scene.prefix) ) TLSTACKPOP
-    if ( ! tl_char_equals(element, "name") ) TLSTACKPOP
-    if ( ! tl_char_equals(value, tl_string(global->application.scene.name))) TLSTACKPOP
+    if ( ! tl_char_equals(prefix, global->application.scene.prefix) ) TL_STACK_POP
+    if ( ! tl_char_equals(element, "name") ) TL_STACK_POP
+    if ( ! tl_char_equals(value, tl_string(global->application.scene.name))) TL_STACK_POP
 
-    global->application.scene.found = TRUE;
-    TLSTACKPOP
+    global->application.scene.found = true;
+    TL_STACK_POP
 }
 
 b8 tl_scene_load(const char* name) {
-    TLSTACKPUSHA("%s", name)
+    TL_STACK_PUSHA("%s", name)
     TLDEBUG("Loading scene [%s]", name);
 
     if (global->application.scene.arena == NULL) {
@@ -206,7 +206,7 @@ b8 tl_scene_load(const char* name) {
     // --------------------------------------------------------
     // Sequentially search for the scene with the desired name
     // --------------------------------------------------------
-    global->application.scene.found = FALSE;
+    global->application.scene.found = false;
     for (u8 sequence = 0 ; sequence < U8_MAX ; sequence++) {
         tl_memory_set(global->application.scene.prefix, 0, U8_MAX);
 
@@ -220,12 +220,12 @@ b8 tl_scene_load(const char* name) {
 
     if (!global->application.scene.found) {
         TLERROR("Scene [%s] not found", name)
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
     // --------------------------------------------------------
     // Load the scene with the desired name
     // --------------------------------------------------------
     TLTRACE("Loading scene with prefix [%s]", global->application.scene.prefix)
     tl_serializer_walk(tl_serializer_load_scene);
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }

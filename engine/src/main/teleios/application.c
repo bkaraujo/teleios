@@ -5,13 +5,13 @@
 #include "teleios/application.h"
 
 b8 tl_application_load(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
     // --------------------------------------------------------
     // Load the desired scene
     // --------------------------------------------------------
     if (!tl_scene_load("main")) {
         TLERROR("Failed to load scene [main]");
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
     // --------------------------------------------------------
     // Apply the scene's settings
@@ -39,45 +39,45 @@ b8 tl_application_load(void) {
     // u8 world = tl_layer_create("world");
     // u8 gui = tl_layer_create("gui");
 
-    TLDEBUG("Application initialized in %llu micros", TLPROFILER_MICROS);
-    TLSTACKPOPV(TRUE)
+    TLDEBUG("Application initialized in %llu micros", TL_PROFILER_MICROS);
+    TL_STACK_POPV(true)
 }
 
 
-static b8 running = TRUE;
-static b8 paused = FALSE;
+static b8 running = true;
+static b8 paused = false;
 
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
-    TLSTACKPUSHA("0x%p", event)
+    TL_STACK_PUSHA("0x%p", event)
 
-    paused = TRUE;
+    paused = true;
 
     global->application.frame.per_second = 0;
     global->application.simulation.per_second = 0;
     TLINFO("Simulation paused")
 
-    TLSTACKPOPV(TL_EVENT_NOT_CONSUMED)
+    TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_closed(const TLEvent *event) {
-    TLSTACKPUSHA("0x%p", event)
+    TL_STACK_PUSHA("0x%p", event)
 
-    running = FALSE;
+    running = false;
 
-    TLSTACKPOPV(TL_EVENT_NOT_CONSUMED)
+    TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_restored(const TLEvent *event) {
-    TLSTACKPUSHA("0x%p", event)
+    TL_STACK_PUSHA("0x%p", event)
 
-    paused = FALSE;
+    paused = false;
     TLINFO("Simulation resumed")
 
-    TLSTACKPOPV(TL_EVENT_NOT_CONSUMED)
+    TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 b8 tl_application_initialize(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
 
     global->application.frame.number = 0;
     global->application.frame.overflow = 0;
@@ -94,12 +94,12 @@ b8 tl_application_initialize(void) {
     tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
 
 
-    TLDEBUG("Engine initialized in %llu micros", TLPROFILER_MICROS);
-    TLSTACKPOPV(TRUE)
+    TLDEBUG("Engine initialized in %llu micros", TL_PROFILER_MICROS);
+    TL_STACK_POPV(true)
 }
 
 b8 tl_application_run(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
     TLClock t1, t2;
     tl_time_clock(&t1);
 
@@ -185,17 +185,17 @@ b8 tl_application_run(void) {
         global->application.frame.arena = NULL;
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_application_terminate(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
 
     if (global->application.arena != NULL) {
         tl_memory_arena_destroy(global->application.arena);
         global->application.arena = NULL;
     }
 
-    TLDEBUG("Engine terminated in %llu micros", TLPROFILER_MICROS);
-    TLSTACKPOPV(TRUE)
+    TLDEBUG("Engine terminated in %llu micros", TL_PROFILER_MICROS);
+    TL_STACK_POPV(true)
 }

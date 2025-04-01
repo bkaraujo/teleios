@@ -20,26 +20,26 @@ struct TLMemoryArena {
 };
 
 static const char* tl_memory_name(const TLMemoryTag tag) {
-    TLSTACKPUSHA("%d", tag)
+    TL_STACK_PUSHA("%d", tag)
     switch (tag) {
-        case TL_MEMORY_BLOCK                : TLSTACKPOPV("TL_MEMORY_BLOCK")
-        case TL_MEMORY_SERIALIZER           : TLSTACKPOPV("TL_MEMORY_SERIALIZER")
-        case TL_MEMORY_CONTAINER_LIST       : TLSTACKPOPV("TL_MEMORY_CONTAINER_LIST")
-        case TL_MEMORY_CONTAINER_STACK      : TLSTACKPOPV("TL_MEMORY_CONTAINER_STACK")
-        case TL_MEMORY_CONTAINER_NODE       : TLSTACKPOPV("TL_MEMORY_CONTAINER_NODE")
-        case TL_MEMORY_CONTAINER_ITERATOR   : TLSTACKPOPV("TL_MEMORY_CONTAINER_ITERATOR")
-        case TL_MEMORY_STRING               : TLSTACKPOPV("TL_MEMORY_STRING")
-        case TL_MEMORY_PROFILER             : TLSTACKPOPV("TL_MEMORY_PROFILER")
-        case TL_MEMORY_SCENE                : TLSTACKPOPV("TL_MEMORY_SCENE")
-        case TL_MEMORY_ULID                 : TLSTACKPOPV("TL_MEMORY_ULID")
-        case TL_MEMORY_MAXIMUM              : TLSTACKPOPV("TL_MEMORY_MAXIMUM")
+        case TL_MEMORY_BLOCK                : TL_STACK_POPV("TL_MEMORY_BLOCK")
+        case TL_MEMORY_SERIALIZER           : TL_STACK_POPV("TL_MEMORY_SERIALIZER")
+        case TL_MEMORY_CONTAINER_LIST       : TL_STACK_POPV("TL_MEMORY_CONTAINER_LIST")
+        case TL_MEMORY_CONTAINER_STACK      : TL_STACK_POPV("TL_MEMORY_CONTAINER_STACK")
+        case TL_MEMORY_CONTAINER_NODE       : TL_STACK_POPV("TL_MEMORY_CONTAINER_NODE")
+        case TL_MEMORY_CONTAINER_ITERATOR   : TL_STACK_POPV("TL_MEMORY_CONTAINER_ITERATOR")
+        case TL_MEMORY_STRING               : TL_STACK_POPV("TL_MEMORY_STRING")
+        case TL_MEMORY_PROFILER             : TL_STACK_POPV("TL_MEMORY_PROFILER")
+        case TL_MEMORY_SCENE                : TL_STACK_POPV("TL_MEMORY_SCENE")
+        case TL_MEMORY_ULID                 : TL_STACK_POPV("TL_MEMORY_ULID")
+        case TL_MEMORY_MAXIMUM              : TL_STACK_POPV("TL_MEMORY_MAXIMUM")
     }
 
-    TLSTACKPOPV("???")
+    TL_STACK_POPV("???")
 }
 
 TLMemoryArena* tl_memory_arena_create(const u64 size) {
-    TLSTACKPUSHA("%d", size)
+    TL_STACK_PUSHA("%d", size)
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
@@ -54,7 +54,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
         if (global->platform.memory.arenas[i] == NULL) {
             global->platform.memory.arenas[i] = arena;
             TLVERBOSE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
-            TLSTACKPOPV(arena)
+            TL_STACK_POPV(arena)
         }
     }
 
@@ -62,17 +62,17 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
 }
 
 TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
-    TLSTACKPUSHA("0x%p", arena)
+    TL_STACK_PUSHA("0x%p", arena)
 
     if (arena == NULL) {
         TLWARN("TLMemoryArena is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (global->platform.memory.arenas[i] == NULL) continue;
         if (global->platform.memory.arenas[i] == arena) {
-            TLSTACKPOPV(i)
+            TL_STACK_POPV(i)
         }
     }
 
@@ -80,7 +80,7 @@ TLINLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
 }
 
 TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
-    TLSTACKPUSHA("%d", index)
+    TL_STACK_PUSHA("%d", index)
     TLMemoryArena *arena = global->platform.memory.arenas[index];
     for (u32 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
@@ -99,40 +99,40 @@ TLINLINE static void tl_memory_arena_do_destroy(const u8 index) {
     tl_platform_memory_free(arena);
     global->platform.memory.arenas[index] = NULL;
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void tl_memory_arena_reset(TLMemoryArena *arena) {
-    TLSTACKPUSHA("0x%p", arena)
+    TL_STACK_PUSHA("0x%p", arena)
     for (u32 i = 0 ; i < TLARRSIZE(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
         tl_memory_set(arena->page[i].payload, 0, arena->page_size);
     }
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void tl_memory_arena_destroy(TLMemoryArena *arena) {
-    TLSTACKPUSHA("0x%p", arena)
+    TL_STACK_PUSHA("0x%p", arena)
     const u8 index = tl_memory_arena_get_index(arena);
     tl_memory_arena_do_destroy(index);
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag tag) {
-    TLSTACKPUSHA("0x%p, %llu, %d", arena, size, tag)
+    TL_STACK_PUSHA("0x%p, %llu, %d", arena, size, tag)
     // -------------------------------------------------
     // Ensure that the Arena can hold the desired size
     // -------------------------------------------------
     if (size == 0) {
         TLFATAL("TLMemoryArena 0x%p allocation size must be greater then 0", arena)
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
 
     if (size > arena->page_size) {
         TLFATAL("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
     // -------------------------------------------------
     // Find a suitable TLMemoryPage within the arena
@@ -159,7 +159,7 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
 
     if (found == U8_MAX) {
         TLWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
     // -------------------------------------------------
     // Adjust the TLMemoryArena internal state
@@ -176,19 +176,19 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
     // -------------------------------------------------
     // Hand out the memory pointer
     // -------------------------------------------------
-    TLSTACKPOPV(address)
+    TL_STACK_POPV(address)
 }
 
 void tl_memory_set(void *block, const i32 value, const u64 size) {
-    TLSTACKPUSHA("0x%p, %d, %llu", block, value, size)
+    TL_STACK_PUSHA("0x%p, %d, %llu", block, value, size)
     tl_platform_memory_set(block, value, size);
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void tl_memory_copy(void *target, void *source, const u64 size) {
-    TLSTACKPUSHA("0x%p, 0x%p, %llu", target, source, size)
+    TL_STACK_PUSHA("0x%p, 0x%p, %llu", target, source, size)
     tl_platform_memory_copy(target, source, size);
-    TLSTACKPOP
+    TL_STACK_POP
 }
 // #####################################################################################################################
 //
@@ -209,67 +209,67 @@ struct TLList {
 } ;
 
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
-    TLSTACKPUSHA("0x%p, 0X%p", arena, value)
+    TL_STACK_PUSHA("0x%p, 0X%p", arena, value)
 
     struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
     if (created == NULL) TLFATAL("Failed to allocate struct TLNode")
     created->payload = value;
 
-    TLSTACKPOPV(created)
+    TL_STACK_POPV(created)
 }
 
 TLList* tl_list_create(TLMemoryArena *arena) {
-    TLSTACKPUSHA("0x%p", arena)
+    TL_STACK_PUSHA("0x%p", arena)
     TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
     if (list == NULL) {
         TLERROR("Failed to allocate TLList")
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
 
     list->arena = arena;
     list->length = 0;
 
-    TLSTACKPOPV(list)
+    TL_STACK_POPV(list)
 }
 
 u64 tl_list_length(TLList* list) {
-    TLSTACKPUSHA("0x%p", list)
-    TLSTACKPOPV(list->length)
+    TL_STACK_PUSHA("0x%p", list)
+    TL_STACK_POPV(list->length)
 }
 
 void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value)) {
-    TLSTACKPUSHA("0x%p, 0x%p", list, PFN_filter)
+    TL_STACK_PUSHA("0x%p, 0x%p", list, PFN_filter)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
 
     if (PFN_filter == NULL) {
         TLERROR("PFN_filter is null")
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (PFN_filter(node->payload)) {
-            TLSTACKPOPV(node->payload);
+            TL_STACK_POPV(node->payload);
         }
 
         node = node->next;
     }
 
-    TLSTACKPOPV(NULL)
+    TL_STACK_POPV(NULL)
 }
 
 void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
-    TLSTACKPUSHA("0x%p, 0x%p", list, PFN_handler)
+    TL_STACK_PUSHA("0x%p, 0x%p", list, PFN_handler)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
+        TL_STACK_POP
     }
     if (PFN_handler == NULL) {
         TLERROR("PFN_handler is NULL")
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     const struct TLNode* node = list->head;
@@ -278,19 +278,19 @@ void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
         node = node->next;
     }
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void tl_list_add(TLList* list, void *value) {
-    TLSTACKPUSHA("0x%p, 0x%p", list, value)
+    TL_STACK_PUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     struct TLNode* created = tl_list_create_node(list->arena, value);
@@ -299,7 +299,7 @@ void tl_list_add(TLList* list, void *value) {
         list->length++;
         list->head = created;
         list->tail = created;
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (list->head == list->tail) {
@@ -307,7 +307,7 @@ void tl_list_add(TLList* list, void *value) {
         list->tail = created;
         list->tail->previous = list->head;
         list->head->next = list->tail;
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     list->length++;
@@ -315,24 +315,24 @@ void tl_list_add(TLList* list, void *value) {
     list->tail->next = created;
     list->tail = created;
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void tl_list_remove(TLList* list, void *value) {
-    TLSTACKPUSHA("0x%p, 0x%p", list, value)
+    TL_STACK_PUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (list->length == 1) {
@@ -344,7 +344,7 @@ void tl_list_remove(TLList* list, void *value) {
             TLWARN("The TLList 0x%p does not contain 0x%p", list, value)
         }
 
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (list->tail->payload == value) {
@@ -352,7 +352,7 @@ void tl_list_remove(TLList* list, void *value) {
         list->tail->previous->next = NULL;
         list->tail = list->tail->previous;
 
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     const struct TLNode* node = list->head;
@@ -369,29 +369,29 @@ void tl_list_remove(TLList* list, void *value) {
         node = node->next;
     }
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 b8 tl_list_after(TLList* list, void *item, void *value) {
-    TLSTACKPUSHA("0x%p, 0x%p, 0x%p", list, item, value)
+    TL_STACK_PUSHA("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (item == NULL) {
         TLERROR("item is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     struct TLNode* node = list->head;
@@ -402,35 +402,35 @@ b8 tl_list_after(TLList* list, void *item, void *value) {
             created->next = node->next;
             created->previous = node;
             node->next = created;
-            TLSTACKPOPV(TRUE)
+            TL_STACK_POPV(true)
         }
 
         node = node->next;
     }
 
-    TLSTACKPOPV(FALSE)
+    TL_STACK_POPV(false)
 }
 
 b8 tl_list_before(TLList* list, void *item, void *value) {
-    TLSTACKPUSHA("0x%p, 0x%p, 0x%p", list, item, value)
+    TL_STACK_PUSHA("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (item == NULL) {
         TLERROR("item is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     struct TLNode* node = list->head;
@@ -442,42 +442,42 @@ b8 tl_list_before(TLList* list, void *item, void *value) {
             created->previous = node->previous;
             node->previous->next = created;
             node->previous = created;
-            TLSTACKPOPV(TRUE)
+            TL_STACK_POPV(true)
         }
 
         node = node->next;
     }
 
-    TLSTACKPOPV(FALSE)
+    TL_STACK_POPV(false)
 }
 
 b8 tl_list_contains(TLList* list, void *value) {
-    TLSTACKPUSHA("0x%p, 0x%p", list, value)
+    TL_STACK_PUSHA("0x%p, 0x%p", list, value)
     if (list == NULL) {
         TLERROR("TLList is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (list->head == NULL) {
         TLERROR("TLList is empty")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (value == NULL) {
         TLERROR("value is NULL")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == value) {
-            TLSTACKPOPV(TRUE)
+            TL_STACK_POPV(true)
         }
 
         node = node->next;
     }
 
-    TLSTACKPOPV(FALSE)
+    TL_STACK_POPV(false)
 
 }
 
@@ -487,56 +487,56 @@ struct TLIterator {
 };
 
 TLIterator* tl_list_iterator_create(TLList* list) {
-    TLSTACKPUSHA("0x%p", list)
+    TL_STACK_PUSHA("0x%p", list)
     TLIterator* iterator = tl_memory_alloc(list->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = list->length;
     iterator->node = list->head;
-    TLSTACKPOPV(iterator)
+    TL_STACK_POPV(iterator)
 }
 
 void* tl_list_iterator_next(TLIterator* iterator) {
-    TLSTACKPUSHA("0x%p", iterator)
+    TL_STACK_PUSHA("0x%p", iterator)
     if (iterator == NULL || iterator->node == NULL) {
-        TLSTACKPOPV(NULL)
+        TL_STACK_POPV(NULL)
     }
 
     void* value = iterator->node->payload;
     iterator->node = iterator->node->next;
-    TLSTACKPOPV(value)
+    TL_STACK_POPV(value)
 }
 
 TLStack* tl_stack_create(TLMemoryArena *arena)  {
-    TLSTACKPUSHA("0x%p", arena)
+    TL_STACK_PUSHA("0x%p", arena)
     TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
     stack = tl_list_create(arena);
-    TLSTACKPOPV(stack)
+    TL_STACK_POPV(stack)
 }
 
 void tl_stack_push(TLStack* stack, void* value) {
-    TLSTACKPUSHA("0x%p, 0x%p", stack, value)
+    TL_STACK_PUSHA("0x%p, 0x%p", stack, value)
     tl_list_add(stack, value);
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 void* tl_stack_peek(TLStack* stack) {
-    TLSTACKPUSHA("0x%p", stack)
+    TL_STACK_PUSHA("0x%p", stack)
     void* value = NULL;
     TLIterator* iterator = tl_list_iterator_create(stack);
     void* next = tl_list_iterator_next(iterator);
     while (next != NULL) { value = next; next = tl_list_iterator_next(iterator); }
-    TLSTACKPOPV(value)
+    TL_STACK_POPV(value)
 }
 
 void* tl_stack_pop(TLStack* stack) {
-    TLSTACKPUSHA("0x%p", stack)
+    TL_STACK_PUSHA("0x%p", stack)
     void* value = tl_stack_peek(stack);
     tl_list_remove(stack, value);
-    TLSTACKPOPV(value)
+    TL_STACK_POPV(value)
 }
 
 u64 tl_stack_length(TLStack* stack) {
-    TLSTACKPUSHA("0x%p", stack)
-    TLSTACKPOPV(tl_list_length(stack))
+    TL_STACK_PUSHA("0x%p", stack)
+    TL_STACK_POPV(tl_list_length(stack))
 }
 // #####################################################################################################################
 //
@@ -558,23 +558,23 @@ void tl_input_update() {
 }
 
 b8 tl_input_is_key_active(const i32 key) {
-    TLSTACKPUSHA("%d", key)
+    TL_STACK_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
-    TLSTACKPOPV(is_active)
+    TL_STACK_POPV(is_active)
 }
 
 b8 tl_input_is_key_pressed(const i32 key) {
-    TLSTACKPUSHA("%d", key)
+    TL_STACK_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
     const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    TLSTACKPOPV(!were_active & is_active)
+    TL_STACK_POPV(!were_active & is_active)
 }
 
 b8 tl_input_is_key_released(const i32 key) {
-    TLSTACKPUSHA("%d", key)
+    TL_STACK_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
     const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    TLSTACKPOPV(were_active & !is_active)
+    TL_STACK_POPV(were_active & !is_active)
 }
 // #####################################################################################################################
 //
@@ -590,9 +590,9 @@ struct TLString {
 };
 
 TLINLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
-    TLSTACKPUSHA("0x%p, %d", arena, size)
+    TL_STACK_PUSHA("0x%p, %d", arena, size)
     TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
-    string->is_view = FALSE;
+    string->is_view = false;
     string->arena = arena;
     string->length = 0;
     if (size > 0) {
@@ -600,25 +600,25 @@ TLINLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size
         string->text = tl_memory_alloc(arena, string->size, TL_MEMORY_STRING);
     }
 
-    TLSTACKPOPV(string)
+    TL_STACK_POPV(string)
 }
 
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
-    TLSTACKPUSHA("0x%p, 0x%p", arena, string)
+    TL_STACK_PUSHA("0x%p, 0x%p", arena, string)
     TLString *clone = tl_string_reserve(arena, tl_char_length(string));
     clone->length = clone->size - 1;
     tl_memory_copy((void*)clone->text, (void*)string, clone->length);
-    TLSTACKPOPV(clone)
+    TL_STACK_POPV(clone)
 }
 
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
-    TLSTACKPUSHA("0x%p, 0x%p", arena, string)
+    TL_STACK_PUSHA("0x%p, 0x%p", arena, string)
     TLString *wrap = tl_string_reserve(arena, 0);
-    wrap->is_view = TRUE;
+    wrap->is_view = true;
     wrap->text = string;
     wrap->size = wrap->length;
     wrap->length = tl_char_length(string);
-    TLSTACKPOPV(wrap)
+    TL_STACK_POPV(wrap)
 }
 
 /**
@@ -627,7 +627,7 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
  * Released under GPLv3.
  */
 TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
-    TLSTACKPUSHA("%d, %d", value, base)
+    TL_STACK_PUSHA("%d, %d", value, base)
 
     u32 digits = 0;
     i32 desired = value;
@@ -639,7 +639,7 @@ TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
     TLString* string = tl_string_reserve(arena, digits);
 
     // check that the base if valid
-    if (base < 2 || base > 36) { TLSTACKPOPV(string) }
+    if (base < 2 || base > 36) { TL_STACK_POPV(string) }
 
     int tmp_value;
     char *ptr  = (char*) string->text;
@@ -664,11 +664,11 @@ TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
         string->length++;
     }
 
-    TLSTACKPOPV(string)
+    TL_STACK_POPV(string)
 }
 
 void tl_string_join(const TLString *string, const char *other) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, other)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, other)
     const u64 length = tl_char_length(other);
     if (length == U32_MAX || length == 0) TLFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
     ((TLString*)string)->size = string->size + length;
@@ -679,114 +679,114 @@ void tl_string_join(const TLString *string, const char *other) {
 
     ((TLString*)string)->text = created;
     ((TLString*)string)->length = string->size - 1;
-    ((TLString*)string)->is_view = FALSE;
+    ((TLString*)string)->is_view = false;
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 
 TLINLINE const char * tl_string(TLString *string) {
-    TLSTACKPUSHA("0x%p", string)
-    TLSTACKPOPV(string->text)
+    TL_STACK_PUSHA("0x%p", string)
+    TL_STACK_POPV(string->text)
 }
 
 TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offset, const u64 length) {
-    TLSTACKPUSHA("0x%p, 0x%p, %d, %d", arena, string, offset, length)
+    TL_STACK_PUSHA("0x%p, 0x%p, %d, %d", arena, string, offset, length)
     //TODO implement tl_string_slice
     TLFATAL("Implementation missing")
-    TLSTACKPOPV(NULL)
+    TL_STACK_POPV(NULL)
 }
 
 TLString* tl_string_view(TLString* string) {
-    TLSTACKPUSHA("0x%p", string)
+    TL_STACK_PUSHA("0x%p", string)
     TLString *view = tl_string_reserve(string->arena, 0);
-    view->is_view = TRUE;
+    view->is_view = true;
     view->text = string->text;
     view->size = string->size;
     view->length = string->length;
-    TLSTACKPOPV(view)
+    TL_STACK_POPV(view)
 }
 
 u32 tl_string_length(TLString *string) {
-    TLSTACKPUSHA("0x%p", string)
+    TL_STACK_PUSHA("0x%p", string)
     if (string == NULL) {
-        TLSTACKPOPV(-1)
+        TL_STACK_POPV(-1)
     }
-    TLSTACKPOPV(string->length)
+    TL_STACK_POPV(string->length)
 }
 
 u32 tl_string_index_of(TLString* string, const char token) {
-    TLSTACKPUSHA("0x%p, %s", string, token)
+    TL_STACK_PUSHA("0x%p, %s", string, token)
     for (u64 i = 0; i < string->length; ++i) {
-        if (string->text[i] == token) TLSTACKPOPV(i);
+        if (string->text[i] == token) TL_STACK_POPV(i);
     }
-    TLSTACKPOPV(U32_MAX)
+    TL_STACK_POPV(U32_MAX)
 }
 
 u32 tl_string_last_index_of(TLString* string, const char token) {
-    TLSTACKPUSHA("0x%p, %c", string, token)
-    if (string == NULL) TLSTACKPOPV(U32_MAX);
-    if (string->length == 0) TLSTACKPOPV(U32_MAX)
+    TL_STACK_PUSHA("0x%p, %c", string, token)
+    if (string == NULL) TL_STACK_POPV(U32_MAX);
+    if (string->length == 0) TL_STACK_POPV(U32_MAX)
 
     for (u64 i = string->length - 1; i > 0; --i) {
-        if (string->text[i] == token) TLSTACKPOPV(i);
+        if (string->text[i] == token) TL_STACK_POPV(i);
     }
     TLFATAL("Implementation missing")
-    TLSTACKPOPV(FALSE)
+    TL_STACK_POPV(false)
 }
 
 b8 tl_string_start_with(TLString* string, const char* guess) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
-    if (string == NULL || guess == NULL) TLSTACKPOPV(FALSE)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
+    if (string == NULL || guess == NULL) TL_STACK_POPV(false)
 
     const u64 length = tl_char_length(guess);
-    if (length > string->length) TLSTACKPOPV(FALSE)
+    if (length > string->length) TL_STACK_POPV(false)
 
     for (u64 i = 0; i < length; ++i) {
         if (string->text[i] != guess[i])
-            TLSTACKPOPV(FALSE)
+            TL_STACK_POPV(false)
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_string_ends_with(TLString* string, const char* guess) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
     //TODO implement tl_string_ends_with
     TLFATAL("Implementation missing")
-    TLSTACKPOPV(FALSE)
+    TL_STACK_POPV(false)
 }
 
 b8 tl_string_is_view(const TLString* string) {
-    TLSTACKPUSHA("0x%p", string)
+    TL_STACK_PUSHA("0x%p", string)
     if (string == NULL) {
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
-    TLSTACKPOPV(string->is_view)
+    TL_STACK_POPV(string->is_view)
 }
 
 b8 tl_string_equals(const TLString* string, const char* guess) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     const u64 length = tl_char_length(guess);
-    if (string->length != length) TLSTACKPOPV(FALSE)
+    if (string->length != length) TL_STACK_POPV(false)
 
     for (u64 i = 0; i < string->length; ++i) {
         if (string->text[i] != guess[i])
-            TLSTACKPOPV(FALSE)
+            TL_STACK_POPV(false)
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_string_contains(TLString* string, const char* guess) {
-    TLSTACKPUSHA("0x%p, 0x%p", string, guess)
+    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
     //TODO implement tl_string_contains
     TLFATAL("Implementation missing")
-    TLSTACKPOPV(FALSE)
+    TL_STACK_POPV(false)
 }
 // #####################################################################################################################
 //
@@ -794,11 +794,11 @@ b8 tl_string_contains(TLString* string, const char* guess) {
 //
 // #####################################################################################################################
 TLString * tl_filesystem_get_parent(TLString *path) {
-    TLSTACKPUSHA("0x%p", path)
-    if (path == NULL) TLSTACKPOPV(NULL)
+    TL_STACK_PUSHA("0x%p", path)
+    if (path == NULL) TL_STACK_POPV(NULL)
 
     const u32 index = tl_string_last_index_of(path, '/');
-    if (index == U32_MAX) TLSTACKPOPV(NULL)
+    if (index == U32_MAX) TL_STACK_POPV(NULL)
 
     TLString *parent = tl_string_reserve(path->arena, index + 1);
 
@@ -806,7 +806,7 @@ TLString * tl_filesystem_get_parent(TLString *path) {
     tl_char_copy(value, path->text, index);
     tl_char_copy((void*) parent->text, value, index);
 
-    TLSTACKPOPV(parent)
+    TL_STACK_POPV(parent)
 }
 // #####################################################################################################################
 //
@@ -827,7 +827,7 @@ typedef struct {
 } TLTuple;
 
 void tl_serializer_walk(void (*processor)(const char* prefix, const char* block, const char *value)) {
-    TLSTACKPUSHA("%s", tl_string(global->yaml))
+    TL_STACK_PUSHA("%s", tl_string(global->yaml))
     FILE* file = fopen(tl_string(global->yaml), "r");
     if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
 
@@ -956,12 +956,12 @@ void tl_serializer_walk(void (*processor)(const char* prefix, const char* block,
             // YAML_BLOCK_END_TOKEN
             // #########################################################################################################
             case YAML_BLOCK_END_TOKEN: {
-                b8 found = FALSE;
+                b8 found = false;
                 for (u16 i = prefix_index - 2 ; i > 0 ; --i) {
                     if (*(prefix + i)  == '.') {
                         tl_memory_set(prefix + i + 1, 0, U16_MAX - i);
                         prefix_index = i + 1;
-                        found = TRUE;
+                        found = true;
                         break;
                     }
                 }
@@ -985,17 +985,17 @@ void tl_serializer_walk(void (*processor)(const char* prefix, const char* block,
     yaml_parser_delete(&parser);
     tl_memory_arena_destroy(arena);
 
-    TLSTACKPOP
+    TL_STACK_POP
 }
 // #####################################################################################################################
 //
 //                                                     SCRIPT
 //
 // #####################################################################################################################
-#define TLSCRIPTERR(s) TLSTACKPOPV(luaL_error(state, s))
+#define TLSCRIPTERR(s) TL_STACK_POPV(luaL_error(state, s))
 
 static i32 tl_script__application_exit(lua_State *state) {
-    TLSTACKPUSHA("0x%p", state)
+    TL_STACK_PUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -1007,11 +1007,11 @@ static i32 tl_script__application_exit(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    TLSTACKPOPV(0)
+    TL_STACK_POPV(0)
 }
 
 static i32 tl_script__is_key_pressed(lua_State *state) {
-    TLSTACKPUSHA("0x%p", state)
+    TL_STACK_PUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -1025,11 +1025,11 @@ static i32 tl_script__is_key_pressed(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    TLSTACKPOPV(1)
+    TL_STACK_POPV(1)
 }
 
 static i32 tl_script__is_key_released(lua_State *state) {
-    TLSTACKPUSHA("0x%p", state)
+    TL_STACK_PUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -1043,11 +1043,13 @@ static i32 tl_script__is_key_released(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    TLSTACKPOPV(1)
+    TL_STACK_POPV(1)
 }
 
 b8 tl_script_initialize(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
+
+    TLTRACE("Initializing Script Engine");
 
     TLDEBUG("LUA_VERSION %s.%s.%s", LUA_VERSION_MAJOR, LUA_VERSION_MINOR, LUA_VERSION_RELEASE);
     global->platform.script.state = luaL_newstate();
@@ -1074,14 +1076,15 @@ b8 tl_script_initialize(void) {
     luaL_newlib(global->platform.script.state, teleios_application);
     lua_setglobal(global->platform.script.state, "teleios_application");
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_script_terminate(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
+    TLTRACE("Terminating Script Engine");
     lua_close(global->platform.script.state);
     global->platform.script.state = NULL;
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 // #####################################################################################################################
 //
@@ -1118,13 +1121,13 @@ struct TLUlid {
 };
 
 static int platform_entropy(void *buf, const i32 len) {
-    TLSTACKPUSHA("0x%p, %d", buf, len)
+    TL_STACK_PUSHA("0x%p, %d", buf, len)
 #if _WIN32
     BOOLEAN NTAPI SystemFunction036(PVOID, ULONG);
-    TLSTACKPOPV(!SystemFunction036(buf, len))
+    TL_STACK_POPV(!SystemFunction036(buf, len))
 #elif __linux__
     i32 result = syscall(SYS_getrandom, buf, len, 0);
-    TLSTACKPOPV(result != len)
+    TL_STACK_POPV(result != len)
 #else
     int r = 0;
     FILE *f = fopen("/dev/urandom", "rb");
@@ -1132,12 +1135,12 @@ static int platform_entropy(void *buf, const i32 len) {
         r = fread(buf, len, 1, f);
         fclose(f);
     }
-    TLSTACKPOPV(!r)
+    TL_STACK_POPV(!r)
 #endif
 }
 
 TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
-    TLSTACKPUSHA("0x%p, %d", arena, flags)
+    TL_STACK_PUSHA("0x%p, %d", arena, flags)
     TLUlidGenerator* generator = tl_memory_alloc(arena, sizeof(TLUlidGenerator), TL_MEMORY_ULID);
 
     generator->timestamp = 0;
@@ -1167,7 +1170,7 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
             generator->s[j] = tmp;
         }
 
-        TLSTACKPOPV(generator)
+        TL_STACK_POPV(generator)
     }
 
     if (!(flags & ULID_SECURE)) {
@@ -1196,10 +1199,10 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
                 generator->s[j] = tmp;
             }
         } while (n++ < 1UL << 16 || now - start < 500000ULL);
-        TLSTACKPOPV(generator)
+        TL_STACK_POPV(generator)
     }
 
-    TLSTACKPOPV(NULL)
+    TL_STACK_POPV(NULL)
 }
 
 void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
@@ -1268,7 +1271,7 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 }
 
 // static b8 ulid_decode(u8 ulid[16], const i8 *s) {
-//     TLSTACKPUSHA("0x%p, 0x%p", ulid, s)
+//     TL_STACK_PUSHA("0x%p, 0x%p", ulid, s)
 //     static const i8 v[] = {
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1304,11 +1307,11 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1
 //     };
 //     if (v[(i32)s[0]] > 7)
-//         TLSTACKPOPV(TRUE)
+//         TL_STACK_POPV(true)
 //
 //     for (i32 i = 0; i < 26; i++)
 //         if (v[(i32)s[i]] == -1)
-//             TLSTACKPOPV(TRUE)
+//             TL_STACK_POPV(true)
 //
 //     ulid[ 0] = v[(i32)s[ 0]] << 5 | v[(i32)s[ 1]] >> 0;
 //     ulid[ 1] = v[(i32)s[ 2]] << 3 | v[(i32)s[ 3]] >> 2;
@@ -1327,11 +1330,11 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //     ulid[14] = v[(i32)s[22]] << 7 | v[(i32)s[23]] << 2 | v[(i32)s[24]] >> 3;
 //     ulid[15] = v[(i32)s[24]] << 5 | v[(i32)s[25]] >> 0;
 //
-//     TLSTACKPOPV(FALSE)
+//     TL_STACK_POPV(false)
 // }
 
 TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
-    TLSTACKPUSHA("0x%p, 0x%p", arena, generator)
+    TL_STACK_PUSHA("0x%p, 0x%p", arena, generator)
     const u64 timestamp = tl_time_epoch_micros() / 1000;
     TLUlid* ulid = tl_memory_alloc(arena, sizeof(TLUlid), TL_MEMORY_ULID);
 
@@ -1342,7 +1345,7 @@ TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
                 break;
 
         tl_ulid_encode(ulid, generator->last);
-        TLSTACKPOPV(ulid)
+        TL_STACK_POPV(ulid)
     }
 
     /* Fill out timestamp */
@@ -1369,13 +1372,13 @@ TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
         generator->last[6] &= 0x7f;
 
     tl_ulid_encode(ulid, generator->last);
-    TLSTACKPOPV(ulid)
+    TL_STACK_POPV(ulid)
 }
 
 TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid) {
-    TLSTACKPUSHA("0x%p, 0x%p", arena, ulid)
+    TL_STACK_PUSHA("0x%p, 0x%p", arena, ulid)
     TLString* string = tl_string_clone(arena, ulid->text);
-    TLSTACKPOPV(string)
+    TL_STACK_POPV(string)
 }
 // #####################################################################################################################
 //
@@ -1383,43 +1386,43 @@ TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid) {
 //
 // #####################################################################################################################
 static void tl_serializer_read(const char *prefix, const char *element, const char *value) {
-    TLSTACKPUSHA("%s, %s, %s", prefix, element, value)
+    TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
 
     if (tl_char_start_with(prefix, "application.")) {
-        if (tl_char_start_with(prefix, "application.scenes.")) TLSTACKPOP
+        if (tl_char_start_with(prefix, "application.scenes.")) TL_STACK_POP
 
         if (tl_char_equals(prefix, "application.")) {
             if (tl_char_equals(element, "version")) {
                 global->application.version = tl_string_clone(global->platform.arena, value);
                 TLTRACE("global->application.version = %s", value)
-                TLSTACKPOP
+                TL_STACK_POP
             }
         }
 
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     if (tl_char_start_with(prefix, "engine.")) {
         if (tl_char_equals(prefix, "engine.logging.") && tl_char_equals(element, "level")) {
-            if (tl_char_equals(value, "verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); TLSTACKPOP }
-            if (tl_char_equals(value,   "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); TLSTACKPOP }
-            if (tl_char_equals(value,   "debug")) { tl_logger_loglevel(  TL_LOG_LEVEL_DEBUG); TLSTACKPOP }
-            if (tl_char_equals(value,    "info")) { tl_logger_loglevel(   TL_LOG_LEVEL_INFO); TLSTACKPOP }
-            if (tl_char_equals(value,    "warn")) { tl_logger_loglevel(   TL_LOG_LEVEL_WARN); TLSTACKPOP }
-            if (tl_char_equals(value,   "error")) { tl_logger_loglevel(  TL_LOG_LEVEL_ERROR); TLSTACKPOP }
-            if (tl_char_equals(value,   "fatal")) { tl_logger_loglevel(  TL_LOG_LEVEL_FATAL); TLSTACKPOP }
+            if (tl_char_equals(value, "verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); TL_STACK_POP }
+            if (tl_char_equals(value,   "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); TL_STACK_POP }
+            if (tl_char_equals(value,   "debug")) { tl_logger_loglevel(  TL_LOG_LEVEL_DEBUG); TL_STACK_POP }
+            if (tl_char_equals(value,    "info")) { tl_logger_loglevel(   TL_LOG_LEVEL_INFO); TL_STACK_POP }
+            if (tl_char_equals(value,    "warn")) { tl_logger_loglevel(   TL_LOG_LEVEL_WARN); TL_STACK_POP }
+            if (tl_char_equals(value,   "error")) { tl_logger_loglevel(  TL_LOG_LEVEL_ERROR); TL_STACK_POP }
+            if (tl_char_equals(value,   "fatal")) { tl_logger_loglevel(  TL_LOG_LEVEL_FATAL); TL_STACK_POP }
         }
 
         if (tl_char_equals(prefix, "engine.graphics.")) {
             if (tl_char_equals(element, "vsync")) {
                 global->platform.graphics.vsync = tl_char_equals(value, "true");
                 TLTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
-                TLSTACKPOP
+                TL_STACK_POP
             }
             if (tl_char_equals(element, "wireframe")) {
                 global->platform.graphics.wireframe = tl_char_equals(value, "true");
                 TLTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
-                TLSTACKPOP
+                TL_STACK_POP
             }
         }
 
@@ -1432,14 +1435,14 @@ static void tl_serializer_read(const char *prefix, const char *element, const ch
 
             global->application.simulation.step = 1.0f / (f64) step;
             TLTRACE("global->simulation.step = %f", global->application.simulation.step)
-            TLSTACKPOP
+            TL_STACK_POP
         }
 
         if (tl_char_equals(prefix, "engine.window.")) {
             if (tl_char_equals(element, "title")) {
                 global->platform.window.title = tl_string_clone(global->platform.arena, value);
                 TLTRACE("global->platform.window.title = %s", value)
-                TLSTACKPOP
+                TL_STACK_POP
             }
 
             if (tl_char_equals(element, "size")) {
@@ -1451,17 +1454,21 @@ static void tl_serializer_read(const char *prefix, const char *element, const ch
 
                 global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
                 TLTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
-                TLSTACKPOP
+                TL_STACK_POP
             }
         }
 
-        TLSTACKPOP
+        TL_STACK_POP
     }
 
     TLWARN("Unknown prefix: %s", prefix)
-    TLSTACKPOP
+    TL_STACK_POP
 }
-
+// #####################################################################################################################
+//
+//                                             WINDOWING
+//
+// #####################################################################################################################
 static void tl_window_callback_window_closed(GLFWwindow* window) {
     tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
 }
@@ -1495,7 +1502,7 @@ static void tl_window_callback_window_focus(GLFWwindow* window, const i32 focuse
 }
 
 static void tl_window_callback_window_minimized(GLFWwindow* window, const i32 minimized) {
-    global->platform.window.maximized = FALSE;
+    global->platform.window.maximized = false;
     global->platform.window.minimized = minimized;
 
     tl_event_submit(minimized ? TL_EVENT_WINDOW_MINIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
@@ -1503,7 +1510,7 @@ static void tl_window_callback_window_minimized(GLFWwindow* window, const i32 mi
 
 static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 maximized) {
     global->platform.window.maximized = maximized;
-    global->platform.window.minimized = FALSE;
+    global->platform.window.minimized = false;
 
     tl_event_submit(maximized ? TL_EVENT_WINDOW_MAXIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
@@ -1514,10 +1521,10 @@ static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key,
     i32 type;
     if (action == GLFW_PRESS) {
         type = TL_EVENT_INPUT_KEY_PRESSED;
-        global->platform.input.keyboard.key[key] = TRUE;
+        global->platform.input.keyboard.key[key] = true;
     } else {
         type = TL_EVENT_INPUT_KEY_RELEASED;
-        global->platform.input.keyboard.key[key] = FALSE;
+        global->platform.input.keyboard.key[key] = false;
     }
 
     TLEvent event = { 0 };
@@ -1541,10 +1548,10 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int
 
     if (action == GLFW_PRESS) {
         type = TL_EVENT_INPUT_CURSOR_PRESSED;
-        global->platform.input.cursor.button[button] = TRUE;
+        global->platform.input.cursor.button[button] = true;
     } else {
         type = TL_EVENT_INPUT_CURSOR_RELEASED;
-        global->platform.input.cursor.button[button] = FALSE;
+        global->platform.input.cursor.button[button] = false;
     }
 
     global->platform.input.cursor.button[button] = action == GLFW_PRESS;
@@ -1572,7 +1579,7 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
 }
 
 static b8 tl_window_create(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
 
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -1582,7 +1589,7 @@ static b8 tl_window_create(void) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_RELEASE_BEHAVIOR_FLUSH);
 #ifdef TLPLATFORM_APPLE
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_true);
 #endif
 
     // --------------------------------------------------------------------------------------
@@ -1610,12 +1617,12 @@ static b8 tl_window_create(void) {
 
     if (global->platform.window.handle == NULL) {
         TLERROR("Failed to create GLFW window");
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
     // --------------------------------------------------------------------------------------
     // Cache state
     // --------------------------------------------------------------------------------------
-    global->platform.window.visible = FALSE;
+    global->platform.window.visible = false;
     global->platform.window.focused = glfwGetWindowAttrib(global->platform.window.handle, GLFW_FOCUSED) == GLFW_TRUE;
     global->platform.window.maximized = glfwGetWindowAttrib(global->platform.window.handle, GLFW_MAXIMIZED) == GLFW_TRUE;
     global->platform.window.minimized = glfwGetWindowAttrib(global->platform.window.handle, GLFW_ICONIFIED) == GLFW_TRUE;
@@ -1645,35 +1652,85 @@ static b8 tl_window_create(void) {
     glfwSetScrollCallback           (global->platform.window.handle, tl_window_callback_input_cursor_scroll);
     glfwSetCursorEnterCallback      (global->platform.window.handle, tl_window_callback_input_cursor_entered);
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
+}
+// #####################################################################################################################
+//
+//                                                     THREAD
+//
+// #####################################################################################################################
+b8 tl_thread_initialize(void) {
+    TL_STACK_PUSH
+    TLTRACE("Initializing Threadpool");
+    TL_STACK_POPV(true)
 }
 
+b8 tl_thread_terminate(void) {
+    TL_STACK_PUSH
+    TLTRACE("Terminating Threadpool");
+    TL_STACK_POPV(true)
+}
+
+void tl_thread_fire_and_forget(void* function) {
+    TL_STACK_PUSH
+    TL_STACK_POP
+}
+
+void tl_thread_fire_and_wait(void* function, u64 timeout) {
+    TL_STACK_PUSH
+    TL_STACK_POP
+}
+// #####################################################################################################################
+//
+//                                                     LIFECYCLE
+//
+// #####################################################################################################################
 b8 tl_runtime_initialize(void) {
-    TLSTACKPUSH
+    TL_STACK_PUSH
 
     tl_serializer_walk(tl_serializer_read);
 
+    if (!tl_thread_initialize()) {
+        TLERROR("Failed to initialize threadpool")
+        TL_STACK_POPV(false)
+    }
+
     if (!tl_window_create()) {
         TLERROR("Failed to create application window");
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (!tl_script_initialize()) {
         TLERROR("Failed to initialize script engine");
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
     if (!tl_graphics_initialize()) {
         TLERROR("Failed to initialize Graphics API")
-        TLSTACKPOPV(FALSE)
+        TL_STACK_POPV(false)
     }
 
-    TLSTACKPOPV(TRUE)
+    TL_STACK_POPV(true)
 }
 
 b8 tl_runtime_terminate(void) {
-    if (!tl_script_terminate()) return FALSE;
-    if (!tl_graphics_terminate()) TLERROR("Failed to terminate graphics engine");
+    TL_STACK_PUSH
 
-    return TRUE;
+    if (!tl_script_terminate()) {
+        TLERROR("Failed to terminate script engine");
+        TL_STACK_POPV(false)
+    }
+
+    if (!tl_graphics_terminate()) {
+        TLERROR("Failed to terminate graphics engine");
+        TL_STACK_POPV(false)
+    }
+
+
+    if (!tl_thread_terminate()) {
+        TLERROR("Failed to terminate threadpool")
+        TL_STACK_POPV(false)
+    }
+
+    TL_STACK_POPV(true)
 }

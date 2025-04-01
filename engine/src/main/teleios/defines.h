@@ -125,9 +125,6 @@ typedef double              f64;
 // Boolean types
 // ---------------------------------
 typedef _Bool               b8;
-
-#define TRUE                true
-#define FALSE               false
 // ---------------------------------
 // Static assertions.
 // ---------------------------------

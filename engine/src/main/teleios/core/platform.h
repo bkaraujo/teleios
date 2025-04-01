@@ -1,5 +1,5 @@
-#ifndef __TELEIOS_PLATFORM__
-#define __TELEIOS_PLATFORM__
+#ifndef __TELEIOS_CORE_PLATFORM__
+#define __TELEIOS_CORE_PLATFORM__
 
 #include "teleios/defines.h"
 
@@ -21,4 +21,4 @@ u64 tl_time_epoch_micros(void);
 b8 tl_platform_initialize(void);
 b8 tl_platform_terminate(void);
 
-#endif // __TELEIOS_PLATFORM__
+#endif // __TELEIOS_CORE_PLATFORM__
