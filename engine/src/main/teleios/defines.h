@@ -174,7 +174,7 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define TLKILOBYTES(amount) ((amount) * 1000ULL)
 
 #define TLARRSIZE(a,t) (sizeof(a) / sizeof(t))
-
+#define TLCHAR(name, size) char name[size]; tl_memory_set(name, 0 , size);
 // ---------------------------------
 // Globals
 // ---------------------------------
@@ -198,5 +198,7 @@ typedef struct TLStackFrame {
 #endif
 
 #define TL_YAML_PROPERTY_MAX_SIZE 1024
+#define TL_STACK_STRING_SIZE 100
+#define TL_STACK_ARGUMENTS_SIZE 1024
 
 #endif // __TELEIOS_DEFINES__

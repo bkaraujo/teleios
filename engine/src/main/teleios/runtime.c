@@ -208,7 +208,6 @@ struct TLList {
     TLMemoryArena *arena;
 } ;
 
-
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
     TLSTACKPUSHA("0x%p, 0X%p", arena, value)
 
@@ -724,13 +723,9 @@ u32 tl_string_index_of(TLString* string, const char token) {
 }
 
 u32 tl_string_last_index_of(TLString* string, const char token) {
-    TLSTACKPUSHA("0x%p, %s", string, token)
+    TLSTACKPUSHA("0x%p, %c", string, token)
     if (string == NULL) TLSTACKPOPV(U32_MAX);
-
-    if (string->length == 0) {
-        if (string->text[0] == token) TLSTACKPOPV(0);
-        TLSTACKPOPV(U32_MAX)
-    }
+    if (string->length == 0) TLSTACKPOPV(U32_MAX)
 
     for (u64 i = string->length - 1; i > 0; --i) {
         if (string->text[i] == token) TLSTACKPOPV(i);
@@ -793,7 +788,26 @@ b8 tl_string_contains(TLString* string, const char* guess) {
     TLFATAL("Implementation missing")
     TLSTACKPOPV(FALSE)
 }
+// #####################################################################################################################
+//
+//                                                     FILESYSTEM
+//
+// #####################################################################################################################
+TLString * tl_filesystem_get_parent(TLString *path) {
+    TLSTACKPUSHA("0x%p", path)
+    if (path == NULL) TLSTACKPOPV(NULL)
 
+    const u32 index = tl_string_last_index_of(path, '/');
+    if (index == U32_MAX) TLSTACKPOPV(NULL)
+
+    TLString *parent = tl_string_reserve(path->arena, index + 1);
+
+    TLCHAR(value, parent->size)
+    tl_char_copy(value, path->text, index);
+    tl_char_copy((void*) parent->text, value, index);
+
+    TLSTACKPOPV(parent)
+}
 // #####################################################################################################################
 //
 //                                                     SERIALIZER

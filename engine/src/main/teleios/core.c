@@ -146,8 +146,14 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
 
 void tl_trace_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    if (global->stack_index >= sizeof(global->stack) / sizeof(TLStackFrame)) {
+
+    global->stack_index++;
+    if (global->stack_index >= TL_STACK_SIZE_MAXIMUM) {
         TLFATAL("global->stack_index exceeded")
+    }
+
+    if (global->stack_index > global->stack_maximum) {
+        global->stack_maximum = global->stack_index;
     }
 
     global->stack[global->stack_index].lineno = lineno;
@@ -157,21 +163,21 @@ void tl_trace_push(const char* filename, const u64 lineno, const char* function,
     // ----------------------------------------------------------------
     {
         u16 i = 0;
-        for ( ; i < STACK_SIZE_MAXIMUM ; ++i) {
+        for ( ; i < TL_STACK_STRING_SIZE ; ++i) {
             if (function[i] == '\0') break;
             global->stack[global->stack_index].function[i] = function[i];
         }
 
-        tl_platform_memory_set(&global->stack[global->stack_index].function[i], 0, STACK_SIZE_MAXIMUM - i);
+        tl_platform_memory_set(&global->stack[global->stack_index].function[i], 0, TL_STACK_STRING_SIZE - i);
     }
     // ----------------------------------------------------------------
     // Copy the value and ensure the rest of the string is null
     // ----------------------------------------------------------------
-    tl_platform_memory_set(global->stack[global->stack_index].arguments, 0, 1024);
+    tl_platform_memory_set(global->stack[global->stack_index].arguments, 0, TL_STACK_ARGUMENTS_SIZE);
     if (arguments != NULL){
         __builtin_va_list arg_ptr;
         va_start(arg_ptr, arguments);
-        vsnprintf(global->stack[global->stack_index].arguments, 1024, arguments, arg_ptr);
+        vsnprintf(global->stack[global->stack_index].arguments, TL_STACK_ARGUMENTS_SIZE, arguments, arg_ptr);
         va_end(arg_ptr);
     }
     // ----------------------------------------------------------------
@@ -186,24 +192,19 @@ void tl_trace_push(const char* filename, const u64 lineno, const char* function,
         }
 
         u16 i = 0;
-        for ( ; i < STACK_SIZE_MAXIMUM ; ++i) {
+        for ( ; i < TL_STACK_STRING_SIZE ; ++i) {
             if (filename[index + i] == '\0') break;
             global->stack[global->stack_index].filename[i] = filename[index + i];
         }
 
-        tl_platform_memory_set(&global->stack[global->stack_index].filename[i], 0, STACK_SIZE_MAXIMUM - i);
-    }
-
-    global->stack_index++;
-    if (global->stack_index > global->stack_maximum) {
-        global->stack_maximum = global->stack_index;
+        tl_platform_memory_set(&global->stack[global->stack_index].filename[i], 0, TL_STACK_STRING_SIZE - i);
     }
 #endif
 }
 
 void tl_trace_pop() {
 #if ! defined(TELEIOS_BUILD_RELEASE)
-    if (global->stack_index == 0) TLWARN("global->stack_index is zero");
+    tl_platform_memory_set(&global->stack[global->stack_index], 0 , sizeof(TLStackFrame));
     global->stack_index--;
 #endif
 }
@@ -471,13 +472,13 @@ TLINLINE u32 tl_char_length(const char *string) {
     TLSTACKPOPV(index)
 }
 
-TLINLINE u32 tl_char_last_index(const char *string, const char token) {
-    TLSTACKPUSHA("0x%p, %c", string, token)
+TLINLINE u32 tl_char_last_index_of(const char *string, const char character) {
+    TLSTACKPUSHA("0x%p, %c", string, character)
     u32 index = 0;
     const char* s = string;
     for (u32 i = 0; *s != '\0' ; ++s) {
-        if (*s == token) {
-            index = i + 1;
+        if (*s == character) {
+            index = i;
         }
 
         if (++i == U32_MAX) {
@@ -544,25 +545,12 @@ b8 tl_char_start_with(const char *string, const char *guess) {
     TLSTACKPOPV(TRUE)
 }
 
-u32 tl_char_copy(char *target, const char *source) {
+u32 tl_char_copy(char *target, const char *source, const u32 length) {
     TLSTACKPUSHA("0x%p, 0x%p", target, source)
-    const u32 target_length = tl_char_length(target);
-    if (target_length == 0 || target_length == U32_MAX) {
-        TLSTACKPOPV(0)
-    }
-
-    const u32 source_length = tl_char_length(source);
-    if (source_length == 0 || source_length == U32_MAX) {
-        TLSTACKPOPV(0)
-    }
-
-    const char *s = source;
-    char *t = target;
 
     u32 copied = 0;
-    while (*s != '\0' && *t != '\0') {
-        *t = *s;
-        s++; t++;
+    for (u32 i = 0; i < length ; ++i) {
+        target[i] = source[i];
         copied++;
     }
 

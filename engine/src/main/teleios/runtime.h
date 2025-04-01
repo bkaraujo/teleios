@@ -9,6 +9,7 @@
 #include "teleios/runtime/input.h"
 #include "teleios/runtime/ulid.h"
 #include "teleios/runtime/string.h"
+#include "teleios/runtime/filesystem.h"
 
 b8 tl_runtime_initialize(void);
 b8 tl_runtime_terminate(void);

@@ -16,17 +16,20 @@ int main (const int argc, const char *argv[]) {
 
     TLGlobal local = { 0 };
     global = &local;
+    global->stack_index = U8_MAX;
+
     TLSTACKPUSHA("%i, 0%xp", argc, argv)
 
     global->platform.arena = tl_memory_arena_create(TLMEBIBYTES(10));
     global->yaml = tl_string_clone(global->platform.arena, argv[1]);
-
 
     if (!tl_platform_initialize()) {
         TLERROR("Platform failed to initialize")
         if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
         exit(99);
     }
+
+    global->rootfs = tl_filesystem_get_parent(global->yaml);
 
     if (!tl_runtime_initialize()) {
         TLERROR("Runtime failed to initialize")
@@ -43,15 +46,15 @@ int main (const int argc, const char *argv[]) {
 
     if (!tl_application_initialize()) {
         TLERROR("Engine failed to initialize");
-        if (!tl_application_terminate   ()) TLERROR("Application failed to terminate")
-        if (!tl_runtime_terminate       ()) TLERROR("Runtime failed to terminate")
-        if (!tl_platform_terminate      ()) TLFATAL("Platform failed to terminate")
+        if (!tl_application_terminate()) TLERROR("Application failed to terminate")
+        if (!tl_runtime_terminate    ()) TLERROR("Runtime failed to terminate")
+        if (!tl_platform_terminate   ()) TLFATAL("Platform failed to terminate")
         exit(99);
     }
 
-    if (!tl_application_run         ()) TLERROR("Application failed to execute")
-    if (!tl_application_terminate   ()) TLERROR("Application failed to terminate")
-    if (!tl_runtime_terminate       ()) TLERROR("Runtime failed to terminate")
+    if (!tl_application_run      ()) TLERROR("Application failed to execute")
+    if (!tl_application_terminate()) TLERROR("Application failed to terminate")
+    if (!tl_runtime_terminate    ()) TLERROR("Runtime failed to terminate")
 
     tl_memory_arena_destroy(global->platform.arena);
 
