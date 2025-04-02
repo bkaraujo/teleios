@@ -511,7 +511,7 @@ b8 tl_char_start_with(const char *string, const char *guess) {
 }
 
 u32 tl_char_copy(char *target, const char *source, const u32 length) {
-    TL_STACK_PUSHA("0x%p, 0x%p", target, source)
+    TL_STACK_PUSHA("0x%p, 0x%p, %d", target, source, length)
 
     u32 copied = 0;
     for (u32 i = 0; i < length ; ++i) {
@@ -557,6 +557,11 @@ TL_INLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
     }
 
     TL_STACK_POP
+}
+
+b8 tl_char_contains(const char *string, const char *token) {
+    TL_STACK_PUSHA("0x%p, 0x%p", string, token)
+    TL_STACK_POPV(false)
 }
 // #####################################################################################################################
 //

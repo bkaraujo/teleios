@@ -34,11 +34,13 @@ static const char* tl_memory_name(const TLMemoryTag tag) {
         case TL_MEMORY_STRING               : TL_STACK_POPV("TL_MEMORY_STRING")
         case TL_MEMORY_PROFILER             : TL_STACK_POPV("TL_MEMORY_PROFILER")
         case TL_MEMORY_SCENE                : TL_STACK_POPV("TL_MEMORY_SCENE")
+        case TL_MEMORY_ECS_COMPONENT        : TL_STACK_POPV("TL_MEMORY_ECS_COMPONENT")
         case TL_MEMORY_ULID                 : TL_STACK_POPV("TL_MEMORY_ULID")
+        case TL_MEMORY_THREAD               : TL_STACK_POPV("TL_MEMORY_THREAD")
         case TL_MEMORY_MAXIMUM              : TL_STACK_POPV("TL_MEMORY_MAXIMUM")
     }
 
-    TL_STACK_POPV("???")
+    TL_STACK_POPV("TL_MEMORY_???")
 }
 
 TLMemoryArena* tl_memory_arena_create(const u64 size) {
@@ -829,7 +831,7 @@ typedef struct {
     u32 sequence;
 } TLTuple;
 
-void tl_serializer_walk(void (*processor)(const char* prefix, const char* block, const char *value)) {
+void tl_serializer_walk(void (*processor)(const char* prefix, const char* element, const char *value)) {
     TL_STACK_PUSHA("%s", tl_string(global->yaml))
     FILE* file = fopen(tl_string(global->yaml), "r");
     if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
@@ -1110,18 +1112,6 @@ b8 tl_script_terminate(void) {
 #endif
 
 #include <time.h>
-
-struct TLUlidGenerator {
-    u8 last[16];
-    u64 timestamp;
-    i32 flags;
-    u8 i, j;
-    u8 s[256];
-};
-
-struct TLUlid {
-    char text[27];
-};
 
 static int platform_entropy(void *buf, const i32 len) {
     TL_STACK_PUSHA("0x%p, %d", buf, len)

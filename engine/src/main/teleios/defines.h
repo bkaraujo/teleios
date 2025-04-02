@@ -181,9 +181,19 @@ typedef struct TLList TLStack;
 typedef struct TLList TLList;
 typedef struct TLIterator TLIterator;
 typedef struct TLString TLString;
-typedef struct TLUlid TLUlid;
-typedef struct TLUlidGenerator TLUlidGenerator;
 typedef struct TLMemoryArena TLMemoryArena;
+
+typedef struct {
+    u8 last[16];
+    u64 timestamp;
+    i32 flags;
+    u8 i, j;
+    u8 s[256];
+} TLUlidGenerator;
+
+typedef struct {
+    char text[27];
+} TLUlid;
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
 typedef struct TLStackFrame {
@@ -195,8 +205,10 @@ typedef struct TLStackFrame {
 } TLStackFrame;
 #endif
 
+#define TL_SCENE_MAX_ACTORS 5
 #define TL_YAML_PROPERTY_MAX_SIZE 1024
 #define TL_STACK_STRING_SIZE 100
 #define TL_STACK_ARGUMENTS_SIZE 1024
+#define TL_STACK_SIZE_MAXIMUM 10
 
 #endif // __TELEIOS_DEFINES__

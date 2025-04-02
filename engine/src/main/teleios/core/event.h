@@ -63,7 +63,20 @@ typedef union {
 
 typedef TLEventStatus (*PFN_handler)(const TLEvent*);
 
+/**
+ * @brief Subscribe for notification on occurrences of <code>event</code>
+ * @param event The event code
+ * @param handler The function that will handle the event
+ * @return <code>true</code> if the handler were registered successfully, <code>false</code> otherwise
+ */
 b8 tl_event_subscribe(u16 event, PFN_handler handler);
+
+/**
+ * @brief Submit a new event for immediate processing.
+ *
+ * @param event The event code
+ * @param data <code>optional</code> event data
+ */
 void tl_event_submit(u16 event, const TLEvent* data);
 
 #endif // __TELEIOS_CORE_EVENT__

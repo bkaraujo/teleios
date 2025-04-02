@@ -4,21 +4,93 @@
 #include "teleios/globals.h"
 #include <ctype.h>
 
+// #####################################################################################################################
+//
+//                                                       ECS
+//
+// #####################################################################################################################
+static TLUlidGenerator *generator;
+
+TLUlid* tl_ecs_create(void) {
+    TL_STACK_PUSH
+    if (generator == NULL) {
+        generator = tl_ulid_generator_init(global->application.scene.arena, ULID_PARANOID);
+    }
+
+    for (u16 i = 0; i < TL_SCENE_MAX_ACTORS; ++i) {
+        if (global->application.ecs.entity[i] != NULL) continue;
+        global->application.ecs.entity[i] = tl_ulid_generate(global->application.scene.arena, generator);
+        TL_STACK_POPV(global->application.ecs.entity[i])
+    }
+
+    TLWARN("Failed to generate entity: array is full")
+    TL_STACK_POPV(NULL)
+}
+
+void tl_ecs_destroy(TLUlid *entity) {
+    TL_STACK_PUSHA("0x%p", entity)
+    if (entity == NULL) TL_STACK_POP
+
+    for (u16 i = 0; i < TL_SCENE_MAX_ACTORS; ++i) {
+        if (global->application.ecs.entity[i] != NULL && tl_char_equals(global->application.ecs.entity[i]->text, entity->text)) {
+            global->application.ecs.entity[i] = NULL;
+            TL_STACK_POP
+        }
+    }
+
+    TLWARN("Failed to destroy entity: not found")
+    TL_STACK_POP
+}
+/*
+#define TL_ECS_ATTACH_FUNCTION(type)                                                \
+    static u16 tl_ecs_attach_##type(TLUlid *entity) {                               \
+        TL_STACK_PUSHA("0x%p, %d", entity)                                          \
+        for (u16 i = 0; i < TL_SCENE_MAX_ACTORS; ++i) {                             \
+            if (global->application.ecs.components.type[i].entity == NULL) {        \
+                global->application.ecs.components.type[i].entity = entity;         \
+                TL_STACK_POPV(i)                                                    \
+            }                                                                       \
+        }                                                                           \
+                                                                                    \
+        TLWARN("Failed to generate ecs.components.%s: array is full", #type)        \
+        TL_STACK_POPV(U16_MAX) \
+    }
+
+TL_ECS_ATTACH_FUNCTION(yaml)
+TL_ECS_ATTACH_FUNCTION(name)
+
+u16 tl_ecs_attach(TLUlid *entity, const TLEcsComponentType type) {
+    TL_STACK_PUSHA("0x%p, %d", entity, type)
+    u16 index = U16_MAX;
+    switch (type) {
+        case TL_ECS_COMPONENT_YAML: index = tl_ecs_attach_yaml(entity); break;
+        case TL_ECS_COMPONENT_NAME: index = tl_ecs_attach_name(entity); break;
+    }
+
+    TL_STACK_POPV(index);
+}
+*/
+// #####################################################################################################################
+//
+//                                                     SCENE
+//
+// #####################################################################################################################
 #define TL_GLPARAM(p, f, g)             \
         if (tl_char_equals(value, f)) { \
         p = g;                          \
         TLTRACE("%s = GL_%s", #p, f)    \
-        TL_STACK_POP                      \
+        TL_STACK_POP                    \
 }
 
 static void tl_serializer_load_scene(const char *prefix, const char *element, const char *value) {
     TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
 
     // Ensure the right [application.scenes.#] is being parsed
-    if ( ! tl_char_start_with(prefix, global->application.scene.prefix) ) TL_STACK_POP
+    if (!tl_char_start_with(prefix, global->application.scene.prefix)) TL_STACK_POP
 
     // String used to check if property is the desired key
     char buffer[TL_YAML_PROPERTY_MAX_SIZE];
+    const u8 prefix_length = tl_char_length(prefix);
 
     // ----------------------------------------------------------------
     //  application.scenes.#.clear_color
@@ -79,6 +151,8 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             TLWARN("Failed to read [scene.clear_color.alpha] assuming magenta");
             TL_STACK_POP
         }
+
+        TL_STACK_POP
     }
     // ----------------------------------------------------------------
     //  application.scenes.#.depth
@@ -102,6 +176,9 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             TL_GLPARAM(global->application.scene.graphics.depth_function, "GREATER", GL_GREATER)
             TL_GLPARAM(global->application.scene.graphics.depth_function, "NOTEQUAL", GL_NOTEQUAL)
         }
+
+        TLWARN("depth")
+        TL_STACK_POP
     }
     // ----------------------------------------------------------------
     //  application.scenes.#.blend
@@ -121,6 +198,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
             TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_ADD", GL_FUNC_ADD)
             TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_SUBTRACT", GL_FUNC_SUBTRACT)
             TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_REVERSE_SUBTRACT", GL_FUNC_REVERSE_SUBTRACT)
+            TL_STACK_POP
         }
 
         tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
@@ -146,6 +224,7 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
                 TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC1_COLOR", GL_ONE_MINUS_SRC1_COLOR)
                 TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC1_ALPHA", GL_SRC1_ALPHA)
                 TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC1_ALPHA", GL_ONE_MINUS_SRC1_ALPHA)
+                TL_STACK_POP
             }
 
             if (tl_char_equals(element, "target") ) {
@@ -168,25 +247,97 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
                 TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC1_COLOR", GL_ONE_MINUS_SRC1_COLOR)
                 TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC1_ALPHA", GL_SRC1_ALPHA)
                 TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC1_ALPHA", GL_ONE_MINUS_SRC1_ALPHA)
+                TL_STACK_POP
             }
         }
+
+        TLWARN("blend")
+        TL_STACK_POP
     }
     // ----------------------------------------------------------------
     //  application.scenes.#.camera
     // ----------------------------------------------------------------
+    tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
+    tl_char_join(buffer, TL_YAML_PROPERTY_MAX_SIZE, global->application.scene.prefix, "camera.");
+    if (tl_char_start_with(prefix, buffer)) {
+        TLINFO("Camera : %s", prefix)
+        TL_STACK_POP
+    }
 
     // ----------------------------------------------------------------
-    //  application.scenes.#.actors
+    //  application.scenes.#.actors.####.
     // ----------------------------------------------------------------
+    if (prefix_length <= 33) {
+
+        tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
+        tl_char_join(buffer, TL_YAML_PROPERTY_MAX_SIZE, global->application.scene.prefix, "actors.");
+        if (!tl_char_start_with(prefix, buffer)) TL_STACK_POP
+
+        TLUlid *entity = NULL;
+
+        {
+            u16 empty_index = U16_MAX;
+            for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+                if (global->application.ecs.components.yaml[i].prefix == NULL) {
+                    if (empty_index == U16_MAX) { empty_index = i; }
+                    continue;
+                }
+
+                if (tl_string_equals(global->application.ecs.components.yaml[i].prefix, prefix)) {
+                    entity = global->application.ecs.components.yaml[i].entity;
+                    break;
+                }
+            }
+
+            if (entity == NULL) {
+                entity = tl_ecs_create();
+                global->application.ecs.components.yaml[empty_index].entity = entity;
+                TLTRACE("global->application.ecs.components.yaml[%d].entity = %s", empty_index, entity->text)
+                global->application.ecs.components.yaml[empty_index].prefix = tl_string_clone(global->application.scene.arena, prefix);
+                TLTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, prefix)
+
+            }
+        }
+
+        tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
+        if (tl_char_equals(element, "name") ) {
+            u16 empty_index = U16_MAX;
+            for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+                if (global->application.ecs.components.name[i].entity == NULL) {
+                    if (empty_index == U16_MAX) { empty_index = i; }
+                    continue;
+                }
+
+                if (tl_char_equals(global->application.ecs.components.name[i].entity->text, entity->text)) {
+                    TLWARN("Element [%s] repeated for prefix [%s]", element, prefix)
+                    break;
+                }
+            }
+
+            global->application.ecs.components.name[empty_index].entity = entity;
+            TLTRACE("global->application.ecs.components.name[%d].entity = %s", empty_index, entity->text)
+            global->application.ecs.components.name[empty_index].name = tl_string_clone(global->application.scene.arena, value);
+            TLTRACE("global->application.ecs.components.name[%d].name = %s", empty_index, value)
+        }
+    }
+
+    // ----------------------------------------------------------------
+    //  application.scenes.#.actors.####.components.###.
+    // ----------------------------------------------------------------
+    tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
+    if (tl_char_contains(prefix, ".components.")) {
+        TLINFO("Component : %s", prefix)
+    }
+
     TL_STACK_POP
 }
 
 static void tl_serializer_find_scene(const char *prefix, const char *element, const char *value) {
     TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
 
-    if ( ! tl_char_equals(prefix, global->application.scene.prefix) ) TL_STACK_POP
-    if ( ! tl_char_equals(element, "name") ) TL_STACK_POP
-    if ( ! tl_char_equals(value, tl_string(global->application.scene.name))) TL_STACK_POP
+    if (!tl_char_equals(prefix, global->application.scene.prefix)) TL_STACK_POP
+    if (!tl_char_equals(element, "name")) TL_STACK_POP
+    if (!tl_char_equals(value, tl_string(global->application.scene.name))) TL_STACK_POP
 
     global->application.scene.found = true;
     TL_STACK_POP

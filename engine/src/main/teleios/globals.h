@@ -5,8 +5,6 @@
 #include "teleios/core/libs.h"
 #include "teleios/runtime/libs.h"
 
-#define TL_STACK_SIZE_MAXIMUM 10
-
 typedef struct {
     TLString *yaml;
     TLString *rootfs;
@@ -77,8 +75,21 @@ typedef struct {
         } simulation;
 
         struct {
-            TLString* name;
+            TLUlid *entity[TL_SCENE_MAX_ACTORS];
+            struct {
+                struct {
+                    TLUlid *entity;
+                    TLString *prefix;
+                } yaml[TL_SCENE_MAX_ACTORS];
+                struct {
+                    TLUlid *entity;
+                    TLString *name;
+                } name[TL_SCENE_MAX_ACTORS];
+            } components;
+        } ecs;
 
+        struct {
+            TLString* name;
             TLMemoryArena *arena;
 
             struct {
