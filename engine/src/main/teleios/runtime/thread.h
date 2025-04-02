@@ -3,10 +3,13 @@
 
 #include "teleios/defines.h"
 
-b8 tl_thread_initialize(void);
-b8 tl_thread_terminate(void);
+typedef struct TLThreadPool TLThreadPool;
 
-void tl_thread_fire_and_wait(void* function, u64 timeout);
-void tl_thread_fire_and_forget(void* function);
+TLThreadPool tl_thread_pool_create(TLMemoryArena *arena);
+void tl_thread_pool_destroy(const TLThreadPool *pool);
+
+typedef void (*PFN_task)();
+void tl_thread_fire_and_wait(PFN_task task, u64 timeout);
+void tl_thread_fire_and_forget(PFN_task task);
 
 #endif //__TELEIOS_RUNTIME_THREAD__

@@ -170,7 +170,8 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define TL_MEGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL)
 #define TL_KILO_BYTES(amount) ((amount) * 1000ULL)
 
-#define TL_ARR_SIZE(a,t) (sizeof(a) / sizeof(t))
+#define TL_ARR_LENGTH(a,t) (sizeof(a) / sizeof(t))
+#define TL_ARR_SIZE(a,t) ((sizeof(a) / sizeof(t)) * sizeof(t))
 #define TL_CREATE_CHAR(name, size) char name[size]; tl_memory_set(name, 0 , size);
 // ---------------------------------
 // Globals

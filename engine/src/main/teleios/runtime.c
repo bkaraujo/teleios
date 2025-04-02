@@ -1,5 +1,8 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
+
+#include <asm-generic/errno-base.h>
+
 #include "teleios/globals.h"
 // #####################################################################################################################
 //
@@ -82,7 +85,7 @@ TL_INLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
 TL_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TL_STACK_PUSHA("%d", index)
     TLMemoryArena *arena = global->platform.memory.arenas[index];
-    for (u32 i = 0 ; i < TL_ARR_SIZE(arena->page, TLMemoryPage) ; ++i) {
+    for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             TLVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
             tl_platform_memory_free(arena->page[i].payload);
@@ -104,7 +107,7 @@ TL_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
 
 void tl_memory_arena_reset(TLMemoryArena *arena) {
     TL_STACK_PUSHA("0x%p", arena)
-    for (u32 i = 0 ; i < TL_ARR_SIZE(arena->page, TLMemoryPage) ; ++i) {
+    for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
@@ -1659,25 +1662,124 @@ static b8 tl_window_create(void) {
 //                                                     THREAD
 //
 // #####################################################################################################################
+#include <pthread.h>
+
+typedef struct {
+    pthread_t handle;
+    PFN_task task;
+    u64 created_at;
+    u64 task_acquired_at;
+    u64 id;
+} TLThread;
+
+typedef struct TLThreadPool {
+    TLThread thread[4];
+    PFN_task stack[U8_MAX];
+    u8 index;
+
+    pthread_mutex_t mutex;
+    pthread_cond_t condition;
+} TLThreadPool;
+
+static TLThreadPool thread_pool;
+
+static void* tl_thread_runner(void *parameter) {
+    TLThread *thread = parameter;
+    thread->id = pthread_self();
+    TLTRACE("Initializing ThreadPoll Thread")
+
+    while (global->application.running) {
+
+        pthread_mutex_lock(&thread_pool.mutex);
+        while (thread_pool.index == U8_MAX) {
+            pthread_cond_wait(&thread_pool.condition, &thread_pool.mutex);
+        }
+
+        thread->task_acquired_at = tl_time_epoch_micros();
+        thread->task = thread_pool.stack[thread_pool.index];
+        TLTRACE("Accepting function 0x%p", thread->task)
+
+        thread_pool.stack[thread_pool.index] = NULL;
+        thread_pool.index--;
+
+        pthread_mutex_unlock(&thread_pool.mutex);
+        thread->task();
+    }
+
+    return NULL;
+}
+
 b8 tl_thread_initialize(void) {
     TL_STACK_PUSH
     TLTRACE("Initializing Threadpool");
+
+    pthread_cond_init(&thread_pool.condition, NULL);
+    pthread_mutex_init(&thread_pool.mutex, NULL);
+    pthread_mutex_lock(&thread_pool.mutex);
+    tl_memory_set(thread_pool.stack, 0, TL_ARR_SIZE(thread_pool.stack, u64*));
+
+    for (u8 i = 0 ; i < TL_ARR_LENGTH(thread_pool.thread, TLThread); ++i) {
+        thread_pool.thread[i].created_at = tl_time_epoch_micros();
+        if (pthread_create(&thread_pool.thread[i].handle, NULL, tl_thread_runner, &thread_pool.thread[i]) != 0) {
+            TLERROR("Failed to create Threadpool thread");
+            TL_STACK_POPV(false)
+        }
+    }
+
     TL_STACK_POPV(true)
 }
 
 b8 tl_thread_terminate(void) {
     TL_STACK_PUSH
+
     TLTRACE("Terminating Threadpool");
+
+    for (u8 i = 0 ; i < TL_ARR_LENGTH(thread_pool.thread, TLThread) ; ++i) {
+        if (thread_pool.thread[i].handle != 0) {
+            TLTRACE("Cancelling Threadpool thread %llu", thread_pool.thread[i].id);
+            const i32 result = pthread_cancel(thread_pool.thread[i].handle);
+            if (result != 0) {
+                if (result == ESRCH) { TLERROR("Failed to cancel thread: no thread with the id %#x could be found.", thread_pool.thread[i].id); }
+                else                 { TLERROR("Failed to cancel thread: an unknown error has occurred. errno=%i", result); }
+
+                TL_STACK_POPV(false)
+            }
+        }
+    }
+
+    pthread_mutex_destroy(&thread_pool.mutex);
+    pthread_cond_destroy(&thread_pool.condition);
+
     TL_STACK_POPV(true)
 }
 
-void tl_thread_fire_and_forget(void* function) {
-    TL_STACK_PUSH
+static u8 tl_thread_submit(PFN_task task) {
+    TL_STACK_PUSHA("0x%p", task);
+
+    pthread_mutex_lock(&thread_pool.mutex);
+    if (thread_pool.index == U8_MAX - 1) {
+        TLWARN("ThreadPool is full, rejecting task")
+        TL_STACK_POPV(false)
+    }
+
+    thread_pool.stack[thread_pool.index] = task;
+    thread_pool.index++;
+    pthread_mutex_unlock(&thread_pool.mutex);
+
+    pthread_cond_signal(&thread_pool.condition);
+
+    TL_STACK_POPV(true)
+}
+
+void tl_thread_fire_and_forget(PFN_task task) {
+    TL_STACK_PUSHA("0x%p", task);
+    tl_thread_submit(task);
     TL_STACK_POP
 }
 
-void tl_thread_fire_and_wait(void* function, u64 timeout) {
-    TL_STACK_PUSH
+void tl_thread_fire_and_wait(PFN_task task, const u64 timeout) {
+    TL_STACK_PUSHA("0x%p, %llu", task, timeout);
+    tl_thread_submit(task);
     TL_STACK_POP
 }
 // #####################################################################################################################

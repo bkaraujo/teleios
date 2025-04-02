@@ -67,7 +67,8 @@ typedef struct {
     struct {
         TLString *version;
         TLMemoryArena *arena;
-
+        b8 running;
+        b8 paused;
         struct {
             f64 step;
             u32 number;

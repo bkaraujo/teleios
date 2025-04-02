@@ -43,14 +43,10 @@ b8 tl_application_load(void) {
     TL_STACK_POPV(true)
 }
 
-
-static b8 running = true;
-static b8 paused = false;
-
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
     TL_STACK_PUSHA("0x%p", event)
 
-    paused = true;
+    global->application.paused = true;
 
     global->application.frame.per_second = 0;
     global->application.simulation.per_second = 0;
@@ -62,7 +58,7 @@ static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
 static TLEventStatus tl_process_window_closed(const TLEvent *event) {
     TL_STACK_PUSHA("0x%p", event)
 
-    running = false;
+    global->application.running = false;
 
     TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
@@ -70,7 +66,7 @@ static TLEventStatus tl_process_window_closed(const TLEvent *event) {
 static TLEventStatus tl_process_window_restored(const TLEvent *event) {
     TL_STACK_PUSHA("0x%p", event)
 
-    paused = false;
+    global->application.paused = false;
     TLINFO("Simulation resumed")
 
     TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
@@ -109,11 +105,11 @@ b8 tl_application_run(void) {
     global->application.frame.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
 
     glfwShowWindow(global->platform.window.handle);
-    while (running) {
+    while (global->application.running) {
         const f64 deltaTime = glfwGetTime() - lastTime;
         lastTime += deltaTime;
 
-        if (!paused) {
+        if (!global->application.paused) {
             global->application.frame.number++;
             if (global->application.frame.number == 0) {
                 global->application.frame.overflow++;
@@ -140,7 +136,6 @@ b8 tl_application_run(void) {
             // =========================================================
             global->application.frame.per_second++;
             glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
             {
                 if (luaL_dofile(global->platform.script.state, "/mnt/nvme1/Cloud/Google/Trabalho/bkraujo/teleios/sandbox/assets/scripts/environment.lua") != LUA_OK) {

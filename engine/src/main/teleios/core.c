@@ -3,7 +3,7 @@
 //                    TIME FUNCTIONS
 // ########################################################
 #include <time.h>
-
+#include <pthread.h>
 #if defined(TLPLATFORM_LINUX)
 #include <sys/time.h>
 #endif
@@ -72,7 +72,6 @@ u64 tl_time_epoch_micros(void) {
 #endif
 
 #if defined(TLPLATFORM_LINUX)
-#   include <time.h>
 #   define ANSI_COLOR_FATAL   "\033[1;31m"
 #   define ANSI_COLOR_ERROR   "\033[1;31m"
 #   define ANSI_COLOR_WARN    "\033[1;33m"
@@ -111,10 +110,11 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     }
 
     TLClock clock; tl_time_clock(&clock);
-    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06u %20s:%04d %s %s\n\033[1;30m",
+    fprintf(stdout, "%s%d-%02d-%02d %02d:%02d:%02d,%06u %lu %20s:%04d %s %s\n\033[1;30m",
         colors[level],
         clock.year, clock.month, clock.day,
         clock.hour, clock.minute, clock.second, clock.millis,
+        pthread_self(),
         filename + index, lineno,
         strings[level],
         output

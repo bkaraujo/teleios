@@ -14,6 +14,7 @@ typedef enum {
     TL_MEMORY_ULID,
     TL_MEMORY_PROFILER,
     TL_MEMORY_SCENE,
+    TL_MEMORY_THREAD,
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
 
