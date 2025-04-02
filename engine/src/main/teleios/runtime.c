@@ -1672,7 +1672,7 @@ typedef struct {
     u64 id;
 } TLThread;
 
-typedef struct TLThreadPool {
+typedef struct {
     TLThread thread[4];
     PFN_task stack[U8_MAX];
     u8 index;

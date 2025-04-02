@@ -80,7 +80,7 @@ int main (const int argc, const char *argv[]) {
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     TLDEBUG("global->stack used: %u", global->stack_maximum);
-    TLDEBUG("global->stack reserved: %u", TL_ARR_SIZE(global->stack, TLStackFrame));
+    TLDEBUG("global->stack reserved: %u", TL_ARR_LENGTH(global->stack, TLStackFrame));
 #endif
 
     TLINFO("Exiting")
