@@ -268,7 +268,6 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
     //  application.scenes.#.actors.####.
     // ----------------------------------------------------------------
     if (prefix_length <= 33) {
-
         tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
         tl_char_join(buffer, TL_YAML_PROPERTY_MAX_SIZE, global->application.scene.prefix, "actors.");
         if (!tl_char_start_with(prefix, buffer)) TL_STACK_POP
@@ -276,24 +275,29 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
         TLUlid *entity = NULL;
 
         {
-            u16 empty_index = U16_MAX;
-            for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+            u32 empty_index = U32_MAX;
+            for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
                 if (global->application.ecs.components.yaml[i].prefix == NULL) {
-                    if (empty_index == U16_MAX) { empty_index = i; }
+                    if (empty_index == U32_MAX) { empty_index = i; }
                     continue;
                 }
 
-                if (tl_string_equals(global->application.ecs.components.yaml[i].prefix, prefix)) {
+                if (tl_char_equals(tl_string(global->application.ecs.components.yaml[i].prefix), prefix)) {
                     entity = global->application.ecs.components.yaml[i].entity;
                     break;
                 }
+            }
+
+            if (empty_index > TL_SCENE_MAX_ACTORS) {
+                TLWARN("Maximum components reached")
+                TL_STACK_POP
             }
 
             if (entity == NULL) {
                 entity = tl_ecs_create();
                 global->application.ecs.components.yaml[empty_index].entity = entity;
                 TLTRACE("global->application.ecs.components.yaml[%d].entity = %s", empty_index, entity->text)
-                global->application.ecs.components.yaml[empty_index].prefix = tl_string_clone(global->application.scene.arena, prefix);
+                global->application.ecs.components.yaml[empty_index].prefix = tl_string_clone(global->platform.arena, prefix);
                 TLTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, prefix)
 
             }
@@ -301,10 +305,10 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
 
         tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
         if (tl_char_equals(element, "name") ) {
-            u16 empty_index = U16_MAX;
-            for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+            u32 empty_index = U32_MAX;
+            for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
                 if (global->application.ecs.components.name[i].entity == NULL) {
-                    if (empty_index == U16_MAX) { empty_index = i; }
+                    if (empty_index == U32_MAX) { empty_index = i; }
                     continue;
                 }
 
@@ -314,9 +318,14 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
                 }
             }
 
+            if (empty_index > TL_SCENE_MAX_ACTORS) {
+                TLWARN("Maximum components reached")
+                TL_STACK_POP
+            }
+
             global->application.ecs.components.name[empty_index].entity = entity;
             TLTRACE("global->application.ecs.components.name[%d].entity = %s", empty_index, entity->text)
-            global->application.ecs.components.name[empty_index].name = tl_string_clone(global->application.scene.arena, value);
+            global->application.ecs.components.name[empty_index].name = tl_string_clone(global->platform.arena, prefix);
             TLTRACE("global->application.ecs.components.name[%d].name = %s", empty_index, value)
         }
     }
@@ -326,13 +335,41 @@ static void tl_serializer_load_scene(const char *prefix, const char *element, co
     // ----------------------------------------------------------------
     tl_memory_set(buffer, 0, TL_YAML_PROPERTY_MAX_SIZE);
     if (tl_char_contains(prefix, ".components.")) {
+        // =========================================
+        // Find the entity id
+        // =========================================
+        TLUlid *entity = NULL;
+        for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS; ++i) {
+            if (global->application.ecs.components.yaml[i].prefix == NULL) continue;
+            if (tl_string_start_with(global->application.ecs.components.yaml[i].prefix, prefix)) {
+                entity = global->application.ecs.components.yaml[i].entity;
+                break;
+            }
+        }
+
+        if (entity == NULL) {
+            TLWARN("Entity not found for prefix [%s]", prefix)
+            TL_STACK_POP
+        }
+
+        if (tl_char_equals(element, "name")) {
+            if (tl_char_equals(value, "COMPONENT_SCRIPT")) {
+                for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS * TL_SCENE_MAX_ACTOR_SCRIPTS; ++i) {
+                    if (global->application.ecs.components.script[i].entity != NULL) continue;
+                    global->application.ecs.components.script[i].entity = entity;
+                    global->application.ecs.components.script[i].prefix = tl_string_clone(global->platform.arena, prefix);
+                }
+            }
+        }
+
+
         TLINFO("Component : %s", prefix)
     }
 
     TL_STACK_POP
 }
 
-static void tl_serializer_find_scene(const char *prefix, const char *element, const char *value) {
+static void tl_serializer_find_scene(const char *prefix, const char  *element, const char *value) {
     TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
 
     if (!tl_char_equals(prefix, global->application.scene.prefix)) TL_STACK_POP

@@ -36,8 +36,8 @@ application:
           components:
             - name: "COMPONENT_SCRIPT"
               properties:
-                - name: "file"
-                  value: "environment.lua"
+                - name: "path"
+                  value: "scripts/environment.lua"
         - name: "Ball"
         - name: "Paddle Left"
         - name: "Paddle Right"

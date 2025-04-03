@@ -58,7 +58,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (global->platform.memory.arenas[i] == NULL) {
             global->platform.memory.arenas[i] = arena;
-            TLVERBOSE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
+            TLTRACE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
             TL_STACK_POPV(arena)
         }
     }
@@ -66,7 +66,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     TLFATAL("Failed to allocate TLMemoryArena");
 }
 
-TL_INLINE static u8 tl_memory_arena_get_index(TLMemoryArena *arena) {
+TL_INLINE static u8 tl_memory_arena_get_index(const TLMemoryArena *arena) {
     TL_STACK_PUSHA("0x%p", arena)
 
     if (arena == NULL) {
@@ -147,7 +147,7 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
 
         // Initialize a new TLMemoryPage
         if (arena->page[i].payload == NULL) {
-            TLVERBOSE("TLMemoryArena 0x%p initializing page %d", arena, i)
+            TLTRACE("TLMemoryArena 0x%p initializing page %d", arena, i)
             arena->page[i].payload = tl_platform_memory_alloc(arena->page_size);
             tl_platform_memory_set(arena->page[i].payload, 0, arena->page_size);
 
@@ -621,8 +621,9 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
     TLString *wrap = tl_string_reserve(arena, 0);
     wrap->is_view = true;
     wrap->text = string;
-    wrap->size = wrap->length;
     wrap->length = tl_char_length(string);
+    wrap->size = wrap->length + 1;
+
     TL_STACK_POPV(wrap)
 }
 
@@ -699,6 +700,17 @@ TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offs
     //TODO implement tl_string_slice
     TLFATAL("Implementation missing")
     TL_STACK_POPV(NULL)
+}
+
+TLString* tl_string_duplicate(TLString *string) {
+    TL_STACK_PUSHA("0x%p", string)
+
+    TLString *duplicate = tl_string_reserve(string->arena, string->length);
+    duplicate->is_view = false;
+    duplicate->length = string->length;
+    tl_memory_copy((void*)duplicate->text, (void*)string->text, string->length);
+
+    TL_STACK_POPV(duplicate)
 }
 
 TLString* tl_string_view(TLString* string) {
@@ -789,9 +801,8 @@ b8 tl_string_equals(const TLString* string, const char* guess) {
 
 b8 tl_string_contains(TLString* string, const char* guess) {
     TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
-    //TODO implement tl_string_contains
-    TLFATAL("Implementation missing")
-    TL_STACK_POPV(false)
+    b8 contains = tl_char_contains(string->text, guess);
+    TL_STACK_POPV(contains)
 }
 // #####################################################################################################################
 //
@@ -831,7 +842,7 @@ typedef struct {
     u32 sequence;
 } TLTuple;
 
-void tl_serializer_walk(void (*processor)(const char* prefix, const char* element, const char *value)) {
+void tl_serializer_walk(void (*processor)(const char *prefix, const char *element, const char *value)) {
     TL_STACK_PUSHA("%s", tl_string(global->yaml))
     FILE* file = fopen(tl_string(global->yaml), "r");
     if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
@@ -1386,7 +1397,7 @@ static void tl_serializer_read(const char *prefix, const char *element, const ch
 
         if (tl_char_equals(prefix, "application.")) {
             if (tl_char_equals(element, "version")) {
-                global->application.version = tl_string_clone(global->platform.arena, value);
+                global->application.version = tl_string_duplicate(value);
                 TLTRACE("global->application.version = %s", value)
                 TL_STACK_POP
             }
@@ -1434,7 +1445,7 @@ static void tl_serializer_read(const char *prefix, const char *element, const ch
         if (tl_char_equals(prefix, "engine.window.")) {
             if (tl_char_equals(element, "title")) {
                 global->platform.window.title = tl_string_clone(global->platform.arena, value);
-                TLTRACE("global->platform.window.title = %s", value)
+                TLTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
                 TL_STACK_POP
             }
 
@@ -1594,13 +1605,6 @@ static b8 tl_window_create(void) {
     // --------------------------------------------------------------------------------------
     // Create the platform surface
     // --------------------------------------------------------------------------------------
-    TLDEBUG(
-        "Window (%u x %u) :: %s",
-        global->platform.window.size.x,
-        global->platform.window.size.y,
-        tl_string(global->platform.window.title)
-    )
-
     global->platform.window.handle = glfwCreateWindow(
         global->platform.window.size.x,
         global->platform.window.size.y,

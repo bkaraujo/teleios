@@ -85,6 +85,11 @@ typedef struct {
                     TLUlid *entity;
                     TLString *name;
                 } name[TL_SCENE_MAX_ACTORS];
+                struct {
+                    TLUlid *entity;
+                    TLString *prefix;
+                    TLString *path;
+                } script[TL_SCENE_MAX_ACTORS * TL_SCENE_MAX_ACTOR_SCRIPTS];
             } components;
         } ecs;
 

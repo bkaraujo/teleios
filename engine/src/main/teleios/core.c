@@ -561,7 +561,30 @@ TL_INLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
 
 b8 tl_char_contains(const char *string, const char *token) {
     TL_STACK_PUSHA("0x%p, 0x%p", string, token)
-    TL_STACK_POPV(false)
+
+    // const char *s = string;
+    // while (*s != '\0') {
+    //     if (*s == *token) {
+    //         b8 found = true;
+    //         const char *sc = s;
+    //         const char *t = token;
+    //         while (*t != '\0' || *sc != '\0') {
+    //             if (*sc != *t) {
+    //                 found = false;
+    //                 break;
+    //             }
+    //
+    //             sc++;
+    //             t++;
+    //         }
+    //
+    //         if (found) TL_STACK_POPV(true)
+    //     }
+    //
+    //     s++;
+    // }
+
+    TL_STACK_POPV(strstr(string, token) != NULL)
 }
 // #####################################################################################################################
 //
