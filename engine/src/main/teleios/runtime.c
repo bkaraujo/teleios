@@ -1663,7 +1663,7 @@ typedef struct {
 } TLThread;
 
 typedef struct {
-    TLThread thread[4];
+    TLThread thread[TL_THREAD_POOL_SIZE];
     PFN_task stack[U8_MAX];
     u8 index;
 
@@ -1708,7 +1708,7 @@ b8 tl_thread_initialize(void) {
     pthread_mutex_lock(&thread_pool.mutex);
     tl_memory_set(thread_pool.stack, 0, TL_ARR_SIZE(thread_pool.stack, u64*));
 
-    for (u8 i = 0 ; i < TL_ARR_LENGTH(thread_pool.thread, TLThread); ++i) {
+    for (u8 i = 0 ; i < TL_THREAD_POOL_SIZE ; ++i) {
         thread_pool.thread[i].created_at = tl_time_epoch_micros();
         if (pthread_create(&thread_pool.thread[i].handle, NULL, tl_thread_runner, &thread_pool.thread[i]) != 0) {
             TLERROR("Failed to create Threadpool thread");
@@ -1724,7 +1724,7 @@ b8 tl_thread_terminate(void) {
 
     TLTRACE("Terminating Threadpool");
 
-    for (u8 i = 0 ; i < TL_ARR_LENGTH(thread_pool.thread, TLThread) ; ++i) {
+    for (u8 i = 0 ; i < TL_THREAD_POOL_SIZE ; ++i) {
         if (thread_pool.thread[i].handle != 0) {
             TLTRACE("Cancelling Threadpool thread %llu", thread_pool.thread[i].id);
             const i32 result = pthread_cancel(thread_pool.thread[i].handle);

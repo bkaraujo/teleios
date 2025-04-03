@@ -210,5 +210,6 @@ typedef struct TLStackFrame {
 #define TL_STACK_STRING_SIZE 100
 #define TL_STACK_ARGUMENTS_SIZE 1024
 #define TL_STACK_SIZE_MAXIMUM 10
+#define TL_THREAD_POOL_SIZE 2
 
 #endif // __TELEIOS_DEFINES__
