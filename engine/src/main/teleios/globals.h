@@ -8,6 +8,7 @@
 typedef struct {
     TLString *yaml;
     TLString *rootfs;
+    TLMap *properties;
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     u8 stack_index;

@@ -56,8 +56,16 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/runtime.c
         engine/src/main/teleios/system.c
         engine/src/main/teleios/application.c
+        engine/src/main/teleios/container.c
+        engine/src/main/teleios/string.c
+        engine/src/main/teleios/event.c
+        engine/src/main/teleios/number.c
+        engine/src/main/teleios/platform.c
+        engine/src/main/teleios/graphics.c
+        engine/src/main/teleios/scene.c
 )
 
+target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-unused-parameter")
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PUBLIC /W4 /permissive)

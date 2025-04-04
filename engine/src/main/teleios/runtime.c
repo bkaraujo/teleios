@@ -30,6 +30,8 @@ static const char* tl_memory_name(const TLMemoryTag tag) {
         case TL_MEMORY_CONTAINER_LIST       : TL_STACK_POPV("TL_MEMORY_CONTAINER_LIST")
         case TL_MEMORY_CONTAINER_STACK      : TL_STACK_POPV("TL_MEMORY_CONTAINER_STACK")
         case TL_MEMORY_CONTAINER_NODE       : TL_STACK_POPV("TL_MEMORY_CONTAINER_NODE")
+        case TL_MEMORY_CONTAINER_MAP        : TL_STACK_POPV("TL_MEMORY_CONTAINER_MAP")
+        case TL_MEMORY_CONTAINER_MAP_ENTRY  : TL_STACK_POPV("TL_MEMORY_CONTAINER_MAP_ENTRY")
         case TL_MEMORY_CONTAINER_ITERATOR   : TL_STACK_POPV("TL_MEMORY_CONTAINER_ITERATOR")
         case TL_MEMORY_STRING               : TL_STACK_POPV("TL_MEMORY_STRING")
         case TL_MEMORY_PROFILER             : TL_STACK_POPV("TL_MEMORY_PROFILER")
@@ -200,349 +202,7 @@ void tl_memory_copy(void *target, void *source, const u64 size) {
 //                                                     CONTAINER
 //
 // #####################################################################################################################
-struct TLNode {
-    void *payload;
-    struct TLNode* next;
-    struct TLNode* previous;
-};
 
-struct TLList {
-    u64 length;
-    struct TLNode* head;
-    struct TLNode* tail;
-    TLMemoryArena *arena;
-} ;
-
-static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
-    TL_STACK_PUSHA("0x%p, 0X%p", arena, value)
-
-    struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
-    if (created == NULL) TLFATAL("Failed to allocate struct TLNode")
-    created->payload = value;
-
-    TL_STACK_POPV(created)
-}
-
-TLList* tl_list_create(TLMemoryArena *arena) {
-    TL_STACK_PUSHA("0x%p", arena)
-    TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
-    if (list == NULL) {
-        TLERROR("Failed to allocate TLList")
-        TL_STACK_POPV(NULL)
-    }
-
-    list->arena = arena;
-    list->length = 0;
-
-    TL_STACK_POPV(list)
-}
-
-u64 tl_list_length(TLList* list) {
-    TL_STACK_PUSHA("0x%p", list)
-    TL_STACK_POPV(list->length)
-}
-
-void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value)) {
-    TL_STACK_PUSHA("0x%p, 0x%p", list, PFN_filter)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POPV(NULL)
-    }
-
-    if (PFN_filter == NULL) {
-        TLERROR("PFN_filter is null")
-        TL_STACK_POPV(NULL)
-    }
-
-    struct TLNode* node = list->head;
-    while (node != NULL) {
-        if (PFN_filter(node->payload)) {
-            TL_STACK_POPV(node->payload);
-        }
-
-        node = node->next;
-    }
-
-    TL_STACK_POPV(NULL)
-}
-
-void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
-    TL_STACK_PUSHA("0x%p, 0x%p", list, PFN_handler)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POP
-    }
-    if (PFN_handler == NULL) {
-        TLERROR("PFN_handler is NULL")
-        TL_STACK_POP
-    }
-
-    const struct TLNode* node = list->head;
-    while (node != NULL) {
-        PFN_handler(node->payload);
-        node = node->next;
-    }
-
-    TL_STACK_POP
-}
-
-void tl_list_add(TLList* list, void *value) {
-    TL_STACK_PUSHA("0x%p, 0x%p", list, value)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POP
-    }
-
-    if (value == NULL) {
-        TLERROR("value is NULL")
-        TL_STACK_POP
-    }
-
-    struct TLNode* created = tl_list_create_node(list->arena, value);
-
-    if (list->head == NULL) {
-        list->length++;
-        list->head = created;
-        list->tail = created;
-        TL_STACK_POP
-    }
-
-    if (list->head == list->tail) {
-        list->length++;
-        list->tail = created;
-        list->tail->previous = list->head;
-        list->head->next = list->tail;
-        TL_STACK_POP
-    }
-
-    list->length++;
-    created->previous = list->tail;
-    list->tail->next = created;
-    list->tail = created;
-
-    TL_STACK_POP
-}
-
-void tl_list_remove(TLList* list, void *value) {
-    TL_STACK_PUSHA("0x%p, 0x%p", list, value)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POP
-    }
-
-    if (list->head == NULL) {
-        TLERROR("TLList is empty")
-        TL_STACK_POP
-    }
-
-    if (value == NULL) {
-        TLERROR("value is NULL")
-        TL_STACK_POP
-    }
-
-    if (list->length == 1) {
-        if (list->head->payload == value) {
-            list->length--;
-            list->head = NULL;
-            list->tail = NULL;
-        } else {
-            TLWARN("The TLList 0x%p does not contain 0x%p", list, value)
-        }
-
-        TL_STACK_POP
-    }
-
-    if (list->tail->payload == value) {
-        list->length--;
-        list->tail->previous->next = NULL;
-        list->tail = list->tail->previous;
-
-        TL_STACK_POP
-    }
-
-    const struct TLNode* node = list->head;
-    while (node != NULL) {
-        if (node->payload == value) {
-            struct TLNode* previous = node->previous;
-            struct TLNode* next = node->next;
-
-            previous->next = next;
-            next->previous = previous;
-            break;
-        }
-
-        node = node->next;
-    }
-
-    TL_STACK_POP
-}
-
-b8 tl_list_after(TLList* list, void *item, void *value) {
-    TL_STACK_PUSHA("0x%p, 0x%p, 0x%p", list, item, value)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    if (list->head == NULL) {
-        TLERROR("TLList is empty")
-        TL_STACK_POPV(false)
-    }
-
-    if (item == NULL) {
-        TLERROR("item is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    if (value == NULL) {
-        TLERROR("value is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    struct TLNode* node = list->head;
-    while (node != NULL) {
-        if (node->payload == item) {
-            struct TLNode* created = tl_list_create_node(list->arena, value);
-
-            created->next = node->next;
-            created->previous = node;
-            node->next = created;
-            TL_STACK_POPV(true)
-        }
-
-        node = node->next;
-    }
-
-    TL_STACK_POPV(false)
-}
-
-b8 tl_list_before(TLList* list, void *item, void *value) {
-    TL_STACK_PUSHA("0x%p, 0x%p, 0x%p", list, item, value)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    if (list->head == NULL) {
-        TLERROR("TLList is empty")
-        TL_STACK_POPV(false)
-    }
-
-    if (item == NULL) {
-        TLERROR("item is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    if (value == NULL) {
-        TLERROR("value is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    struct TLNode* node = list->head;
-    while (node != NULL) {
-        if (node->payload == item) {
-            struct TLNode* created = tl_list_create_node(list->arena, value);
-
-            created->next = node;
-            created->previous = node->previous;
-            node->previous->next = created;
-            node->previous = created;
-            TL_STACK_POPV(true)
-        }
-
-        node = node->next;
-    }
-
-    TL_STACK_POPV(false)
-}
-
-b8 tl_list_contains(TLList* list, void *value) {
-    TL_STACK_PUSHA("0x%p, 0x%p", list, value)
-    if (list == NULL) {
-        TLERROR("TLList is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    if (list->head == NULL) {
-        TLERROR("TLList is empty")
-        TL_STACK_POPV(false)
-    }
-
-    if (value == NULL) {
-        TLERROR("value is NULL")
-        TL_STACK_POPV(false)
-    }
-
-    struct TLNode* node = list->head;
-    while (node != NULL) {
-        if (node->payload == value) {
-            TL_STACK_POPV(true)
-        }
-
-        node = node->next;
-    }
-
-    TL_STACK_POPV(false)
-
-}
-
-struct TLIterator {
-    u64 length;
-    struct TLNode* node;
-};
-
-TLIterator* tl_list_iterator_create(TLList* list) {
-    TL_STACK_PUSHA("0x%p", list)
-    TLIterator* iterator = tl_memory_alloc(list->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
-    iterator->length = list->length;
-    iterator->node = list->head;
-    TL_STACK_POPV(iterator)
-}
-
-void* tl_list_iterator_next(TLIterator* iterator) {
-    TL_STACK_PUSHA("0x%p", iterator)
-    if (iterator == NULL || iterator->node == NULL) {
-        TL_STACK_POPV(NULL)
-    }
-
-    void* value = iterator->node->payload;
-    iterator->node = iterator->node->next;
-    TL_STACK_POPV(value)
-}
-
-TLStack* tl_stack_create(TLMemoryArena *arena)  {
-    TL_STACK_PUSHA("0x%p", arena)
-    TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
-    stack = tl_list_create(arena);
-    TL_STACK_POPV(stack)
-}
-
-void tl_stack_push(TLStack* stack, void* value) {
-    TL_STACK_PUSHA("0x%p, 0x%p", stack, value)
-    tl_list_add(stack, value);
-    TL_STACK_POP
-}
-
-void* tl_stack_peek(TLStack* stack) {
-    TL_STACK_PUSHA("0x%p", stack)
-    void* value = NULL;
-    TLIterator* iterator = tl_list_iterator_create(stack);
-    void* next = tl_list_iterator_next(iterator);
-    while (next != NULL) { value = next; next = tl_list_iterator_next(iterator); }
-    TL_STACK_POPV(value)
-}
-
-void* tl_stack_pop(TLStack* stack) {
-    TL_STACK_PUSHA("0x%p", stack)
-    void* value = tl_stack_peek(stack);
-    tl_list_remove(stack, value);
-    TL_STACK_POPV(value)
-}
-
-u64 tl_stack_length(TLStack* stack) {
-    TL_STACK_PUSHA("0x%p", stack)
-    TL_STACK_POPV(tl_list_length(stack))
-}
 // #####################################################################################################################
 //
 //                                                     INPUT
@@ -583,229 +243,6 @@ b8 tl_input_is_key_released(const i32 key) {
 }
 // #####################################################################################################################
 //
-//                                                     STRING
-//
-// #####################################################################################################################
-struct TLString {
-    u64 size;
-    u64 length;
-    const char *text;
-    TLMemoryArena *arena;
-    b8 is_view;
-};
-
-TL_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
-    TL_STACK_PUSHA("0x%p, %d", arena, size)
-    TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
-    string->is_view = false;
-    string->arena = arena;
-    string->length = 0;
-    if (size > 0) {
-        string->size = size + 1; // extra byte for NULL character
-        string->text = tl_memory_alloc(arena, string->size, TL_MEMORY_STRING);
-    }
-
-    TL_STACK_POPV(string)
-}
-
-TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
-    TL_STACK_PUSHA("0x%p, 0x%p", arena, string)
-    TLString *clone = tl_string_reserve(arena, tl_char_length(string));
-    clone->length = clone->size - 1;
-    tl_memory_copy((void*)clone->text, (void*)string, clone->length);
-    TL_STACK_POPV(clone)
-}
-
-TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
-    TL_STACK_PUSHA("0x%p, 0x%p", arena, string)
-    TLString *wrap = tl_string_reserve(arena, 0);
-    wrap->is_view = true;
-    wrap->text = string;
-    wrap->length = tl_char_length(string);
-    wrap->size = wrap->length + 1;
-
-    TL_STACK_POPV(wrap)
-}
-
-/**
- * C++ version 0.4 char* style "itoa":
- * Written by Lukás Chmela
- * Released under GPLv3.
- */
-TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
-    TL_STACK_PUSHA("%d, %d", value, base)
-
-    u32 digits = 0;
-    i32 desired = value;
-    do {
-        digits++;
-        desired = desired / 10;
-    } while(desired > 0);
-
-    TLString* string = tl_string_reserve(arena, digits);
-
-    // check that the base if valid
-    if (base < 2 || base > 36) { TL_STACK_POPV(string) }
-
-    int tmp_value;
-    char *ptr  = (char*) string->text;
-    char *ptr1 = (char*) string->text;
-
-    do {
-        tmp_value = value;
-        value /= base;
-        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
-        string->length++;
-    } while ( value );
-
-    // Apply negative sign
-    if (tmp_value < 0) *ptr++ = '-';
-    *ptr-- = '\0';
-
-    // Reverse the string
-    while(ptr1 < ptr) {
-        const char tmp_char = *ptr;
-        *ptr--= *ptr1;
-        *ptr1++ = tmp_char;
-        string->length++;
-    }
-
-    TL_STACK_POPV(string)
-}
-
-void tl_string_join(const TLString *string, const char *other) {
-    TL_STACK_PUSHA("0x%p, 0x%p", string, other)
-    const u64 length = tl_char_length(other);
-    if (length == U32_MAX || length == 0) TLFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
-    ((TLString*)string)->size = string->size + length;
-
-    void *created = tl_memory_alloc(string->arena, string->size, TL_MEMORY_STRING);
-    tl_memory_copy(created, (void*)string->text, string->length);
-    tl_memory_copy(created + string->length, (void*)other, length);
-
-    ((TLString*)string)->text = created;
-    ((TLString*)string)->length = string->size - 1;
-    ((TLString*)string)->is_view = false;
-
-    TL_STACK_POP
-}
-
-TL_INLINE const char * tl_string(TLString *string) {
-    TL_STACK_PUSHA("0x%p", string)
-    TL_STACK_POPV(string->text)
-}
-
-TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offset, const u64 length) {
-    TL_STACK_PUSHA("0x%p, 0x%p, %d, %d", arena, string, offset, length)
-    //TODO implement tl_string_slice
-    TLFATAL("Implementation missing")
-    TL_STACK_POPV(NULL)
-}
-
-TLString* tl_string_duplicate(TLString *string) {
-    TL_STACK_PUSHA("0x%p", string)
-
-    TLString *duplicate = tl_string_reserve(string->arena, string->length);
-    duplicate->is_view = false;
-    duplicate->length = string->length;
-    tl_memory_copy((void*)duplicate->text, (void*)string->text, string->length);
-
-    TL_STACK_POPV(duplicate)
-}
-
-TLString* tl_string_view(TLString* string) {
-    TL_STACK_PUSHA("0x%p", string)
-    TLString *view = tl_string_reserve(string->arena, 0);
-    view->is_view = true;
-    view->text = string->text;
-    view->size = string->size;
-    view->length = string->length;
-    TL_STACK_POPV(view)
-}
-
-u32 tl_string_length(TLString *string) {
-    TL_STACK_PUSHA("0x%p", string)
-    if (string == NULL) {
-        TL_STACK_POPV(-1)
-    }
-    TL_STACK_POPV(string->length)
-}
-
-u32 tl_string_index_of(TLString* string, const char token) {
-    TL_STACK_PUSHA("0x%p, %s", string, token)
-    for (u64 i = 0; i < string->length; ++i) {
-        if (string->text[i] == token) TL_STACK_POPV(i);
-    }
-    TL_STACK_POPV(U32_MAX)
-}
-
-u32 tl_string_last_index_of(TLString* string, const char token) {
-    TL_STACK_PUSHA("0x%p, %c", string, token)
-    if (string == NULL) TL_STACK_POPV(U32_MAX);
-    if (string->length == 0) TL_STACK_POPV(U32_MAX)
-
-    for (u64 i = string->length - 1; i > 0; --i) {
-        if (string->text[i] == token) TL_STACK_POPV(i);
-    }
-    TLFATAL("Implementation missing")
-    TL_STACK_POPV(false)
-}
-
-b8 tl_string_start_with(TLString* string, const char* guess) {
-    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
-    if (string == NULL || guess == NULL) TL_STACK_POPV(false)
-
-    const u64 length = tl_char_length(guess);
-    if (length > string->length) TL_STACK_POPV(false)
-
-    for (u64 i = 0; i < length; ++i) {
-        if (string->text[i] != guess[i])
-            TL_STACK_POPV(false)
-    }
-
-    TL_STACK_POPV(true)
-}
-
-b8 tl_string_ends_with(TLString* string, const char* guess) {
-    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
-    //TODO implement tl_string_ends_with
-    TLFATAL("Implementation missing")
-    TL_STACK_POPV(false)
-}
-
-b8 tl_string_is_view(const TLString* string) {
-    TL_STACK_PUSHA("0x%p", string)
-    if (string == NULL) {
-        TL_STACK_POPV(false)
-    }
-
-    TL_STACK_POPV(string->is_view)
-}
-
-b8 tl_string_equals(const TLString* string, const char* guess) {
-    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
-    if (string == NULL || guess == NULL) {
-        TL_STACK_POPV(false)
-    }
-
-    const u64 length = tl_char_length(guess);
-    if (string->length != length) TL_STACK_POPV(false)
-
-    for (u64 i = 0; i < string->length; ++i) {
-        if (string->text[i] != guess[i])
-            TL_STACK_POPV(false)
-    }
-
-    TL_STACK_POPV(true)
-}
-
-b8 tl_string_contains(TLString* string, const char* guess) {
-    TL_STACK_PUSHA("0x%p, 0x%p", string, guess)
-    b8 contains = tl_char_contains(string->text, guess);
-    TL_STACK_POPV(contains)
-}
-// #####################################################################################################################
-//
 //                                                     FILESYSTEM
 //
 // #####################################################################################################################
@@ -816,193 +253,14 @@ TLString * tl_filesystem_get_parent(TLString *path) {
     const u32 index = tl_string_last_index_of(path, '/');
     if (index == U32_MAX) TL_STACK_POPV(NULL)
 
-    TLString *parent = tl_string_reserve(path->arena, index + 1);
 
-    TL_CREATE_CHAR(value, parent->size)
-    tl_char_copy(value, path->text, index);
-    tl_char_copy((void*) parent->text, value, index);
+    TL_CREATE_CHAR(value, index + 1)
+    tl_char_copy(value, tl_string(path), index);
+    TLString *parent = tl_string_clone(global->platform.arena, value);
 
     TL_STACK_POPV(parent)
 }
-// #####################################################################################################################
-//
-//                                                     SERIALIZER
-//
-// #####################################################################################################################
-#include <ctype.h>
-#include <stdio.h>
 
-#define EXPECT(t)                                   \
-    yaml_token_delete(&token);                      \
-    yaml_parser_scan(&parser, &token);              \
-    if (token.type != t) TLFATAL("Unexpect token")
-
-typedef struct {
-    const TLString *name;
-    u32 sequence;
-} TLTuple;
-
-void tl_serializer_walk(void (*processor)(const char *prefix, const char *element, const char *value)) {
-    TL_STACK_PUSHA("%s", tl_string(global->yaml))
-    FILE* file = fopen(tl_string(global->yaml), "r");
-    if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
-
-    yaml_parser_t parser;
-    if (!yaml_parser_initialize(&parser)) { fclose(file); TLFATAL("Failed to initialize parser!"); }
-    yaml_parser_set_input_file(&parser, file);
-
-    u8 block_index = 0;
-    u16 prefix_index = 0;
-    yaml_token_t token;
-    TLMemoryArena *arena = tl_memory_arena_create(TL_KIBI_BYTES(4));
-    TLList *sequences = tl_list_create(arena);
-    char block[U8_MAX]; // current YAML_KEY_TOKEN
-    char prefix[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
-
-    do {
-        yaml_parser_scan(&parser, &token);
-
-        switch(token.type) {
-            default: continue;
-            case YAML_NO_TOKEN: {
-                TLFATAL("Malformed YAML token");
-            } break;
-            // #########################################################################################################
-            // YAML_BLOCK_SEQUENCE_START_TOKEN
-            // #########################################################################################################
-            case YAML_BLOCK_SEQUENCE_START_TOKEN: {
-                // -----------------------------------------------------------
-                // If it's already inside a block persist into 'prefix'
-                // -----------------------------------------------------------
-                TLTuple *tuple = tl_memory_alloc(arena, sizeof(TLTuple), TL_MEMORY_SERIALIZER);
-                tuple->sequence = 0;
-
-                tuple->name = tl_string_clone(arena, prefix);
-                tl_string_join(tuple->name, block);
-                tl_string_join(tuple->name, ".");
-
-                tl_list_add(sequences, tuple);
-            } break;
-            // #########################################################################################################
-            // YAML_BLOCK_MAPPING_START_TOKEN
-            // #########################################################################################################
-            case YAML_BLOCK_MAPPING_START_TOKEN: {
-                EXPECT(YAML_KEY_TOKEN)
-                EXPECT(YAML_SCALAR_TOKEN)
-                // -----------------------------------------------------------
-                // If it's already inside a block persist into 'prefix'
-                // -----------------------------------------------------------
-                if (block_index != 0) {
-                    tl_memory_copy(prefix + prefix_index, block, block_index);
-                    prefix_index += block_index;
-
-                    tl_memory_copy(prefix + prefix_index, ".", 1);
-                    prefix_index++;
-                }
-                // -----------------------------------------------------------
-                // Copy the scalar content to the 'block'
-                // -----------------------------------------------------------
-                tl_memory_copy(block, token.data.scalar.value, token.data.scalar.length);
-                if (block_index > token.data.scalar.length) {
-                    tl_memory_set(block + token.data.scalar.length, 0, block_index - token.data.scalar.length);
-                }
-                block_index = token.data.scalar.length;
-            } break;
-            // #########################################################################################################
-            // YAML_BLOCK_ENTRY_TOKEN
-            // #########################################################################################################
-            case YAML_BLOCK_ENTRY_TOKEN: {
-                // -----------------------------------------------------------
-                // If it's already inside a block persist into 'prefix'
-                // -----------------------------------------------------------
-                if (block_index != 0) {
-                    tl_memory_copy(prefix + prefix_index, block, block_index);
-                    prefix_index += block_index;
-
-                    tl_memory_copy(prefix + prefix_index, ".", 1);
-                    prefix_index++;
-                }
-                // -----------------------------------------------------------
-                // Copy the scalar content to the 'block'
-                // -----------------------------------------------------------
-                TLString *string = NULL;
-
-                // -----------------------------------------------------------
-                // Try tro increase the counter
-                // -----------------------------------------------------------
-                TLIterator *iterator = tl_list_iterator_create(sequences);
-                for (TLTuple *tuple = tl_list_iterator_next(iterator) ; tuple != NULL; tuple = tl_list_iterator_next(iterator)) {
-                    if (tl_string_equals(tuple->name, prefix)) {
-                        string = tl_string_from_i32(arena, (i32) tuple->sequence, 10);
-                        tuple->sequence++;
-                    }
-                }
-
-                u32 length = tl_string_length(string);
-                tl_memory_copy(block, (void*) tl_string(string), length);
-
-                if (block_index > length) {
-                    tl_memory_set(block + length, 0, block_index - length);
-                }
-
-                block_index = tl_string_length(string);
-            } continue;
-            // #########################################################################################################
-            // YAML_KEY_TOKEN
-            // #########################################################################################################
-            case YAML_KEY_TOKEN: {
-                EXPECT(YAML_SCALAR_TOKEN)
-                // -----------------------------------------------------------
-                // Copy the scalar content to the 'block'
-                // -----------------------------------------------------------
-                tl_memory_copy(block, token.data.scalar.value, token.data.scalar.length);
-                if (block_index > token.data.scalar.length) {
-                    tl_memory_set(block + token.data.scalar.length, 0, block_index - token.data.scalar.length);
-                }
-
-                block_index = token.data.scalar.length;
-            } break;
-            // #########################################################################################################
-            // YAML_SCALAR_TOKEN
-            // #########################################################################################################
-            case YAML_SCALAR_TOKEN: {
-                processor(prefix, block, (const char*)token.data.scalar.value);
-            } break;
-            // #########################################################################################################
-            // YAML_BLOCK_END_TOKEN
-            // #########################################################################################################
-            case YAML_BLOCK_END_TOKEN: {
-                b8 found = false;
-                for (u16 i = prefix_index - 2 ; i > 0 ; --i) {
-                    if (*(prefix + i)  == '.') {
-                        tl_memory_set(prefix + i + 1, 0, U16_MAX - i);
-                        prefix_index = i + 1;
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    tl_memory_set(prefix, 0, U16_MAX);
-                    prefix_index = 0;
-                }
-
-                tl_memory_set(block, 0, U8_MAX - block_index);
-                block_index = 0;
-            } break;
-        }
-
-        if (token.type != YAML_STREAM_END_TOKEN) {
-            yaml_token_delete(&token);
-        }
-    } while (token.type != YAML_STREAM_END_TOKEN);
-
-    yaml_token_delete(&token);
-    yaml_parser_delete(&parser);
-    tl_memory_arena_destroy(arena);
-
-    TL_STACK_POP
-}
 // #####################################################################################################################
 //
 //                                                     SCRIPT
@@ -1386,90 +644,6 @@ TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid) {
 }
 // #####################################################################################################################
 //
-//                                                     SERIALIZER
-//
-// #####################################################################################################################
-static void tl_serializer_read(const char *prefix, const char *element, const char *value) {
-    TL_STACK_PUSHA("%s, %s, %s", prefix, element, value)
-
-    if (tl_char_start_with(prefix, "application.")) {
-        if (tl_char_start_with(prefix, "application.scenes.")) TL_STACK_POP
-
-        if (tl_char_equals(prefix, "application.")) {
-            if (tl_char_equals(element, "version")) {
-                global->application.version = tl_string_duplicate(value);
-                TLTRACE("global->application.version = %s", value)
-                TL_STACK_POP
-            }
-        }
-
-        TL_STACK_POP
-    }
-
-    if (tl_char_start_with(prefix, "engine.")) {
-        if (tl_char_equals(prefix, "engine.logging.") && tl_char_equals(element, "level")) {
-            if (tl_char_equals(value, "verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); TL_STACK_POP }
-            if (tl_char_equals(value,   "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); TL_STACK_POP }
-            if (tl_char_equals(value,   "debug")) { tl_logger_loglevel(  TL_LOG_LEVEL_DEBUG); TL_STACK_POP }
-            if (tl_char_equals(value,    "info")) { tl_logger_loglevel(   TL_LOG_LEVEL_INFO); TL_STACK_POP }
-            if (tl_char_equals(value,    "warn")) { tl_logger_loglevel(   TL_LOG_LEVEL_WARN); TL_STACK_POP }
-            if (tl_char_equals(value,   "error")) { tl_logger_loglevel(  TL_LOG_LEVEL_ERROR); TL_STACK_POP }
-            if (tl_char_equals(value,   "fatal")) { tl_logger_loglevel(  TL_LOG_LEVEL_FATAL); TL_STACK_POP }
-        }
-
-        if (tl_char_equals(prefix, "engine.graphics.")) {
-            if (tl_char_equals(element, "vsync")) {
-                global->platform.graphics.vsync = tl_char_equals(value, "true");
-                TLTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
-                TL_STACK_POP
-            }
-            if (tl_char_equals(element, "wireframe")) {
-                global->platform.graphics.wireframe = tl_char_equals(value, "true");
-                TLTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
-                TL_STACK_POP
-            }
-        }
-
-        if (tl_char_equals(prefix, "engine.simulation.") && tl_char_equals(element, "step")) {
-            u8 step = strtol(value, (void*)(value + tl_char_length(value)), 10);
-            if (step == 0) {
-                TLWARN("Failed to read [%s%s] assuming 24", prefix, value);
-                step = 24;
-            }
-
-            global->application.simulation.step = 1.0f / (f64) step;
-            TLTRACE("global->simulation.step = %f", global->application.simulation.step)
-            TL_STACK_POP
-        }
-
-        if (tl_char_equals(prefix, "engine.window.")) {
-            if (tl_char_equals(element, "title")) {
-                global->platform.window.title = tl_string_clone(global->platform.arena, value);
-                TLTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
-                TL_STACK_POP
-            }
-
-            if (tl_char_equals(element, "size")) {
-                if (tl_char_equals(value,  "SD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
-                if (tl_char_equals(value,  "HD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
-                if (tl_char_equals(value, "FHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
-                if (tl_char_equals(value, "QHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
-                if (tl_char_equals(value, "UHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
-
-                global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
-                TLTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
-                TL_STACK_POP
-            }
-        }
-
-        TL_STACK_POP
-    }
-
-    TLWARN("Unknown prefix: %s", prefix)
-    TL_STACK_POP
-}
-// #####################################################################################################################
-//
 //                                             WINDOWING
 //
 // #####################################################################################################################
@@ -1784,7 +958,83 @@ void tl_thread_fire_and_wait(PFN_task task, const u64 timeout) {
 b8 tl_runtime_initialize(void) {
     TL_STACK_PUSH
 
-    tl_serializer_walk(tl_serializer_read);
+    if (global->properties == NULL || tl_map_length(global->properties) == 0) {
+        TLERROR("Failed to read runtime properties")
+        TL_STACK_POPV(false)
+    }
+
+    TLIterator *it = tl_map_keys(global->properties);
+    for (TLString* key = tl_iterator_next(it); key != NULL; key = tl_iterator_next(it)) {
+        if (tl_string_start_with(key, "application.scenes.")) continue;
+        const char *value = tl_string(tl_map_get(global->properties, tl_string(key)));
+
+        if (tl_string_equals(key, "application.version")) {
+            global->application.version = tl_string_wrap(global->platform.arena, value);
+            TLTRACE("global->application.version = %s", tl_string(global->application.version))
+            continue;
+        }
+
+        if ( ! tl_string_start_with(key, "engine.")) continue;
+
+        if (tl_string_equals(key, "engine.logging.level")) {
+            if (tl_char_equals(value, "verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); continue; }
+            if (tl_char_equals(value,   "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); continue; }
+            if (tl_char_equals(value,   "debug")) { tl_logger_loglevel(  TL_LOG_LEVEL_DEBUG); continue; }
+            if (tl_char_equals(value,    "info")) { tl_logger_loglevel(   TL_LOG_LEVEL_INFO); continue; }
+            if (tl_char_equals(value,    "warn")) { tl_logger_loglevel(   TL_LOG_LEVEL_WARN); continue; }
+            if (tl_char_equals(value,   "error")) { tl_logger_loglevel(  TL_LOG_LEVEL_ERROR); continue; }
+            if (tl_char_equals(value,   "fatal")) { tl_logger_loglevel(  TL_LOG_LEVEL_FATAL); continue; }
+        }
+
+
+        if (tl_string_start_with(key, "engine.graphics.")) {
+            if (tl_string_equals(key, "engine.graphics.vsync")) {
+                global->platform.graphics.vsync = tl_char_equals(value, "true");
+                TLTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
+                continue;
+            }
+
+            if (tl_string_equals(key, "engine.graphics.wireframe")) {
+                global->platform.graphics.wireframe = tl_char_equals(value, "true");
+                TLTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
+                continue;
+            }
+        }
+
+        if (tl_string_start_with(key, "engine.simulation.")) {
+            if (tl_string_equals(key, "engine.simulation.step")) {
+                u8 step = strtol(value, (void*)(value + tl_char_length(value)), 10);
+                if (step == 0) {
+                    TLWARN("Failed to read [%s] assuming 24", tl_string(key));
+                    step = 24;
+                }
+
+                global->application.simulation.step = 1.0f / (f64) step;
+                TLTRACE("global->simulation.step = %f", global->application.simulation.step)
+                continue;
+            }
+        }
+
+        if (tl_string_start_with(key, "engine.window.")) {
+            if (tl_string_equals(key, "engine.window.title")) {
+                global->platform.window.title = tl_string_clone(global->platform.arena, value);
+                TLTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
+                continue;
+            }
+
+            if (tl_string_equals(key, "engine.window.size")) {
+                if (tl_char_equals(value,  "SD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_SD; }
+                if (tl_char_equals(value,  "HD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_HD; }
+                if (tl_char_equals(value, "FHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_FHD; }
+                if (tl_char_equals(value, "QHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_QHD; }
+                if (tl_char_equals(value, "UHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
+
+                global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
+                TLTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
+                continue;
+            }
+        }
+    }
 
     if (!tl_thread_initialize()) {
         TLERROR("Failed to initialize threadpool")

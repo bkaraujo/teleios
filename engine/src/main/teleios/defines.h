@@ -176,12 +176,17 @@ static_assert(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 // Globals
 // ---------------------------------
+typedef struct TLMemoryArena TLMemoryArena;
+typedef struct TLString TLString;
 
 typedef struct TLList TLStack;
 typedef struct TLList TLList;
+/**
+ * @brief The map hold a <TLString, void*> structure. The structure lives
+ * for as long as there a elements in the TLList
+ */
+typedef struct TLMap TLMap;
 typedef struct TLIterator TLIterator;
-typedef struct TLString TLString;
-typedef struct TLMemoryArena TLMemoryArena;
 
 typedef struct {
     u8 last[16];
@@ -205,12 +210,12 @@ typedef struct TLStackFrame {
 } TLStackFrame;
 #endif
 
-#define TL_SCENE_MAX_ACTORS 5
-#define TL_SCENE_MAX_ACTOR_SCRIPTS 10
-#define TL_YAML_PROPERTY_MAX_SIZE 1024
-#define TL_STACK_STRING_SIZE 100
-#define TL_STACK_ARGUMENTS_SIZE 1024
-#define TL_STACK_SIZE_MAXIMUM 10
-#define TL_THREAD_POOL_SIZE 2
+#define TL_SCENE_MAX_ACTORS         5
+#define TL_SCENE_MAX_ACTOR_SCRIPTS  10
+#define TL_YAML_PROPERTY_MAX_SIZE   1024
+#define TL_STACK_STRING_SIZE        100
+#define TL_STACK_ARGUMENTS_SIZE     1024
+#define TL_STACK_SIZE_MAXIMUM       10
+#define TL_THREAD_POOL_SIZE         2
 
 #endif // __TELEIOS_DEFINES__

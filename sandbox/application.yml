@@ -13,7 +13,7 @@ engine:
     size: HD
     title: LearnOpenGL
 application:
-  scenes:
+  scene:
     - name: main
       clear_color: .7, .2, .7, 1
       depth:
@@ -26,16 +26,16 @@ application:
           source: SRC_ALPHA
           target: ONE_MINUS_SRC_ALPHA
       camera:
-        properties:
+        property:
           - name: "depth"
             value: "-1.0, 1.0"
           - name: "rectangle"
             value: "-21.0, 21.0, -21.0, 21.0"
-      actors:
+      actor:
         - name: "Environment"
-          components:
+          component:
             - name: "COMPONENT_SCRIPT"
-              properties:
+              property:
                 - name: "path"
                   value: "scripts/environment.lua"
         - name: "Ball"
