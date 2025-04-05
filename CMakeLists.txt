@@ -63,6 +63,11 @@ add_executable(${PROJECT_NAME}
         engine/src/main/teleios/platform.c
         engine/src/main/teleios/graphics.c
         engine/src/main/teleios/scene.c
+        engine/src/main/teleios/memory.c
+        engine/src/main/teleios/script.c
+        engine/src/main/teleios/ulid.c
+        engine/src/main/teleios/thread.c
+        engine/src/main/teleios/filesystem.c
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-unused-parameter")

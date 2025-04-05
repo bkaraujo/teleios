@@ -13,6 +13,7 @@ void tl_char_join(char *buffer, u64 size, const char *str0, const char *str1);
 void tl_char_from_i32(char *buffer, i32 value, u8 base);
 b8 tl_char_contains(const char *string, const char *token);
 
+TLMemoryArena* tl_string_arena(TLString *string);
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string);
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string);
 TLString* tl_string_slice(TLMemoryArena *arena, TLString *string, u64 offset, u64 length);

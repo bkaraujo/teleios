@@ -199,6 +199,12 @@ TL_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 siz
     TL_STACK_POPV(string)
 }
 
+TLMemoryArena* tl_string_arena(TLString *string){
+    TL_STACK_PUSHA("0x%p", string)
+    TLMemoryArena *arena = string->arena;
+    TL_STACK_POPV(arena)
+}
+
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
     TL_STACK_PUSHA("0x%p, 0x%p", arena, string)
     TLString *clone = tl_string_reserve(arena, tl_char_length(string));

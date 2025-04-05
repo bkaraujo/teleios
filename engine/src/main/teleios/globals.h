@@ -19,14 +19,6 @@ typedef struct {
     struct {
         // Execution-wide arena
         TLMemoryArena* arena;
-
-        struct {
-            u64 allocated;
-            u64 tagged_count[TL_MEMORY_MAXIMUM];
-            u64 tagged_size[TL_MEMORY_MAXIMUM];
-            TLMemoryArena *arenas[U8_MAX];
-        } memory;
-
         struct {
             b8 vsync;
             b8 wireframe;

@@ -1,6 +1,5 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
-#include "teleios/application/loader.h"
 #include "teleios/globals.h"
 #include "teleios/application.h"
     
