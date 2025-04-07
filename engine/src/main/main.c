@@ -15,14 +15,14 @@ int main (const int argc, const char *argv[]) {
 
     TLINFO("Initializing %s", argv[1]);
 
-    TLGlobal local = { 0 };
-    global = &local;
+    global = tl_platform_memory_alloc(sizeof(TLGlobal));
+    tl_platform_memory_set(global, 0, sizeof(TLGlobal));
     global->stack_index = U8_MAX;
-    global->application.running = true;
 
     TL_STACK_PUSHA("%i, 0%xp", argc, argv)
 
-    global->platform.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
+    global->application.running = true;
+    global->arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
 
     if (!tl_platform_initialize()) {
         TLERROR("Platform failed to initialize")
@@ -30,9 +30,9 @@ int main (const int argc, const char *argv[]) {
         exit(99);
     }
 
-    global->yaml = tl_string_clone(global->platform.arena, argv[1]);
+    global->yaml = tl_string_clone(global->arena, argv[1]);
     global->rootfs = tl_filesystem_get_parent(global->yaml);
-    global->properties = tl_map_create(global->platform.arena);
+    global->properties = tl_map_create(global->arena);
 
     tl_serializer_walk(global->properties);
 
@@ -78,7 +78,7 @@ int main (const int argc, const char *argv[]) {
         exit(99);
     }
 
-    tl_memory_arena_destroy(global->platform.arena);
+    tl_memory_arena_destroy(global->arena);
 
     if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
 
@@ -236,7 +236,7 @@ static void tl_serializer_walk(TLMap *properties) {
             case YAML_SCALAR_TOKEN: {
                 tl_platform_memory_set(property, 0, TL_YAML_PROPERTY_MAX_SIZE);
                 tl_char_join(property, TL_YAML_PROPERTY_MAX_SIZE, prefix, element);
-                tl_map_put(properties, property, tl_string_clone(global->platform.arena, (char*) token.data.scalar.value));
+                tl_map_put(properties, property, tl_string_clone(global->arena, (char*) token.data.scalar.value));
             } break;
             // #########################################################################################################
             // YAML_BLOCK_END_TOKEN

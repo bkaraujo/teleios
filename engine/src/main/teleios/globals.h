@@ -6,9 +6,25 @@
 #include "teleios/runtime/libs.h"
 
 typedef struct {
+    struct {
+        b8 key[GLFW_KEY_LAST + 1];
+    } keyboard;
+    struct {
+        b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
+        u32 position_x;
+        u32 position_y;
+        u8 scroll_x;
+        u8 scroll_y;
+        b8 hoover;
+    } cursor;
+} TLInput;
+
+typedef struct {
     TLString *yaml;
     TLString *rootfs;
     TLMap *properties;
+
+    TLMemoryArena* arena;
 
 #if ! defined(TELEIOS_BUILD_RELEASE)
     u8 stack_index;
@@ -17,8 +33,6 @@ typedef struct {
 #endif
 
     struct {
-        // Execution-wide arena
-        TLMemoryArena* arena;
         struct {
             b8 vsync;
             b8 wireframe;
@@ -36,19 +50,7 @@ typedef struct {
             b8 hovered;
         } window;
 
-        struct {
-            struct {
-                b8 key[GLFW_KEY_LAST + 1];
-            } keyboard;
-            struct {
-                b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
-                u32 position_x;
-                u32 position_y;
-                u8 scroll_x;
-                u8 scroll_y;
-                b8 hoover;
-            } cursor;
-        } input;
+        TLInput input;
 
         struct {
             lua_State *state;
@@ -127,37 +129,8 @@ typedef struct {
             u16 overflow;
             u16 per_second;
 
-            struct {
-                struct {
-                    struct {
-                        b8 key[GLFW_KEY_LAST + 1];
-                    } keyboard;
-                    struct {
-                        b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
-                        u32 position_x;
-                        u32 position_y;
-                        u8 scroll_x;
-                        u8 scroll_y;
-                        b8 hoover;
-                    } cursor;
-                } input;
-            } last;
-
-            struct {
-                struct {
-                    struct {
-                        b8 key[GLFW_KEY_LAST + 1];
-                    } keyboard;
-                    struct {
-                        b8 button[GLFW_MOUSE_BUTTON_LAST + 1];
-                        u32 position_x;
-                        u32 position_y;
-                        u8 scroll_x;
-                        u8 scroll_y;
-                        b8 hoover;
-                    } cursor;
-                } input;
-            } current;
+            struct { TLInput input; } last;
+            struct { TLInput input; } current;
         } frame;
     } application;
 

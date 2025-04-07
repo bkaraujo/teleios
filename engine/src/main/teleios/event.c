@@ -8,7 +8,7 @@ static const char* tl_event_name(const TLEventCodes code) {
     switch (code) {
         default                             : {
                 u16 digits = tl_number_i32_digits(code);
-                char* buffer = tl_memory_alloc(global->platform.arena, digits + 1, TL_MEMORY_STRING);
+                char* buffer = tl_memory_alloc(global->arena, digits + 1, TL_MEMORY_STRING);
                 tl_char_from_i32(buffer, code, 10);
                 TL_STACK_POPV(buffer);
         }
