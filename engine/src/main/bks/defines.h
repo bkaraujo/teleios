@@ -27,6 +27,7 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 #include <stdarg.h>
+#include <pthread.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #   define BKS_PLATFORM_WINDOWS 1

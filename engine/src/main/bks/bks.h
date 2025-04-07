@@ -15,8 +15,10 @@
 #   define BKS_STACK_SIZE_MAXIMUM       10
 #endif
 
+/* Include order matters */
+
 #include "bks/time.h"
 #include "bks/trace.h"
 #include "bks/logger.h"
 
-#endif //__BK_STANDARDS__
+#endif

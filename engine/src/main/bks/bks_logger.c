@@ -1,6 +1,5 @@
 #include "bks/bks.h"
 #include <stdio.h>
-#include <pthread.h>
 
 #if defined(BKS_PLATFORM_WINDOWS)
 #   define ANSI_COLOR_FATAL   ""
