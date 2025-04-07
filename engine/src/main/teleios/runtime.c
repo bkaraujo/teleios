@@ -21,23 +21,23 @@ void tl_input_update() {
 }
 
 b8 tl_input_is_key_active(const i32 key) {
-    TL_STACK_PUSHA("%d", key)
+    BKS_STACK_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
-    TL_STACK_POPV(is_active)
+    BKS_STACK_POPV(is_active)
 }
 
 b8 tl_input_is_key_pressed(const i32 key) {
-    TL_STACK_PUSHA("%d", key)
+    BKS_STACK_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
     const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    TL_STACK_POPV(!were_active & is_active)
+    BKS_STACK_POPV(!were_active & is_active)
 }
 
 b8 tl_input_is_key_released(const i32 key) {
-    TL_STACK_PUSHA("%d", key)
+    BKS_STACK_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
     const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    TL_STACK_POPV(were_active & !is_active)
+    BKS_STACK_POPV(were_active & !is_active)
 }
 // #####################################################################################################################
 //
@@ -160,7 +160,7 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
 }
 
 static b8 tl_window_create(void) {
-    TL_STACK_PUSH
+    BKS_STACK_PUSH
 
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -190,8 +190,8 @@ static b8 tl_window_create(void) {
     );
 
     if (global->platform.window.handle == NULL) {
-        TLERROR("Failed to create GLFW window");
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to create GLFW window");
+        BKS_STACK_POPV(false)
     }
     // --------------------------------------------------------------------------------------
     // Cache state
@@ -226,7 +226,7 @@ static b8 tl_window_create(void) {
     glfwSetScrollCallback           (global->platform.window.handle, tl_window_callback_input_cursor_scroll);
     glfwSetCursorEnterCallback      (global->platform.window.handle, tl_window_callback_input_cursor_entered);
 
-    TL_STACK_POPV(true)
+    BKS_STACK_POPV(true)
 }
 // #####################################################################################################################
 //
@@ -234,11 +234,11 @@ static b8 tl_window_create(void) {
 //
 // #####################################################################################################################
 b8 tl_runtime_initialize(void) {
-    TL_STACK_PUSH
+    BKS_STACK_PUSH
 
     if (global->properties == NULL || tl_map_length(global->properties) == 0) {
-        TLERROR("Failed to read runtime properties")
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to read runtime properties")
+        BKS_STACK_POPV(false)
     }
 
     TLIterator *it = tl_map_keys(global->properties);
@@ -248,33 +248,33 @@ b8 tl_runtime_initialize(void) {
 
         if (tl_string_equals(key, "application.version")) {
             global->application.version = tl_string_wrap(global->arena, value);
-            TLTRACE("global->application.version = %s", tl_string(global->application.version))
+            BKSTRACE("global->application.version = %s", tl_string(global->application.version))
             continue;
         }
 
         if ( ! tl_string_start_with(key, "engine.")) continue;
 
         if (tl_string_equals(key, "engine.logging.level")) {
-            if (tl_char_equals(value, "verbose")) { tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE); continue; }
-            if (tl_char_equals(value,   "trace")) { tl_logger_loglevel(  TL_LOG_LEVEL_TRACE); continue; }
-            if (tl_char_equals(value,   "debug")) { tl_logger_loglevel(  TL_LOG_LEVEL_DEBUG); continue; }
-            if (tl_char_equals(value,    "info")) { tl_logger_loglevel(   TL_LOG_LEVEL_INFO); continue; }
-            if (tl_char_equals(value,    "warn")) { tl_logger_loglevel(   TL_LOG_LEVEL_WARN); continue; }
-            if (tl_char_equals(value,   "error")) { tl_logger_loglevel(  TL_LOG_LEVEL_ERROR); continue; }
-            if (tl_char_equals(value,   "fatal")) { tl_logger_loglevel(  TL_LOG_LEVEL_FATAL); continue; }
+            if (tl_char_equals(value, "verbose")) { bks_logger_loglevel(BKS_LOG_LEVEL_VERBOSE); continue; }
+            if (tl_char_equals(value,   "trace")) { bks_logger_loglevel(  BKS_LOG_LEVEL_TRACE); continue; }
+            if (tl_char_equals(value,   "debug")) { bks_logger_loglevel(  BKS_LOG_LEVEL_DEBUG); continue; }
+            if (tl_char_equals(value,    "info")) { bks_logger_loglevel(   BKS_LOG_LEVEL_INFO); continue; }
+            if (tl_char_equals(value,    "warn")) { bks_logger_loglevel(   BKS_LOG_LEVEL_WARN); continue; }
+            if (tl_char_equals(value,   "error")) { bks_logger_loglevel(  BKS_LOG_LEVEL_ERROR); continue; }
+            if (tl_char_equals(value,   "fatal")) { bks_logger_loglevel(  BKS_LOG_LEVEL_FATAL); continue; }
         }
 
 
         if (tl_string_start_with(key, "engine.graphics.")) {
             if (tl_string_equals(key, "engine.graphics.vsync")) {
                 global->platform.graphics.vsync = tl_char_equals(value, "true");
-                TLTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
+                BKSTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
                 continue;
             }
 
             if (tl_string_equals(key, "engine.graphics.wireframe")) {
                 global->platform.graphics.wireframe = tl_char_equals(value, "true");
-                TLTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
+                BKSTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
                 continue;
             }
         }
@@ -283,12 +283,12 @@ b8 tl_runtime_initialize(void) {
             if (tl_string_equals(key, "engine.simulation.step")) {
                 u8 step = strtol(value, (void*)(value + tl_char_length(value)), 10);
                 if (step == 0) {
-                    TLWARN("Failed to read [%s] assuming 24", tl_string(key));
+                    BKSWARN("Failed to read [%s] assuming 24", tl_string(key));
                     step = 24;
                 }
 
                 global->application.simulation.step = 1.0f / (f64) step;
-                TLTRACE("global->simulation.step = %f", global->application.simulation.step)
+                BKSTRACE("global->simulation.step = %f", global->application.simulation.step)
                 continue;
             }
         }
@@ -296,7 +296,7 @@ b8 tl_runtime_initialize(void) {
         if (tl_string_start_with(key, "engine.window.")) {
             if (tl_string_equals(key, "engine.window.title")) {
                 global->platform.window.title = tl_string_clone(global->arena, value);
-                TLTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
+                BKSTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
                 continue;
             }
 
@@ -308,53 +308,53 @@ b8 tl_runtime_initialize(void) {
                 if (tl_char_equals(value, "UHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
 
                 global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
-                TLTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
+                BKSTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
                 continue;
             }
         }
     }
 
     if (!tl_thread_initialize()) {
-        TLERROR("Failed to initialize threadpool")
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to initialize threadpool")
+        BKS_STACK_POPV(false)
     }
 
     if (!tl_window_create()) {
-        TLERROR("Failed to create application window");
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to create application window");
+        BKS_STACK_POPV(false)
     }
 
     if (!tl_script_initialize()) {
-        TLERROR("Failed to initialize script engine");
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to initialize script engine");
+        BKS_STACK_POPV(false)
     }
 
     if (!tl_graphics_initialize()) {
-        TLERROR("Failed to initialize Graphics API")
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to initialize Graphics API")
+        BKS_STACK_POPV(false)
     }
 
-    TL_STACK_POPV(true)
+    BKS_STACK_POPV(true)
 }
 
 b8 tl_runtime_terminate(void) {
-    TL_STACK_PUSH
+    BKS_STACK_PUSH
 
     if (!tl_script_terminate()) {
-        TLERROR("Failed to terminate script engine");
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to terminate script engine");
+        BKS_STACK_POPV(false)
     }
 
     if (!tl_graphics_terminate()) {
-        TLERROR("Failed to terminate graphics engine");
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to terminate graphics engine");
+        BKS_STACK_POPV(false)
     }
 
 
     if (!tl_thread_terminate()) {
-        TLERROR("Failed to terminate threadpool")
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to terminate threadpool")
+        BKS_STACK_POPV(false)
     }
 
-    TL_STACK_POPV(true)
+    BKS_STACK_POPV(true)
 }

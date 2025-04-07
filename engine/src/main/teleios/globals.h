@@ -23,14 +23,7 @@ typedef struct {
     TLString *yaml;
     TLString *rootfs;
     TLMap *properties;
-
     TLMemoryArena* arena;
-
-#if ! defined(TELEIOS_BUILD_RELEASE)
-    u8 stack_index;
-    u8 stack_maximum;
-    TLStackFrame stack[TL_STACK_SIZE_MAXIMUM];
-#endif
 
     struct {
         struct {

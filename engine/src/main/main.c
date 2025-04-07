@@ -9,24 +9,23 @@ static void tl_serializer_walk(TLMap *properties);
 
 int main (const int argc, const char *argv[]) {
     if (argc != 2) {
-        TLERROR("argc != 2")
-        TL_STACK_POPV(99)
+        BKSERROR("argc != 2")
+        BKS_STACK_POPV(99)
     }
 
-    TLINFO("Initializing %s", argv[1]);
+    BKSINFO("Initializing %s", argv[1]);
 
     global = tl_platform_memory_alloc(sizeof(TLGlobal));
     tl_platform_memory_set(global, 0, sizeof(TLGlobal));
-    global->stack_index = U8_MAX;
 
-    TL_STACK_PUSHA("%i, 0%xp", argc, argv)
+    BKS_STACK_PUSHA("%i, 0%xp", argc, argv)
 
     global->application.running = true;
-    global->arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
+    global->arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
 
     if (!tl_platform_initialize()) {
-        TLERROR("Platform failed to initialize")
-        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Platform failed to initialize")
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
@@ -37,58 +36,53 @@ int main (const int argc, const char *argv[]) {
     tl_serializer_walk(global->properties);
 
     if (!tl_runtime_initialize()) {
-        TLERROR("Runtime failed to initialize")
-        if (!tl_runtime_terminate ()) TLERROR("Runtime failed to terminate")
-        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Runtime failed to initialize")
+        if (!tl_runtime_terminate ()) BKSERROR("Runtime failed to terminate")
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_application_load()) {
-        TLERROR("Application failed to initialize");
-        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Application failed to initialize");
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_application_initialize()) {
-        TLERROR("Engine failed to initialize");
-        if (!tl_application_terminate()) TLERROR("Application failed to terminate")
-        if (!tl_runtime_terminate    ()) TLERROR("Runtime failed to terminate")
-        if (!tl_platform_terminate   ()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Engine failed to initialize");
+        if (!tl_application_terminate()) BKSERROR("Application failed to terminate")
+        if (!tl_runtime_terminate    ()) BKSERROR("Runtime failed to terminate")
+        if (!tl_platform_terminate   ()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_application_run()) {
-        TLERROR("Application failed to execute")
-        if (!tl_application_terminate()) TLERROR("Application failed to terminate")
-        if (!tl_runtime_terminate    ()) TLERROR("Runtime failed to terminate")
-        if (!tl_platform_terminate   ()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Application failed to execute")
+        if (!tl_application_terminate()) BKSERROR("Application failed to terminate")
+        if (!tl_runtime_terminate    ()) BKSERROR("Runtime failed to terminate")
+        if (!tl_platform_terminate   ()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_application_terminate()) {
-        TLERROR("Application failed to terminate")
-        if (!tl_runtime_terminate ()) TLERROR("Runtime failed to terminate")
-        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Application failed to terminate")
+        if (!tl_runtime_terminate ()) BKSERROR("Runtime failed to terminate")
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
     if (!tl_runtime_terminate()) {
-        TLERROR("Runtime failed to terminate")
-        if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
+        BKSERROR("Runtime failed to terminate")
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
 
     tl_memory_arena_destroy(global->arena);
 
-    if (!tl_platform_terminate()) TLFATAL("Platform failed to terminate")
+    if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
 
-#if ! defined(TELEIOS_BUILD_RELEASE)
-    TLDEBUG("global->stack used: %u", global->stack_maximum);
-    TLDEBUG("global->stack reserved: %u", TL_ARR_LENGTH(global->stack, TLStackFrame));
-#endif
-
-    TLINFO("Exiting")
-    TL_STACK_POPV(0)
+    BKSINFO("Exiting")
+    BKS_STACK_POPV(0)
 }
 
 // #####################################################################################################################
@@ -102,7 +96,7 @@ int main (const int argc, const char *argv[]) {
 #define EXPECT(t)                                   \
     yaml_token_delete(&token);                      \
     yaml_parser_scan(&parser, &token);              \
-    if (token.type != t) TLFATAL("Unexpect token")
+    if (token.type != t) BKSFATAL("Unexpect token")
 
 typedef struct {
     const TLString *name;
@@ -110,18 +104,18 @@ typedef struct {
 } TLTuple;
 
 static void tl_serializer_walk(TLMap *properties) {
-    TL_STACK_PUSHA("0x%p")
+    BKS_STACK_PUSHA("0x%p")
     FILE* file = fopen(tl_string(global->yaml), "r");
-    if (file == NULL) TLFATAL("Failed to open %s", tl_string(global->yaml));
+    if (file == NULL) BKSFATAL("Failed to open %s", tl_string(global->yaml));
 
     yaml_parser_t parser;
-    if (!yaml_parser_initialize(&parser)) { fclose(file); TLFATAL("Failed to initialize parser!"); }
+    if (!yaml_parser_initialize(&parser)) { fclose(file); BKSFATAL("Failed to initialize parser!"); }
     yaml_parser_set_input_file(&parser, file);
 
     u8 block_index = 0;
     u16 prefix_index = 0;
     yaml_token_t token;
-    TLMemoryArena *arena = tl_memory_arena_create(TL_KIBI_BYTES(4));
+    TLMemoryArena *arena = tl_memory_arena_create(BKS_KIBI_BYTES(4));
     TLList *sequences = tl_list_create(arena);
     char element[U8_MAX]; // current YAML_KEY_TOKEN
     char prefix[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
@@ -133,7 +127,7 @@ static void tl_serializer_walk(TLMap *properties) {
         switch(token.type) {
             default: continue;
             case YAML_NO_TOKEN: {
-                TLFATAL("Malformed YAML token");
+                BKSFATAL("Malformed YAML token");
             } break;
             // #########################################################################################################
             // YAML_BLOCK_SEQUENCE_START_TOKEN
@@ -271,5 +265,5 @@ static void tl_serializer_walk(TLMap *properties) {
     yaml_parser_delete(&parser);
     tl_memory_arena_destroy(arena);
 
-    TL_STACK_POP
+    BKS_STACK_POP
 }

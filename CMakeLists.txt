@@ -43,7 +43,7 @@ add_subdirectory(engine/libs/liblua)
 #                   TELIOS
 #
 # ==========================================
-#add_definitions(-DTELEIOS_BUILD_RELEASE)
+#add_definitions(-DBKS_BUILD_RELEASE)
 
 include_directories(engine/src/main)
 file(GLOB_RECURSE SOURCES "engine/src/main/*.h" "engine/src/main/*.cpp" "engine/src/main/*.c")

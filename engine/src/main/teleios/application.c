@@ -5,13 +5,13 @@
 #include "teleios/application.h"
 
 b8 tl_application_load(void) {
-    TL_STACK_PUSH
+    BKS_STACK_PUSH
     // --------------------------------------------------------
     // Load the desired scene
     // --------------------------------------------------------
     if (!tl_scene_load("main")) {
-        TLERROR("Failed to load scene [main]");
-        TL_STACK_POPV(false)
+        BKSERROR("Failed to load scene [main]");
+        BKS_STACK_POPV(false)
     }
     // --------------------------------------------------------
     // Apply the scene's settings
@@ -39,41 +39,41 @@ b8 tl_application_load(void) {
     // u8 world = tl_layer_create("world");
     // u8 gui = tl_layer_create("gui");
 
-    TLDEBUG("Application initialized in %llu micros", TL_PROFILER_MICROS);
-    TL_STACK_POPV(true)
+    BKSDEBUG("Application initialized in %llu micros", BKS_PROFILER_MICROS);
+    BKS_STACK_POPV(true)
 }
 
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
-    TL_STACK_PUSHA("0x%p", event)
+    BKS_STACK_PUSHA("0x%p", event)
 
     global->application.paused = true;
 
     global->application.frame.per_second = 0;
     global->application.simulation.per_second = 0;
-    TLINFO("Simulation paused")
+    BKSINFO("Simulation paused")
 
-    TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
+    BKS_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_closed(const TLEvent *event) {
-    TL_STACK_PUSHA("0x%p", event)
+    BKS_STACK_PUSHA("0x%p", event)
 
     global->application.running = false;
 
-    TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
+    BKS_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_restored(const TLEvent *event) {
-    TL_STACK_PUSHA("0x%p", event)
+    BKS_STACK_PUSHA("0x%p", event)
 
     global->application.paused = false;
-    TLINFO("Simulation resumed")
+    BKSINFO("Simulation resumed")
 
-    TL_STACK_POPV(TL_EVENT_NOT_CONSUMED)
+    BKS_STACK_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 b8 tl_application_initialize(void) {
-    TL_STACK_PUSH
+    BKS_STACK_PUSH
 
     global->application.frame.number = 0;
     global->application.frame.overflow = 0;
@@ -83,26 +83,26 @@ b8 tl_application_initialize(void) {
     global->application.simulation.overflow = 0;
     global->application.simulation.per_second = 0;
 
-    global->application.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
+    global->application.arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
 
     tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
     tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
     tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
 
 
-    TLDEBUG("Engine initialized in %llu micros", TL_PROFILER_MICROS);
-    TL_STACK_POPV(true)
+    BKSDEBUG("Engine initialized in %llu micros", BKS_PROFILER_MICROS);
+    BKS_STACK_POPV(true)
 }
 
 b8 tl_application_run(void) {
-    TL_STACK_PUSH
-    TLClock t1, t2;
-    tl_time_clock(&t1);
+    BKS_STACK_PUSH
+    BKSClock t1, t2;
+    bks_time_clock(&t1);
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
 
-    global->application.frame.arena = tl_memory_arena_create(TL_MEBI_BYTES(10));
+    global->application.frame.arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
 
     glfwShowWindow(global->platform.window.handle);
     while (global->application.running) {
@@ -113,7 +113,7 @@ b8 tl_application_run(void) {
             global->application.frame.number++;
             if (global->application.frame.number == 0) {
                 global->application.frame.overflow++;
-                TLWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
+                BKSWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
             }
 
             // =========================================================
@@ -124,7 +124,7 @@ b8 tl_application_run(void) {
                 global->application.simulation.number++;
                 if (global->application.simulation.number == 0) {
                     global->application.simulation.overflow++;
-                    TLWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
+                    BKSWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
                 }
 
                 global->application.simulation.per_second++;
@@ -156,10 +156,10 @@ b8 tl_application_run(void) {
         // =========================================================
         // FPS calculation
         // =========================================================
-        tl_time_clock(&t2);
+        bks_time_clock(&t2);
         if (t1.second != t2.second) {
-            tl_platform_memory_copy(&t1, &t2, sizeof(TLClock));
-            TLDEBUG("FPS %llu, UPS %llu", global->application.frame.per_second, global->application.simulation.per_second);
+            tl_platform_memory_copy(&t1, &t2, sizeof(BKSClock));
+            BKSDEBUG("FPS %llu, UPS %llu", global->application.frame.per_second, global->application.simulation.per_second);
             global->application.frame.per_second = global->application.simulation.per_second = 0;
         }
         // =========================================================
@@ -180,17 +180,17 @@ b8 tl_application_run(void) {
         global->application.frame.arena = NULL;
     }
 
-    TL_STACK_POPV(true)
+    BKS_STACK_POPV(true)
 }
 
 b8 tl_application_terminate(void) {
-    TL_STACK_PUSH
+    BKS_STACK_PUSH
 
     if (global->application.arena != NULL) {
         tl_memory_arena_destroy(global->application.arena);
         global->application.arena = NULL;
     }
 
-    TLDEBUG("Engine terminated in %llu micros", TL_PROFILER_MICROS);
-    TL_STACK_POPV(true)
+    BKSDEBUG("Engine terminated in %llu micros", BKS_PROFILER_MICROS);
+    BKS_STACK_POPV(true)
 }

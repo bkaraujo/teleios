@@ -4,9 +4,7 @@
 #include "teleios/defines.h"
 #include "teleios/core/libs.h"
 
-#include "teleios/core/logger.h"
 #include "teleios/core/platform.h"
-#include "teleios/core/meta.h"
 #include "teleios/core/event.h"
 #include "teleios/core/number.h"
 #include "teleios/core/string.h"
