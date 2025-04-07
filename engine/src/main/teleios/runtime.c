@@ -116,7 +116,7 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
 }
 
 static b8 tl_window_create(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -147,7 +147,7 @@ static b8 tl_window_create(void) {
 
     if (global->platform.window.handle == NULL) {
         BKSERROR("Failed to create GLFW window");
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
     // --------------------------------------------------------------------------------------
     // Cache state
@@ -182,7 +182,7 @@ static b8 tl_window_create(void) {
     glfwSetScrollCallback           (global->platform.window.handle, tl_window_callback_input_cursor_scroll);
     glfwSetCursorEnterCallback      (global->platform.window.handle, tl_window_callback_input_cursor_entered);
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 // #####################################################################################################################
 //
@@ -190,11 +190,11 @@ static b8 tl_window_create(void) {
 //
 // #####################################################################################################################
 b8 tl_runtime_initialize(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     if (global->properties == NULL || tl_map_length(global->properties) == 0) {
         BKSERROR("Failed to read runtime properties")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     TLIterator *it = tl_map_keys(global->properties);
@@ -272,45 +272,45 @@ b8 tl_runtime_initialize(void) {
 
     if (!tl_thread_initialize()) {
         BKSERROR("Failed to initialize threadpool")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     if (!tl_window_create()) {
         BKSERROR("Failed to create application window");
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     if (!tl_script_initialize()) {
         BKSERROR("Failed to initialize script engine");
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     if (!tl_graphics_initialize()) {
         BKSERROR("Failed to initialize Graphics API")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 b8 tl_runtime_terminate(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     if (!tl_script_terminate()) {
         BKSERROR("Failed to terminate script engine");
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     if (!tl_graphics_terminate()) {
         BKSERROR("Failed to terminate graphics engine");
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
 
     if (!tl_thread_terminate()) {
         BKSERROR("Failed to terminate threadpool")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }

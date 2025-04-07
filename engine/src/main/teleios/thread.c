@@ -51,7 +51,7 @@ static void* tl_thread_runner(void *parameter) {
 }
 
 b8 tl_thread_initialize(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
     BKSTRACE("Initializing Threadpool");
 
     pthread_cond_init(&thread_pool.condition, NULL);
@@ -63,15 +63,15 @@ b8 tl_thread_initialize(void) {
         thread_pool.thread[i].created_at = bks_time_epoch_micros();
         if (pthread_create(&thread_pool.thread[i].handle, NULL, tl_thread_runner, &thread_pool.thread[i]) != 0) {
             BKSERROR("Failed to create Threadpool thread");
-            BKS_STACK_POPV(false)
+            BKS_TRACE_POPV(false)
         }
     }
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 b8 tl_thread_terminate(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     BKSTRACE("Terminating Threadpool");
 
@@ -83,7 +83,7 @@ b8 tl_thread_terminate(void) {
                 if (result == ESRCH) { BKSERROR("Failed to cancel thread: no thread with the id %#x could be found.", thread_pool.thread[i].id); }
                 else                 { BKSERROR("Failed to cancel thread: an unknown error has occurred. errno=%i", result); }
 
-                BKS_STACK_POPV(false)
+                BKS_TRACE_POPV(false)
             }
         }
     }
@@ -91,16 +91,16 @@ b8 tl_thread_terminate(void) {
     pthread_mutex_destroy(&thread_pool.mutex);
     pthread_cond_destroy(&thread_pool.condition);
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 static u8 tl_thread_submit(PFN_task task) {
-    BKS_STACK_PUSHA("0x%p", task);
+    BKS_TRACE_PUSHA("0x%p", task);
 
     pthread_mutex_lock(&thread_pool.mutex);
     if (thread_pool.index == U8_MAX - 1) {
         BKSWARN("ThreadPool is full, rejecting task")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     thread_pool.stack[thread_pool.index] = task;
@@ -109,17 +109,17 @@ static u8 tl_thread_submit(PFN_task task) {
 
     pthread_cond_signal(&thread_pool.condition);
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 void tl_thread_fire_and_forget(PFN_task task) {
-    BKS_STACK_PUSHA("0x%p", task);
+    BKS_TRACE_PUSHA("0x%p", task);
     tl_thread_submit(task);
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 void tl_thread_fire_and_wait(PFN_task task, const u64 timeout) {
-    BKS_STACK_PUSHA("0x%p, %llu", task, timeout);
+    BKS_TRACE_PUSHA("0x%p, %llu", task, timeout);
     tl_thread_submit(task);
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }

@@ -11,7 +11,7 @@
     if (tl_string_equals(value, f)) {   \
         p = g;                          \
         BKSTRACE("%s = GL_%s", #p, f)    \
-        BKS_STACK_POP                    \
+        BKS_TRACE_POP                    \
     }
 
 static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLString *value);
@@ -22,13 +22,13 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
 static void tl_scene_load_actor_component(TLMemoryArena *arena, const char* actor, TLString *key, TLString *value);
 
 b8 tl_scene_load(const char* name) {
-    BKS_STACK_PUSHA("%s", name)
+    BKS_TRACE_PUSHA("%s", name)
     BKSDEBUG("Loading scene [%s]", name);
     TLMemoryArena *scrape = tl_memory_arena_create(BKS_MEBI_BYTES(1));
 
     if (global->properties == NULL || tl_map_length(global->properties) == 0) {
         BKSERROR("Failed to read runtime properties")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     if (global->application.scene.arena == NULL) {
@@ -63,7 +63,7 @@ b8 tl_scene_load(const char* name) {
         tl_memory_set(scene, 0 , TL_YAML_MAX_SCENE_KEY);
     }
 
-    if (!found) { BKSERROR("Scene [%s] not found", name) BKS_STACK_POPV(false) }
+    if (!found) { BKSERROR("Scene [%s] not found", name) BKS_TRACE_POPV(false) }
     // --------------------------------------------------------
     // Load the scene with the desired name
     // --------------------------------------------------------
@@ -80,11 +80,11 @@ b8 tl_scene_load(const char* name) {
         if (tl_string_contains(key, ".actor.")) tl_scene_load_actor(scrape, scene, key, value);
     }
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLString *value) {
-    BKS_STACK_PUSHA("%s, %s", tl_string(key), tl_string(value))
+    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
     const char *current_pos = tl_string(value);
     char *endptr;
 
@@ -95,7 +95,7 @@ static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLStr
         global->application.scene.graphics.clear_color.z = 0.75f;
         global->application.scene.graphics.clear_color.w = 1.0f;
         BKSWARN("Failed to read [scene.clear_color.red] assuming magenta");
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     current_pos = endptr;
@@ -110,7 +110,7 @@ static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLStr
         global->application.scene.graphics.clear_color.z = 0.75f;
         global->application.scene.graphics.clear_color.w = 1.0f;
         BKSWARN("Failed to read [scene.clear_color.green] assuming magenta");
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     current_pos = endptr;
@@ -125,7 +125,7 @@ static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLStr
         global->application.scene.graphics.clear_color.z = 0.75f;
         global->application.scene.graphics.clear_color.w = 1.0f;
         BKSWARN("Failed to read [scene.clear_color.blue] assuming magenta");
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     current_pos = endptr;
@@ -140,18 +140,18 @@ static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLStr
         global->application.scene.graphics.clear_color.z = 0.75f;
         global->application.scene.graphics.clear_color.w = 1.0f;
         BKSWARN("Failed to read [scene.clear_color.alpha] assuming magenta");
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 static void tl_scene_load_depth(TLMemoryArena *arena, TLString *key, TLString *value) {
-    BKS_STACK_PUSHA("%s, %s", tl_string(key), tl_string(value))
+    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
     if (tl_string_contains(key, "depth.enabled")) {
         global->application.scene.graphics.depth_enabled = true;
         BKSTRACE("global->application.scene.graphics.depth_enabled = %d", global->application.scene.graphics.depth_enabled )
-        BKS_STACK_POP;
+        BKS_TRACE_POP;
     }
 
     if (tl_string_contains(key, "depth.function")) {
@@ -163,18 +163,18 @@ static void tl_scene_load_depth(TLMemoryArena *arena, TLString *key, TLString *v
         TL_GLPARAM(global->application.scene.graphics.depth_function, "ALWAYS", GL_ALWAYS)
         TL_GLPARAM(global->application.scene.graphics.depth_function, "GREATER", GL_GREATER)
         TL_GLPARAM(global->application.scene.graphics.depth_function, "NOTEQUAL", GL_NOTEQUAL)
-        BKS_STACK_POP;
+        BKS_TRACE_POP;
     }
 
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *value) {
-    BKS_STACK_PUSHA("%s, %s", tl_string(key), tl_string(value))
+    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
     if (tl_string_contains(key, "blend.enabled")) {
         global->application.scene.graphics.blend_enabled = true;
         BKSTRACE("global->application.scene.graphics.blend_enabled = %d", global->application.scene.graphics.blend_enabled )
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     if (tl_string_contains(key, "blend.equation") ) {
@@ -183,7 +183,7 @@ static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *v
         TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_ADD", GL_FUNC_ADD)
         TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_SUBTRACT", GL_FUNC_SUBTRACT)
         TL_GLPARAM(global->application.scene.graphics.blend_equation, "FUNC_REVERSE_SUBTRACT", GL_FUNC_REVERSE_SUBTRACT)
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     if (tl_string_contains(key, "blend.function.source")) {
@@ -206,7 +206,7 @@ static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *v
         TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC1_COLOR", GL_ONE_MINUS_SRC1_COLOR)
         TL_GLPARAM(global->application.scene.graphics.blend_function_src, "SRC1_ALPHA", GL_SRC1_ALPHA)
         TL_GLPARAM(global->application.scene.graphics.blend_function_src, "ONE_MINUS_SRC1_ALPHA", GL_ONE_MINUS_SRC1_ALPHA)
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     if (tl_string_contains(key, "blend.function.target")) {
@@ -229,20 +229,20 @@ static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *v
         TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC1_COLOR", GL_ONE_MINUS_SRC1_COLOR)
         TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "SRC1_ALPHA", GL_SRC1_ALPHA)
         TL_GLPARAM(global->application.scene.graphics.blend_function_tgt, "ONE_MINUS_SRC1_ALPHA", GL_ONE_MINUS_SRC1_ALPHA)
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 static void tl_scene_load_camera(TLMemoryArena *arena, TLString *key, TLString *value) {
-    BKS_STACK_PUSHA("%s, %s", tl_string(key), tl_string(value))
+    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
     BKSINFO("Camera : %s", tl_string(key))
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 static TLUlid * tl_scene_create(TLMemoryArena *arena, const char* actor) {
-    BKS_STACK_PUSHA("%s", actor)
+    BKS_TRACE_PUSHA("%s", actor)
     u32 empty_index = U32_MAX;
     for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
         if (global->application.ecs.components.yaml[i].prefix == NULL) {
@@ -251,7 +251,7 @@ static TLUlid * tl_scene_create(TLMemoryArena *arena, const char* actor) {
         }
 
         if (tl_char_equals(tl_string(global->application.ecs.components.yaml[i].prefix), actor)) {
-            BKS_STACK_POPV(global->application.ecs.components.yaml[i].entity);
+            BKS_TRACE_POPV(global->application.ecs.components.yaml[i].entity);
         }
     }
 
@@ -261,11 +261,11 @@ static TLUlid * tl_scene_create(TLMemoryArena *arena, const char* actor) {
     global->application.ecs.components.yaml[empty_index].prefix = tl_string_clone(global->application.scene.arena, actor);
     BKSTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, actor)
 
-    BKS_STACK_POPV(entity)
+    BKS_TRACE_POPV(entity)
 }
 
 static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLString *key, TLString *value) {
-    BKS_STACK_PUSHA("%s, %s", tl_string(key), tl_string(value))
+    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // Check if actor number is within TL_SCENE_MAX_ACTORS
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -283,7 +283,7 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
     // Ignore if it goes beyond TL_SCENE_MAX_ACTORS
     if (*actor == '\0') {
         BKSWARN("Ignoring actor %s", actor)
-        BKS_STACK_POP
+        BKS_TRACE_POP
     }
 
     TLUlid *entity = tl_scene_create(arena, actor);
@@ -309,7 +309,7 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
 
         if (empty_index == U32_MAX) {
             BKSWARN("Maximum components reached")
-            BKS_STACK_POP
+            BKS_TRACE_POP
         }
 
         global->application.ecs.components.name[empty_index].entity = entity;
@@ -318,10 +318,10 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
         BKSTRACE("global->application.ecs.components.name[%d].name = %s", empty_index, tl_string(value));
     }
 
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 static void tl_scene_load_actor_component(TLMemoryArena *arena, const char* actor, TLString *key, TLString *value) {
-    BKS_STACK_PUSHA("%s, %s, %s", actor, tl_string(key), tl_string(value))
-    BKS_STACK_POP
+    BKS_TRACE_PUSHA("%s, %s, %s", actor, tl_string(key), tl_string(value))
+    BKS_TRACE_POP
 }

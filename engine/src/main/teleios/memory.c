@@ -17,30 +17,30 @@ struct TLMemoryArena {
 static TLMemoryArena *arenas[U8_MAX];
 
 static const char* tl_memory_name(const TLMemoryTag tag) {
-    BKS_STACK_PUSHA("%d", tag)
+    BKS_TRACE_PUSHA("%d", tag)
     switch (tag) {
-        case TL_MEMORY_BLOCK                : BKS_STACK_POPV("TL_MEMORY_BLOCK")
-        case TL_MEMORY_SERIALIZER           : BKS_STACK_POPV("TL_MEMORY_SERIALIZER")
-        case TL_MEMORY_CONTAINER_LIST       : BKS_STACK_POPV("TL_MEMORY_CONTAINER_LIST")
-        case TL_MEMORY_CONTAINER_STACK      : BKS_STACK_POPV("TL_MEMORY_CONTAINER_STACK")
-        case TL_MEMORY_CONTAINER_NODE       : BKS_STACK_POPV("TL_MEMORY_CONTAINER_NODE")
-        case TL_MEMORY_CONTAINER_MAP        : BKS_STACK_POPV("TL_MEMORY_CONTAINER_MAP")
-        case TL_MEMORY_CONTAINER_MAP_ENTRY  : BKS_STACK_POPV("TL_MEMORY_CONTAINER_MAP_ENTRY")
-        case TL_MEMORY_CONTAINER_ITERATOR   : BKS_STACK_POPV("TL_MEMORY_CONTAINER_ITERATOR")
-        case TL_MEMORY_STRING               : BKS_STACK_POPV("TL_MEMORY_STRING")
-        case TL_MEMORY_PROFILER             : BKS_STACK_POPV("TL_MEMORY_PROFILER")
-        case TL_MEMORY_SCENE                : BKS_STACK_POPV("TL_MEMORY_SCENE")
-        case TL_MEMORY_ECS_COMPONENT        : BKS_STACK_POPV("TL_MEMORY_ECS_COMPONENT")
-        case TL_MEMORY_ULID                 : BKS_STACK_POPV("TL_MEMORY_ULID")
-        case TL_MEMORY_THREAD               : BKS_STACK_POPV("TL_MEMORY_THREAD")
-        case TL_MEMORY_MAXIMUM              : BKS_STACK_POPV("TL_MEMORY_MAXIMUM")
+        case TL_MEMORY_BLOCK                : BKS_TRACE_POPV("TL_MEMORY_BLOCK")
+        case TL_MEMORY_SERIALIZER           : BKS_TRACE_POPV("TL_MEMORY_SERIALIZER")
+        case TL_MEMORY_CONTAINER_LIST       : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_LIST")
+        case TL_MEMORY_CONTAINER_STACK      : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_STACK")
+        case TL_MEMORY_CONTAINER_NODE       : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_NODE")
+        case TL_MEMORY_CONTAINER_MAP        : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_MAP")
+        case TL_MEMORY_CONTAINER_MAP_ENTRY  : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_MAP_ENTRY")
+        case TL_MEMORY_CONTAINER_ITERATOR   : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_ITERATOR")
+        case TL_MEMORY_STRING               : BKS_TRACE_POPV("TL_MEMORY_STRING")
+        case TL_MEMORY_PROFILER             : BKS_TRACE_POPV("TL_MEMORY_PROFILER")
+        case TL_MEMORY_SCENE                : BKS_TRACE_POPV("TL_MEMORY_SCENE")
+        case TL_MEMORY_ECS_COMPONENT        : BKS_TRACE_POPV("TL_MEMORY_ECS_COMPONENT")
+        case TL_MEMORY_ULID                 : BKS_TRACE_POPV("TL_MEMORY_ULID")
+        case TL_MEMORY_THREAD               : BKS_TRACE_POPV("TL_MEMORY_THREAD")
+        case TL_MEMORY_MAXIMUM              : BKS_TRACE_POPV("TL_MEMORY_MAXIMUM")
     }
 
-    BKS_STACK_POPV("TL_MEMORY_???")
+    BKS_TRACE_POPV("TL_MEMORY_???")
 }
 
 TLMemoryArena* tl_memory_arena_create(const u64 size) {
-    BKS_STACK_PUSHA("%d", size)
+    BKS_TRACE_PUSHA("%d", size)
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
@@ -55,7 +55,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
         if (arenas[i] == NULL) {
             arenas[i] = arena;
             BKSTRACE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
-            BKS_STACK_POPV(arena)
+            BKS_TRACE_POPV(arena)
         }
     }
 
@@ -63,17 +63,17 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
 }
 
 BKS_INLINE static u8 tl_memory_arena_get_index(const TLMemoryArena *arena) {
-    BKS_STACK_PUSHA("0x%p", arena)
+    BKS_TRACE_PUSHA("0x%p", arena)
 
     if (arena == NULL) {
         BKSWARN("TLMemoryArena is NULL")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arenas[i] == NULL) continue;
         if (arenas[i] == arena) {
-            BKS_STACK_POPV(i)
+            BKS_TRACE_POPV(i)
         }
     }
 
@@ -81,7 +81,7 @@ BKS_INLINE static u8 tl_memory_arena_get_index(const TLMemoryArena *arena) {
 }
 
 BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
-    BKS_STACK_PUSHA("%d", index)
+    BKS_TRACE_PUSHA("%d", index)
     TLMemoryArena *arena = arenas[index];
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
@@ -100,40 +100,40 @@ BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
     tl_platform_memory_free(arena);
     arenas[index] = NULL;
 
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 void tl_memory_arena_reset(TLMemoryArena *arena) {
-    BKS_STACK_PUSHA("0x%p", arena)
+    BKS_TRACE_PUSHA("0x%p", arena)
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
         tl_memory_set(arena->page[i].payload, 0, arena->page_size);
     }
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 void tl_memory_arena_destroy(TLMemoryArena *arena) {
-    BKS_STACK_PUSHA("0x%p", arena)
+    BKS_TRACE_PUSHA("0x%p", arena)
     const u8 index = tl_memory_arena_get_index(arena);
     tl_memory_arena_do_destroy(index);
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag tag) {
-    BKS_STACK_PUSHA("0x%p, %llu, %d", arena, size, tag)
+    BKS_TRACE_PUSHA("0x%p, %llu, %d", arena, size, tag)
     // -------------------------------------------------
     // Ensure that the Arena can hold the desired size
     // -------------------------------------------------
     if (size == 0) {
         BKSFATAL("TLMemoryArena 0x%p allocation size must be greater then 0", arena)
-        BKS_STACK_POPV(NULL)
+        BKS_TRACE_POPV(NULL)
     }
 
     if (size > arena->page_size) {
         BKSFATAL("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
-        BKS_STACK_POPV(NULL)
+        BKS_TRACE_POPV(NULL)
     }
     // -------------------------------------------------
     // Find a suitable TLMemoryPage within the arena
@@ -160,7 +160,7 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
 
     if (found == U8_MAX) {
         BKSWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
-        BKS_STACK_POPV(NULL)
+        BKS_TRACE_POPV(NULL)
     }
     // -------------------------------------------------
     // Adjust the TLMemoryArena internal state
@@ -177,17 +177,17 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
     // -------------------------------------------------
     // Hand out the memory pointer
     // -------------------------------------------------
-    BKS_STACK_POPV(address)
+    BKS_TRACE_POPV(address)
 }
 
 void tl_memory_set(void *block, const i32 value, const u64 size) {
-    BKS_STACK_PUSHA("0x%p, %d, %llu", block, value, size)
+    BKS_TRACE_PUSHA("0x%p, %d, %llu", block, value, size)
     tl_platform_memory_set(block, value, size);
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }
 
 void tl_memory_copy(void *target, void *source, const u64 size) {
-    BKS_STACK_PUSHA("0x%p, 0x%p, %llu", target, source, size)
+    BKS_TRACE_PUSHA("0x%p, 0x%p, %llu", target, source, size)
     tl_platform_memory_copy(target, source, size);
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }

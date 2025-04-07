@@ -10,7 +10,7 @@ static void tl_serializer_walk(TLMap *properties);
 int main (const int argc, const char *argv[]) {
     if (argc != 2) {
         BKSERROR("argc != 2")
-        BKS_STACK_POPV(99)
+        BKS_TRACE_POPV(99)
     }
 
     BKSINFO("Initializing %s", argv[1]);
@@ -18,7 +18,7 @@ int main (const int argc, const char *argv[]) {
     global = tl_platform_memory_alloc(sizeof(TLGlobal));
     tl_platform_memory_set(global, 0, sizeof(TLGlobal));
 
-    BKS_STACK_PUSHA("%i, 0%xp", argc, argv)
+    BKS_TRACE_PUSHA("%i, 0%xp", argc, argv)
 
     global->application.running = true;
     global->arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
@@ -82,7 +82,7 @@ int main (const int argc, const char *argv[]) {
     if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
 
     BKSINFO("Exiting")
-    BKS_STACK_POPV(0)
+    BKS_TRACE_POPV(0)
 }
 
 // #####################################################################################################################
@@ -104,7 +104,7 @@ typedef struct {
 } TLTuple;
 
 static void tl_serializer_walk(TLMap *properties) {
-    BKS_STACK_PUSHA("0x%p")
+    BKS_TRACE_PUSHA("0x%p")
     FILE* file = fopen(tl_string(global->yaml), "r");
     if (file == NULL) BKSFATAL("Failed to open %s", tl_string(global->yaml));
 
@@ -265,5 +265,5 @@ static void tl_serializer_walk(TLMap *properties) {
     yaml_parser_delete(&parser);
     tl_memory_arena_destroy(arena);
 
-    BKS_STACK_POP
+    BKS_TRACE_POP
 }

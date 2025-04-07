@@ -16,21 +16,21 @@ u64 bks_profiler_ticks(const char *name);
 void bks_trace_push(const char* filename, u64 lineno, const char* function, const char* arguments, ...);
 void bks_trace_pop();
 
-#define BKS_STACK_PUSHA(args, ...)                                           \
+#define BKS_TRACE_PUSHA(args, ...)                                           \
     {                                                                        \
         /* Operation order matters */                                        \
         bks_trace_push(__FILE__, __LINE__, __func__, args, ##__VA_ARGS__);   \
         bks_profiler_begin(__func__);                                        \
     }
 
-#define BKS_STACK_PUSH                                       \
+#define BKS_TRACE_PUSH                                       \
     {                                                        \
         /* Operation order matters */                        \
         bks_trace_push(__FILE__, __LINE__, __func__, NULL);  \
         bks_profiler_begin(__func__);                        \
     }
 
-#define BKS_STACK_POP                 \
+#define BKS_TRACE_POP                 \
     do {                              \
         /* Operation order matters */ \
         bks_profiler_end(__func__);   \
@@ -38,7 +38,7 @@ void bks_trace_pop();
         return;                       \
     } while (false);
 
-#define BKS_STACK_POPV(v)             \
+#define BKS_TRACE_POPV(v)             \
     do {                              \
         /* Operation order matters */ \
         bks_profiler_end(__func__);   \

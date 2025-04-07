@@ -3,10 +3,10 @@
 #include "teleios/runtime/libs.h"
 #include "teleios/globals.h"
 
-#define TLSCRIPTERR(s) BKS_STACK_POPV(luaL_error(state, s))
+#define TLSCRIPTERR(s) BKS_TRACE_POPV(luaL_error(state, s))
 
 static i32 tl_script__application_exit(lua_State *state) {
-    BKS_STACK_PUSHA("0x%p", state)
+    BKS_TRACE_PUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -18,11 +18,11 @@ static i32 tl_script__application_exit(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    BKS_STACK_POPV(0)
+    BKS_TRACE_POPV(0)
 }
 
 static i32 tl_script__is_key_pressed(lua_State *state) {
-    BKS_STACK_PUSHA("0x%p", state)
+    BKS_TRACE_PUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -36,11 +36,11 @@ static i32 tl_script__is_key_pressed(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    BKS_STACK_POPV(1)
+    BKS_TRACE_POPV(1)
 }
 
 static i32 tl_script__is_key_released(lua_State *state) {
-    BKS_STACK_PUSHA("0x%p", state)
+    BKS_TRACE_PUSHA("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -54,11 +54,11 @@ static i32 tl_script__is_key_released(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    BKS_STACK_POPV(1)
+    BKS_TRACE_POPV(1)
 }
 
 b8 tl_script_initialize(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     BKSTRACE("Initializing Script Engine");
 
@@ -87,13 +87,13 @@ b8 tl_script_initialize(void) {
     luaL_newlib(global->platform.script.state, teleios_application);
     lua_setglobal(global->platform.script.state, "teleios_application");
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 b8 tl_script_terminate(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
     BKSTRACE("Terminating Script Engine");
     lua_close(global->platform.script.state);
     global->platform.script.state = NULL;
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }

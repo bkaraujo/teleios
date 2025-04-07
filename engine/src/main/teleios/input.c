@@ -17,21 +17,21 @@ void tl_input_update() {
 }
 
 b8 tl_input_is_key_active(const i32 key) {
-    BKS_STACK_PUSHA("%d", key)
+    BKS_TRACE_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
-    BKS_STACK_POPV(is_active)
+    BKS_TRACE_POPV(is_active)
 }
 
 b8 tl_input_is_key_pressed(const i32 key) {
-    BKS_STACK_PUSHA("%d", key)
+    BKS_TRACE_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
     const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    BKS_STACK_POPV(!were_active & is_active)
+    BKS_TRACE_POPV(!were_active & is_active)
 }
 
 b8 tl_input_is_key_released(const i32 key) {
-    BKS_STACK_PUSHA("%d", key)
+    BKS_TRACE_PUSHA("%d", key)
     const b8 is_active = global->application.frame.current.input.keyboard.key[key];
     const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    BKS_STACK_POPV(were_active & !is_active)
+    BKS_TRACE_POPV(were_active & !is_active)
 }

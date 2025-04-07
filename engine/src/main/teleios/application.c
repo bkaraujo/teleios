@@ -5,13 +5,13 @@
 #include "teleios/application.h"
 
 b8 tl_application_load(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
     // --------------------------------------------------------
     // Load the desired scene
     // --------------------------------------------------------
     if (!tl_scene_load("main")) {
         BKSERROR("Failed to load scene [main]");
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
     // --------------------------------------------------------
     // Apply the scene's settings
@@ -40,11 +40,11 @@ b8 tl_application_load(void) {
     // u8 gui = tl_layer_create("gui");
 
     BKSDEBUG("Application initialized in %llu micros", BKS_PROFILER_MICROS);
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
-    BKS_STACK_PUSHA("0x%p", event)
+    BKS_TRACE_PUSHA("0x%p", event)
 
     global->application.paused = true;
 
@@ -52,28 +52,28 @@ static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
     global->application.simulation.per_second = 0;
     BKSINFO("Simulation paused")
 
-    BKS_STACK_POPV(TL_EVENT_NOT_CONSUMED)
+    BKS_TRACE_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_closed(const TLEvent *event) {
-    BKS_STACK_PUSHA("0x%p", event)
+    BKS_TRACE_PUSHA("0x%p", event)
 
     global->application.running = false;
 
-    BKS_STACK_POPV(TL_EVENT_NOT_CONSUMED)
+    BKS_TRACE_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_restored(const TLEvent *event) {
-    BKS_STACK_PUSHA("0x%p", event)
+    BKS_TRACE_PUSHA("0x%p", event)
 
     global->application.paused = false;
     BKSINFO("Simulation resumed")
 
-    BKS_STACK_POPV(TL_EVENT_NOT_CONSUMED)
+    BKS_TRACE_POPV(TL_EVENT_NOT_CONSUMED)
 }
 
 b8 tl_application_initialize(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     global->application.frame.number = 0;
     global->application.frame.overflow = 0;
@@ -91,11 +91,11 @@ b8 tl_application_initialize(void) {
 
 
     BKSDEBUG("Engine initialized in %llu micros", BKS_PROFILER_MICROS);
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 b8 tl_application_run(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
     BKSClock t1, t2;
     bks_time_clock(&t1);
 
@@ -180,11 +180,11 @@ b8 tl_application_run(void) {
         global->application.frame.arena = NULL;
     }
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 b8 tl_application_terminate(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     if (global->application.arena != NULL) {
         tl_memory_arena_destroy(global->application.arena);
@@ -192,5 +192,5 @@ b8 tl_application_terminate(void) {
     }
 
     BKSDEBUG("Engine terminated in %llu micros", BKS_PROFILER_MICROS);
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }

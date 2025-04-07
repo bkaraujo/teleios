@@ -2,7 +2,7 @@
 #include "teleios/globals.h"
 
 b8 tl_graphics_initialize(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
 
     BKSTRACE("Initializing Graphics Engine");
     glfwMakeContextCurrent(global->platform.window.handle);
@@ -11,7 +11,7 @@ b8 tl_graphics_initialize(void) {
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         BKSERROR("Failed to initialize GLAD")
-        BKS_STACK_POPV(false)
+        BKS_TRACE_POPV(false)
     }
 
     BKSDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
@@ -32,13 +32,13 @@ b8 tl_graphics_initialize(void) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
 
 b8 tl_graphics_terminate(void) {
-    BKS_STACK_PUSH
+    BKS_TRACE_PUSH
     BKSTRACE("Terminating Graphics Engine");
     tl_platform_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
     glfwMakeContextCurrent(NULL);
-    BKS_STACK_POPV(true)
+    BKS_TRACE_POPV(true)
 }
