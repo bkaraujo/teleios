@@ -3,7 +3,6 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_BUILD_TYPE debug)
 
 project(teleios C)
-
 # ==========================================
 #
 #                   GLFW
@@ -39,7 +38,6 @@ include_directories(engine/libs/libyaml/include)
 #
 # ==========================================
 add_subdirectory(engine/libs/liblua)
-
 # ==========================================
 #
 #                   TELIOS
@@ -47,40 +45,15 @@ add_subdirectory(engine/libs/liblua)
 # ==========================================
 #add_definitions(-DTELEIOS_BUILD_RELEASE)
 
-include_directories("engine/src/main")
-add_executable(${PROJECT_NAME}
-        engine/src/main/main.c
-        engine/src/main/glad/glad.c
+include_directories(engine/src/main)
+file(GLOB_RECURSE SOURCES "engine/src/main/*.h" "engine/src/main/*.cpp" "engine/src/main/*.c")
 
-        engine/src/main/teleios/core.c
-        engine/src/main/teleios/runtime.c
-        engine/src/main/teleios/system.c
-        engine/src/main/teleios/application.c
-        engine/src/main/teleios/container.c
-        engine/src/main/teleios/string.c
-        engine/src/main/teleios/event.c
-        engine/src/main/teleios/number.c
-        engine/src/main/teleios/platform.c
-        engine/src/main/teleios/graphics.c
-        engine/src/main/teleios/scene.c
-        engine/src/main/teleios/memory.c
-        engine/src/main/teleios/script.c
-        engine/src/main/teleios/ulid.c
-        engine/src/main/teleios/thread.c
-        engine/src/main/teleios/filesystem.c
-)
-
+add_executable(${PROJECT_NAME} ${SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "teleios")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-unused-parameter")
-
-if (MSVC)
-    target_compile_options(${PROJECT_NAME} PUBLIC /W4 /permissive)
-else ()
-    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra)
-endif()
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra)
 
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} cglm)
 target_link_libraries(${PROJECT_NAME} yaml)
 target_link_libraries(${PROJECT_NAME} lua_static)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "teleios")
