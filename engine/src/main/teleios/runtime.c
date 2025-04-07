@@ -3,50 +3,6 @@
 #include "teleios/globals.h"
 // #####################################################################################################################
 //
-//                                                     INPUT
-//
-// #####################################################################################################################
-void tl_input_update() {
-    tl_memory_copy(
-        &global->application.frame.last.input,
-        &global->application.frame.current.input,
-        sizeof(TLInput)
-    );
-
-    tl_memory_copy(
-        &global->application.frame.current.input,
-        &global->platform.input,
-        sizeof(TLInput)
-    );
-}
-
-b8 tl_input_is_key_active(const i32 key) {
-    BKS_STACK_PUSHA("%d", key)
-    const b8 is_active = global->application.frame.current.input.keyboard.key[key];
-    BKS_STACK_POPV(is_active)
-}
-
-b8 tl_input_is_key_pressed(const i32 key) {
-    BKS_STACK_PUSHA("%d", key)
-    const b8 is_active = global->application.frame.current.input.keyboard.key[key];
-    const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    BKS_STACK_POPV(!were_active & is_active)
-}
-
-b8 tl_input_is_key_released(const i32 key) {
-    BKS_STACK_PUSHA("%d", key)
-    const b8 is_active = global->application.frame.current.input.keyboard.key[key];
-    const b8 were_active = global->application.frame.last.input.keyboard.key[key];
-    BKS_STACK_POPV(were_active & !is_active)
-}
-// #####################################################################################################################
-//
-//                                                     FILESYSTEM
-//
-// #####################################################################################################################
-
-// #####################################################################################################################
-//
 //                                             WINDOWING
 //
 // #####################################################################################################################
