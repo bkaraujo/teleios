@@ -54,7 +54,7 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arenas[i] == NULL) {
             arenas[i] = arena;
-            BKSTRACE("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
+            BKSDEBUG("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
             BKS_TRACE_POPV(arena)
         }
     }
@@ -85,7 +85,7 @@ BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TLMemoryArena *arena = arenas[index];
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
-            BKSVERBOSE("TLMemoryArena 0x%p releasing page %d", arena, i)
+            BKSDEBUG("TLMemoryArena 0x%p releasing page %d", arena, i)
             tl_platform_memory_free(arena->page[i].payload);
             arena->page[i].payload = NULL;
         }

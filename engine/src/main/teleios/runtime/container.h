@@ -14,7 +14,7 @@ void tl_list_remove(TLList* list, void *value);
 b8 tl_list_after(TLList* list, void *item, void *value);
 b8 tl_list_before(TLList* list, void *item, void *value);
 b8 tl_list_contains(TLList* list, void *value);
-TLIterator* tl_list_iterator_create(TLList* list);
+TLIterator* tl_list_iterator_create(TLMemoryArena *arena, TLList* list);
 
 TLStack* tl_stack_create(TLMemoryArena *arena);
 void tl_stack_push(TLStack* stack, void* value);
@@ -29,7 +29,7 @@ void* tl_map_get(TLMap* map, const char *key);
 void tl_map_remove(TLMap* map, const char *key);
 b8 tl_map_contains(TLMap* map, const char *key);
 u16 tl_map_length(TLMap* map);
-TLIterator* tl_map_keys(TLMap* map);
+TLIterator* tl_map_keys(TLMemoryArena *arena, TLMap* map);
 
 
 #endif // __TELEIOS_RUNTIME_CONTAINER__

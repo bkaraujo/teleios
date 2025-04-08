@@ -325,9 +325,9 @@ static void* tl_list_iterator_next(TLIterator *iterator) {
     BKS_TRACE_POPV(value)
 }
 
-TLIterator* tl_list_iterator_create(TLList* list) {
+TLIterator* tl_list_iterator_create(TLMemoryArena *arena, TLList* list) {
     BKS_TRACE_PUSHA("0x%p", list)
-    TLIterator* iterator = tl_memory_alloc(list->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
+    TLIterator* iterator = tl_memory_alloc(arena == NULL ? list->arena : arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = 0;
     iterator->capacity = list->length;
     iterator->node = list->head;
@@ -356,7 +356,7 @@ void tl_stack_push(TLStack* stack, void* value) {
 void* tl_stack_peek(TLStack* stack) {
     BKS_TRACE_PUSHA("0x%p", stack)
     void* value = NULL;
-    TLIterator* iterator = tl_list_iterator_create(stack);
+    TLIterator* iterator = tl_list_iterator_create(NULL, stack);
     void* next = tl_iterator_next(iterator);
     while (next != NULL) { value = next; next = tl_iterator_next(iterator); }
     BKS_TRACE_POPV(value)
@@ -451,6 +451,7 @@ void* tl_map_get(TLMap* map, const char *key) {
 
     BKS_TRACE_POPV(NULL)
 }
+
 u16 tl_map_length(TLMap* map) {
     BKS_TRACE_PUSHA("0x%p", map)
     const u16 length = map->length;
@@ -488,7 +489,7 @@ void tl_map_remove(TLMap* map, const char *key) {
     BKS_TRACE_POP
 }
 
-TLIterator* tl_map_keys(TLMap* map) {
+TLIterator* tl_map_keys(TLMemoryArena *arena, TLMap* map) {
     BKS_TRACE_PUSHA("0x%p", map)
     if (map == NULL) BKSFATAL("TLMap is NULL")
 
@@ -499,6 +500,6 @@ TLIterator* tl_map_keys(TLMap* map) {
         tl_list_add(keys, map->values[i].key);
     }
 
-    TLIterator *it = tl_list_iterator_create(keys);
+    TLIterator *it = tl_list_iterator_create(arena, keys);
     BKS_TRACE_POPV(it)
 }

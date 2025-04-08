@@ -197,7 +197,8 @@ b8 tl_runtime_initialize(void) {
         BKS_TRACE_POPV(false)
     }
 
-    TLIterator *it = tl_map_keys(global->properties);
+    TLMemoryArena *scrape = tl_memory_arena_create(BKS_MEBI_BYTES(1));
+    TLIterator *it = tl_map_keys(scrape, global->properties);
     for (TLString* key = tl_iterator_next(it); key != NULL; key = tl_iterator_next(it)) {
         if (tl_string_start_with(key, "application.scenes.")) continue;
         const char *value = tl_string(tl_map_get(global->properties, tl_string(key)));
@@ -269,6 +270,7 @@ b8 tl_runtime_initialize(void) {
             }
         }
     }
+    tl_memory_arena_destroy(scrape);
 
     if (!tl_thread_initialize()) {
         BKSERROR("Failed to initialize threadpool")

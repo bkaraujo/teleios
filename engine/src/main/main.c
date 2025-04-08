@@ -13,6 +13,8 @@ int main (const int argc, const char *argv[]) {
         BKS_TRACE_POPV(99)
     }
 
+    bks_logger_loglevel(BKS_LOG_LEVEL_VERBOSE);
+
     BKSINFO("Initializing %s", argv[1]);
 
     global = tl_platform_memory_alloc(sizeof(TLGlobal));
@@ -192,7 +194,7 @@ static void tl_serializer_walk(TLMap *properties) {
                 // -----------------------------------------------------------
                 // Try tro increase the counter
                 // -----------------------------------------------------------
-                TLIterator *iterator = tl_list_iterator_create(sequences);
+                TLIterator *iterator = tl_list_iterator_create(NULL, sequences);
                 for (TLTuple *tuple = tl_iterator_next(iterator) ; tuple != NULL; tuple = tl_iterator_next(iterator)) {
                     if (tl_string_equals(tuple->name, prefix)) {
                         string = tl_string_from_i32(arena, (i32) tuple->sequence, 10);

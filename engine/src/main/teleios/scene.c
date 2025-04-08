@@ -47,7 +47,7 @@ b8 tl_scene_load(const char* name) {
     for (u8 sequence = 0 ; sequence < U8_MAX ; sequence++) {
         snprintf(scene, TL_YAML_MAX_SCENE_KEY + 1, "application.scene.%d.", sequence);
 
-        TLIterator *it = tl_map_keys(global->properties);
+        TLIterator *it = tl_map_keys(scrape, global->properties);
         for (TLString* key = tl_iterator_next(it); key != NULL; key = tl_iterator_next(it)) {
             if (!tl_string_start_with(key, scene)) continue;
 
@@ -68,7 +68,7 @@ b8 tl_scene_load(const char* name) {
     // Load the scene with the desired name
     // --------------------------------------------------------
     BKSTRACE("Loading scene with prefix [%s]", global->application.scene.prefix)
-    TLIterator *it = tl_map_keys(global->properties);
+    TLIterator *it = tl_map_keys(scrape, global->properties);
     for (TLString* key = tl_iterator_next(it); key != NULL; key = tl_iterator_next(it)) {
         if (!tl_string_start_with(key, scene)) continue;
         TLString *value = tl_map_get(global->properties, tl_string(key));
