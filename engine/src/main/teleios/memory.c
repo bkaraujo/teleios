@@ -18,7 +18,7 @@ static TLMemoryArena *arenas[U8_MAX];
 
 b8 tl_memory_initialize(void) {
     BKS_TRACE_PUSH
-    bks_memory_set(arenas, 0, U8_MAX * sizeof(TLMemoryArena));
+    bks_memory_set(arenas, 0, sizeof(arenas));
     BKS_TRACE_POPV(true)
 }
 
@@ -70,12 +70,71 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arenas[i] == NULL) {
             arenas[i] = arena;
-            BKSDEBUG("TLMemoryArena 0x%p created with page size of %d bytes", arena, arena->page_size)
+            BKSDEBUG("TLMemoryArena 0x%p created with page length of %d bytes", arena, arena->page_size)
             BKS_TRACE_POPV(arena)
         }
     }
 
     BKSFATAL("Failed to allocate TLMemoryArena");
+}
+
+void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag tag) {
+    BKS_TRACE_PUSHA("0x%p, %llu, %d", arena, size, tag)
+    // -------------------------------------------------
+    // Ensure that the Arena can hold the desired length
+    // -------------------------------------------------
+    if (size == 0) {
+        BKSFATAL("TLMemoryArena 0x%p allocation length must be greater then 0", arena)
+        BKS_TRACE_POPV(NULL)
+    }
+
+    if (size > arena->page_size) {
+        BKSFATAL("TLMemoryArena with page length of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
+        BKS_TRACE_POPV(NULL)
+    }
+    // -------------------------------------------------
+    // Find a suitable TLMemoryPage within the arena
+    // -------------------------------------------------
+    u8 found = U8_MAX;
+    for (u8 i = 0; i < U8_MAX ; ++i) {
+
+        // Initialize a new TLMemoryPage
+        if (arena->page[i].payload == NULL) {
+            arena->page[i].payload = bks_memory_alloc(arena->page_size);
+            BKSTRACE("TLMemoryArena 0x%p initializing page %d at 0x%p", arena, i, arena->page[i].payload)
+            bks_memory_set(arena->page[i].payload, 0, arena->page_size);
+
+            found = i;
+            break;
+        }
+
+        // check if the page support the desired length
+        if (arena->page[i].index + size <= arena->page_size) {
+            found = i;
+            break;
+        }
+    }
+
+    if (found == U8_MAX) {
+        BKSWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
+        BKS_TRACE_POPV(NULL)
+    }
+    // -------------------------------------------------
+    // Adjust the TLMemoryArena internal state
+    // -------------------------------------------------
+    arena->allocated += size;
+    arena->tagged_count[tag] += 1;
+    arena->tagged_size[tag] += size;
+    // -------------------------------------------------
+    // Adjust the TLMemoryPage internal state
+    // -------------------------------------------------
+    void* address = arena->page[found].payload + arena->page[found].index;
+    BKSVERBOSE("TLMemoryArena 0x%p page %d [remaning %llu] :: allocating %llu ", arena, found, arena->page_size - arena->page[found].index, size)
+    arena->page[found].index += size;
+    // -------------------------------------------------
+    // Hand out the memory pointer
+    // -------------------------------------------------
+    BKS_TRACE_POPV(address)
 }
 
 BKS_INLINE static u8 tl_memory_arena_get_index(const TLMemoryArena *arena) {
@@ -101,7 +160,7 @@ BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
     TLMemoryArena *arena = arenas[index];
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
-            BKSDEBUG("TLMemoryArena 0x%p releasing page %d", arena, i)
+            BKSDEBUG("TLMemoryArena 0x%p releasing page %d at 0x%p", arena, i, arena->page[i].payload)
             bks_memory_free(arena->page[i].payload);
             arena->page[i].payload = NULL;
         }
@@ -135,65 +194,6 @@ void tl_memory_arena_destroy(TLMemoryArena *arena) {
     const u8 index = tl_memory_arena_get_index(arena);
     tl_memory_arena_do_destroy(index);
     BKS_TRACE_POP
-}
-
-void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag tag) {
-    BKS_TRACE_PUSHA("0x%p, %llu, %d", arena, size, tag)
-    // -------------------------------------------------
-    // Ensure that the Arena can hold the desired size
-    // -------------------------------------------------
-    if (size == 0) {
-        BKSFATAL("TLMemoryArena 0x%p allocation size must be greater then 0", arena)
-        BKS_TRACE_POPV(NULL)
-    }
-
-    if (size > arena->page_size) {
-        BKSFATAL("TLMemoryArena with page size of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
-        BKS_TRACE_POPV(NULL)
-    }
-    // -------------------------------------------------
-    // Find a suitable TLMemoryPage within the arena
-    // -------------------------------------------------
-    u8 found = U8_MAX;
-    for (u8 i = 0; i < U8_MAX ; ++i) {
-
-        // Initialize a new TLMemoryPage
-        if (arena->page[i].payload == NULL) {
-            BKSTRACE("TLMemoryArena 0x%p initializing page %d", arena, i)
-            arena->page[i].payload = bks_memory_alloc(arena->page_size);
-            bks_memory_set(arena->page[i].payload, 0, arena->page_size);
-
-            found = i;
-            break;
-        }
-
-        // check if the page support the desired size
-        if (arena->page[i].index + size <= arena->page_size) {
-            found = i;
-            break;
-        }
-    }
-
-    if (found == U8_MAX) {
-        BKSWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
-        BKS_TRACE_POPV(NULL)
-    }
-    // -------------------------------------------------
-    // Adjust the TLMemoryArena internal state
-    // -------------------------------------------------
-    arena->allocated += size;
-    arena->tagged_count[tag] += 1;
-    arena->tagged_size[tag] += size;
-    // -------------------------------------------------
-    // Adjust the TLMemoryPage internal state
-    // -------------------------------------------------
-    void* address = arena->page[found].payload + arena->page[found].index;
-    BKSVERBOSE("TLMemoryArena 0x%p page %d [remaning %llu] :: allocating %llu ", arena, found, arena->page_size - arena->page[found].index, size)
-    arena->page[found].index += size;
-    // -------------------------------------------------
-    // Hand out the memory pointer
-    // -------------------------------------------------
-    BKS_TRACE_POPV(address)
 }
 
 void tl_memory_set(void *block, const i32 value, const u64 size) {

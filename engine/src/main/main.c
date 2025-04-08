@@ -17,19 +17,26 @@ int main (const int argc, const char *argv[]) {
 
     BKSINFO("Initializing %s", argv[1]);
 
-    global = bks_memory_alloc(sizeof(TLGlobal));
+    TLGlobal local = {0};
+    global = &local;
     bks_memory_set(global, 0, sizeof(TLGlobal));
 
     BKS_TRACE_PUSHA("%i, 0%xp", argc, argv)
-
-    global->application.running = true;
-    global->arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
 
     if (!tl_platform_initialize()) {
         BKSERROR("Platform failed to initialize")
         if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
         exit(99);
     }
+
+    if (!tl_memory_initialize()) {
+        BKSERROR("Memory failed to initialize")
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
+        exit(99);
+    }
+
+    global->application.running = true;
+    global->arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
 
     global->yaml = tl_string_clone(global->arena, argv[1]);
     global->rootfs = tl_filesystem_get_parent(global->yaml);
@@ -80,6 +87,12 @@ int main (const int argc, const char *argv[]) {
     }
 
     tl_memory_arena_destroy(global->arena);
+
+    if (!tl_memory_terminate()) {
+        BKSERROR("Memory failed to terminate")
+        if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
+        exit(99);
+    }
 
     if (!tl_platform_terminate()) BKSFATAL("Platform failed to terminate")
 

@@ -80,6 +80,8 @@ b8 tl_scene_load(const char* name) {
         if (tl_string_contains(key,     ".actor.")) tl_scene_load_actor      (scrape, scene, key, value);
     }
 
+    tl_memory_arena_destroy(scrape);
+
     BKS_TRACE_POPV(true)
 }
 

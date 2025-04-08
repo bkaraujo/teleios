@@ -175,16 +175,21 @@ b8 tl_application_run(void) {
     global->application.simulation.per_second = 0;
     glfwHideWindow(global->platform.window.handle);
 
-    if (global->application.frame.arena != NULL) {
-        tl_memory_arena_destroy(global->application.frame.arena);
-        global->application.frame.arena = NULL;
-    }
-
     BKS_TRACE_POPV(true)
 }
 
 b8 tl_application_terminate(void) {
     BKS_TRACE_PUSH
+
+    if (global->application.frame.arena != NULL) {
+        tl_memory_arena_destroy(global->application.frame.arena);
+        global->application.frame.arena = NULL;
+    }
+
+    if (global->application.scene.arena != NULL) {
+        tl_memory_arena_destroy(global->application.scene.arena);
+        global->application.scene.arena = NULL;
+    }
 
     if (global->application.arena != NULL) {
         tl_memory_arena_destroy(global->application.arena);

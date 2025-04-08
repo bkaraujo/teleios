@@ -18,7 +18,6 @@ b8 tl_platform_initialize(void) {
 
 b8 tl_platform_terminate(void) {
     BKS_TRACE_PUSH
-
     glfwTerminate();
     BKS_TRACE_POPV(true)
 }
