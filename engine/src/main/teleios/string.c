@@ -344,8 +344,8 @@ u32 tl_string_last_index_of(TLString* string, const char token) {
     for (u64 i = string->length - 1; i > 0; --i) {
         if (string->text[i] == token) BKS_TRACE_POPV(i);
     }
-    BKSFATAL("Implementation missing")
-    BKS_TRACE_POPV(false)
+
+    BKS_TRACE_POPV(U8_MAX)
 }
 
 b8 tl_string_start_with(TLString* string, const char* guess) {

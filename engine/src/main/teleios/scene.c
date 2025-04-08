@@ -74,10 +74,10 @@ b8 tl_scene_load(const char* name) {
         TLString *value = tl_map_get(global->properties, tl_string(key));
 
         if (tl_string_contains(key, "clear_color")) tl_scene_load_clear_color(scrape, key, value);
-        if (tl_string_contains(key, "depth.")) tl_scene_load_depth(scrape, key, value);
-        if (tl_string_contains(key, "blend.")) tl_scene_load_blend(scrape, key, value);
-        if (tl_string_contains(key, "camera.")) tl_scene_load_camera(scrape, key, value);
-        if (tl_string_contains(key, ".actor.")) tl_scene_load_actor(scrape, scene, key, value);
+        if (tl_string_contains(key,      "depth.")) tl_scene_load_depth      (scrape, key, value);
+        if (tl_string_contains(key,      "blend.")) tl_scene_load_blend      (scrape, key, value);
+        if (tl_string_contains(key,     "camera.")) tl_scene_load_camera     (scrape, key, value);
+        if (tl_string_contains(key,     ".actor.")) tl_scene_load_actor      (scrape, scene, key, value);
     }
 
     BKS_TRACE_POPV(true)
@@ -241,34 +241,9 @@ static void tl_scene_load_camera(TLMemoryArena *arena, TLString *key, TLString *
     BKS_TRACE_POP
 }
 
-static TLUlid * tl_scene_create(TLMemoryArena *arena, const char* actor) {
-    BKS_TRACE_PUSHA("%s", actor)
-    u32 empty_index = U32_MAX;
-    for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
-        if (global->application.ecs.components.yaml[i].prefix == NULL) {
-            if (empty_index == U32_MAX) { empty_index = i; }
-            continue;
-        }
+static TLString* tl_scene_is_valid_actor(TLMemoryArena *arena, const char* scene, TLString *key) {
+    BKS_TRACE_PUSHA("%s, %s", scene, tl_string(key))
 
-        if (tl_char_equals(tl_string(global->application.ecs.components.yaml[i].prefix), actor)) {
-            BKS_TRACE_POPV(global->application.ecs.components.yaml[i].entity);
-        }
-    }
-
-    TLUlid *entity = tl_ecs_create();
-    global->application.ecs.components.yaml[empty_index].entity = entity;
-    BKSTRACE("global->application.ecs.components.yaml[%d].entity = %s", empty_index, entity->text)
-    global->application.ecs.components.yaml[empty_index].prefix = tl_string_clone(global->application.scene.arena, actor);
-    BKSTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, actor)
-
-    BKS_TRACE_POPV(entity)
-}
-
-static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLString *key, TLString *value) {
-    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
-    // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    // Check if actor number is within TL_SCENE_MAX_ACTORS
-    // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     char *actor = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 1, TL_MEMORY_STRING);
     char *number = tl_memory_alloc(arena, 3, TL_MEMORY_STRING);
     for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
@@ -280,44 +255,123 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
         tl_memory_set(actor, 0, TL_YAML_MAX_ACTOR_KEY);
     }
 
-    // Ignore if it goes beyond TL_SCENE_MAX_ACTORS
-    if (*actor == '\0') {
-        BKSWARN("Ignoring actor %s", actor)
+    if (*actor == '\0') BKS_TRACE_POPV(NULL)
+    TLString *string = tl_string_clone(arena, actor);
+
+    BKS_TRACE_POPV(string)
+}
+
+static TLUlid * tl_scene_create_actor(TLMemoryArena *arena, TLString* actor) {
+    BKS_TRACE_PUSHA("%s", actor)
+    u32 empty_index = U32_MAX;
+    for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+        if (global->application.ecs.components.yaml[i].prefix == NULL) {
+            if (empty_index == U32_MAX) { empty_index = i; }
+            continue;
+        }
+
+        if (tl_string_equals(actor, tl_string(global->application.ecs.components.yaml[i].prefix))) {
+            BKS_TRACE_POPV(global->application.ecs.components.yaml[i].entity);
+        }
+    }
+
+    TLUlid *entity = tl_ecs_create();
+    global->application.ecs.components.yaml[empty_index].entity = entity;
+    BKSTRACE("global->application.ecs.components.yaml[%d].entity = %s", empty_index, entity->text)
+    global->application.ecs.components.yaml[empty_index].prefix = actor;
+    BKSTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, actor)
+
+    BKS_TRACE_POPV(entity)
+}
+
+static void tl_scene_actor_create_name_component(TLMemoryArena *arena, TLUlid *entity, TLString *actor, TLString *value) {
+    BKS_TRACE_PUSHA("0x%p, %s, %s, %s", arena, entity->text, tl_string(actor), tl_string(value))
+
+    u32 empty_index = U32_MAX;
+    for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+        if (global->application.ecs.components.name[i].entity == NULL) {
+            if (empty_index == U32_MAX) { empty_index = i; }
+            continue;
+        }
+
+        if (tl_char_equals(global->application.ecs.components.name[i].entity->text, entity->text)) {
+            BKSWARN("Element repeated for [%s]", tl_string(actor))
+            break;
+        }
+    }
+
+    if (empty_index == U32_MAX) {
+        BKSWARN("Maximum components reached")
         BKS_TRACE_POP
     }
 
-    TLUlid *entity = tl_scene_create(arena, actor);
+    global->application.ecs.components.name[empty_index].entity = entity;
+    BKSTRACE("global->application.ecs.components.name[%d].entity = %s", empty_index, entity->text)
+    global->application.ecs.components.name[empty_index].name = tl_string_duplicate(value);
+    BKSTRACE("global->application.ecs.components.name[%d].name = %s", empty_index, tl_string(value));
+
+    BKS_TRACE_POP
+}
+
+static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLString *key, TLString *value) {
+    BKS_TRACE_PUSHA("%s, %s", tl_string(key), tl_string(value))
+    TLString *actor = tl_scene_is_valid_actor(arena, scene, key);
+    if (actor == NULL) { BKSWARN("Ignoring actor %s", actor) BKS_TRACE_POP }
+
+    TLUlid *entity = tl_scene_create_actor(arena, actor);
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // application.ecs.components.name
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    char *name = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 5, TL_MEMORY_STRING);
-    tl_char_join(name, TL_YAML_MAX_ACTOR_KEY + 5, actor, ".name");
+    {
+        char *name = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 5, TL_MEMORY_STRING);
+        tl_char_join(name, TL_YAML_MAX_ACTOR_KEY + 5, tl_string(actor), ".name");
 
-    if (tl_string_equals(key, name)) {
-        u32 empty_index = U32_MAX;
-        for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
-            if (global->application.ecs.components.name[i].entity == NULL) {
-                if (empty_index == U32_MAX) { empty_index = i; }
-                continue;
-            }
-
-            if (tl_char_equals(global->application.ecs.components.name[i].entity->text, entity->text)) {
-                BKSWARN("Element repeated for [%s]", actor)
-                break;
-            }
-        }
-
-        if (empty_index == U32_MAX) {
-            BKSWARN("Maximum components reached")
+        if (tl_string_equals(key, name)) {
+            tl_scene_actor_create_name_component(arena, entity, actor, value);
             BKS_TRACE_POP
         }
-
-        global->application.ecs.components.name[empty_index].entity = entity;
-        BKSTRACE("global->application.ecs.components.name[%d].entity = %s", empty_index, entity->text)
-        global->application.ecs.components.name[empty_index].name = tl_string_duplicate(value);
-        BKSTRACE("global->application.ecs.components.name[%d].name = %s", empty_index, tl_string(value));
     }
+    // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    // application.ecs.components.*
+    // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    {
+        char *desired = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 11, TL_MEMORY_STRING);
+        tl_char_join(desired, TL_YAML_MAX_ACTOR_KEY + 11, tl_string(actor), ".component.");
 
+        if (tl_string_start_with(key, desired)) {
+            const u32 idx = tl_string_last_index_of(key, '.') + 1;
+            TL_CREATE_CHAR(prefix, idx + 1)
+            tl_char_copy(prefix, tl_string(key), idx);
+
+            // Check if it's a component continuation
+            for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS * TL_SCENE_MAX_ACTOR_SCRIPTS ; ++i) {
+                if (tl_string_equals(global->application.ecs.components.script[i].prefix, prefix)) {
+                    BKS_TRACE_POP
+                }
+            }
+
+            // for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
+            //     if (tl_string_equals(global->application.ecs.components.OTHER[i].prefix, prefix)) {
+            //         BKS_TRACE_POP
+            //     }
+            // }
+
+            if (tl_string_contains(key, "name") && tl_string_equals(value, "COMPONENT_SCRIPT")) {
+                for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS * TL_SCENE_MAX_ACTOR_SCRIPTS ; ++i) {
+                    if (global->application.ecs.components.script[i].entity == NULL) {
+                        global->application.ecs.components.script[i].entity = entity;
+
+                        global->application.ecs.components.script[i].prefix = tl_string_clone(global->arena, prefix);
+                        break;
+                    }
+
+                }
+            }
+
+            if (tl_string_contains(key, "name") && tl_string_equals(value, "COMPONENT_FOOO")) {
+            }
+        }
+    }
     BKS_TRACE_POP
 }
 
