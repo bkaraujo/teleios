@@ -38,7 +38,7 @@ b8 tl_graphics_initialize(void) {
 b8 tl_graphics_terminate(void) {
     BKS_TRACE_PUSH
     BKSTRACE("Terminating Graphics Engine");
-    tl_platform_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
+    bks_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
     glfwMakeContextCurrent(NULL);
     BKS_TRACE_POPV(true)
 }

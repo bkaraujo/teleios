@@ -16,6 +16,22 @@ struct TLMemoryArena {
 
 static TLMemoryArena *arenas[U8_MAX];
 
+b8 tl_memory_initialize(void) {
+    BKS_TRACE_PUSH
+    bks_memory_set(arenas, 0, U8_MAX * sizeof(TLMemoryArena));
+    BKS_TRACE_POPV(true)
+}
+
+b8 tl_memory_terminate(void) {
+    BKS_TRACE_PUSH
+    for (u8 i = 0 ; i < U8_MAX ; ++i) {
+        if (arenas[i] != NULL) {
+            BKSERROR("TLMemoryArena 0x%p is live", arenas[i]);
+        }
+    }
+    BKS_TRACE_POPV(true)
+}
+
 static const char* tl_memory_name(const TLMemoryTag tag) {
     BKS_TRACE_PUSHA("%d", tag)
     switch (tag) {
@@ -44,9 +60,9 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
-    TLMemoryArena *arena = tl_platform_memory_alloc(sizeof(TLMemoryArena));
+    TLMemoryArena *arena = bks_memory_alloc(sizeof(TLMemoryArena));
     if (arena == NULL) BKSFATAL("Failed to allocate TLMemoryArena");
-    tl_platform_memory_set(arena, 0, sizeof(TLMemoryArena));
+    bks_memory_set(arena, 0, sizeof(TLMemoryArena));
     arena->page_size = size;
     // ----------------------------------------------------------
     // Keep track of the created arena
@@ -86,7 +102,7 @@ BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
             BKSDEBUG("TLMemoryArena 0x%p releasing page %d", arena, i)
-            tl_platform_memory_free(arena->page[i].payload);
+            bks_memory_free(arena->page[i].payload);
             arena->page[i].payload = NULL;
         }
     }
@@ -97,7 +113,7 @@ BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
         }
     }
 
-    tl_platform_memory_free(arena);
+    bks_memory_free(arena);
     arenas[index] = NULL;
 
     BKS_TRACE_POP
@@ -144,8 +160,8 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
         // Initialize a new TLMemoryPage
         if (arena->page[i].payload == NULL) {
             BKSTRACE("TLMemoryArena 0x%p initializing page %d", arena, i)
-            arena->page[i].payload = tl_platform_memory_alloc(arena->page_size);
-            tl_platform_memory_set(arena->page[i].payload, 0, arena->page_size);
+            arena->page[i].payload = bks_memory_alloc(arena->page_size);
+            bks_memory_set(arena->page[i].payload, 0, arena->page_size);
 
             found = i;
             break;
@@ -182,12 +198,12 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
 
 void tl_memory_set(void *block, const i32 value, const u64 size) {
     BKS_TRACE_PUSHA("0x%p, %d, %llu", block, value, size)
-    tl_platform_memory_set(block, value, size);
+    bks_memory_set(block, value, size);
     BKS_TRACE_POP
 }
 
 void tl_memory_copy(void *target, void *source, const u64 size) {
     BKS_TRACE_PUSHA("0x%p, 0x%p, %llu", target, source, size)
-    tl_platform_memory_copy(target, source, size);
+    bks_memory_copy(target, source, size);
     BKS_TRACE_POP
 }

@@ -21,4 +21,6 @@
 #include "bks/trace.h"
 #include "bks/logger.h"
 
+#include "bks/memory.h"
+
 #endif

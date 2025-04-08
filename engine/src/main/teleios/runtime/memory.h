@@ -21,6 +21,8 @@ typedef enum {
     TL_MEMORY_MAXIMUM
 } TLMemoryTag;
 
+b8 tl_memory_initialize(void);
+b8 tl_memory_terminate(void);
 TLMemoryArena* tl_memory_arena_create(u64 size);
 void tl_memory_arena_destroy(TLMemoryArena *arena);
 void tl_memory_arena_reset(TLMemoryArena *arena);

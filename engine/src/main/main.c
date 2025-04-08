@@ -17,8 +17,8 @@ int main (const int argc, const char *argv[]) {
 
     BKSINFO("Initializing %s", argv[1]);
 
-    global = tl_platform_memory_alloc(sizeof(TLGlobal));
-    tl_platform_memory_set(global, 0, sizeof(TLGlobal));
+    global = bks_memory_alloc(sizeof(TLGlobal));
+    bks_memory_set(global, 0, sizeof(TLGlobal));
 
     BKS_TRACE_PUSHA("%i, 0%xp", argc, argv)
 
@@ -230,7 +230,7 @@ static void tl_serializer_walk(TLMap *properties) {
             // YAML_SCALAR_TOKEN
             // #########################################################################################################
             case YAML_SCALAR_TOKEN: {
-                tl_platform_memory_set(property, 0, TL_YAML_PROPERTY_MAX_SIZE);
+                bks_memory_set(property, 0, TL_YAML_PROPERTY_MAX_SIZE);
                 tl_char_join(property, TL_YAML_PROPERTY_MAX_SIZE, prefix, element);
                 tl_map_put(properties, property, tl_string_clone(global->arena, (char*) token.data.scalar.value));
             } break;

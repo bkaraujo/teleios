@@ -1,21 +1,6 @@
 #include "teleios/core.h"
 #include "teleios/globals.h"
 
-BKS_INLINE void* tl_platform_memory_alloc(const u64 size) {
-    return __builtin_malloc(size);
-}
-
-BKS_INLINE void tl_platform_memory_free(void *block) {
-    __builtin_free(block);
-}
-BKS_INLINE void tl_platform_memory_set(void *block, const i32 value, const u64 size) {
-    __builtin_memset(block, value, size);
-}
-
-BKS_INLINE void tl_platform_memory_copy(void *target, const void *source, const u64 size) {
-    __builtin_memcpy(target, source, size);
-}
-
 b8 tl_platform_initialize(void) {
     BKS_TRACE_PUSH
 
