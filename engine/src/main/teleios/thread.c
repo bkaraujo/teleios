@@ -57,7 +57,7 @@ b8 tl_thread_initialize(void) {
     pthread_cond_init(&thread_pool.condition, NULL);
     pthread_mutex_init(&thread_pool.mutex, NULL);
     pthread_mutex_lock(&thread_pool.mutex);
-    tl_memory_set(thread_pool.stack, 0, TL_ARR_SIZE(thread_pool.stack, u64*));
+    k_memory_set(thread_pool.stack, 0, TL_ARR_SIZE(thread_pool.stack, u64*));
 
     for (u8 i = 0 ; i < TL_THREAD_POOL_SIZE ; ++i) {
         thread_pool.thread[i].created_at = k_time_epoch_micros();

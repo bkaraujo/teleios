@@ -83,8 +83,6 @@ b8 tl_application_initialize(void) {
     global->application.simulation.overflow = 0;
     global->application.simulation.per_second = 0;
 
-    global->application.arena = tl_memory_arena_create(K_MEBI_BYTES(10));
-
     tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
     tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
     tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
@@ -102,7 +100,7 @@ b8 tl_application_run(void) {
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
 
-    global->application.frame.arena = tl_memory_arena_create(K_MEBI_BYTES(10));
+    global->application.frame.allocator = k_memory_allocator_create(K_MEMORY_ALLOCATOR_LINEAR, K_MEBI_BYTES(10));
 
     glfwShowWindow(global->platform.window.handle);
     while (global->application.running) {
@@ -168,7 +166,7 @@ b8 tl_application_run(void) {
         glfwPollEvents();
         tl_input_update();
 
-        tl_memory_arena_reset(global->application.frame.arena);
+        k_memory_allocator_reset(global->application.frame.allocator);
     }
 
     global->application.frame.per_second = 0;
@@ -181,19 +179,14 @@ b8 tl_application_run(void) {
 b8 tl_application_terminate(void) {
     K_FRAME_PUSH
 
-    if (global->application.frame.arena != NULL) {
-        tl_memory_arena_destroy(global->application.frame.arena);
-        global->application.frame.arena = NULL;
+    if (global->application.frame.allocator != NULL) {
+        k_memory_allocator_destroy(global->application.frame.allocator);
+        global->application.frame.allocator = NULL;
     }
 
-    if (global->application.scene.arena != NULL) {
-        tl_memory_arena_destroy(global->application.scene.arena);
-        global->application.scene.arena = NULL;
-    }
-
-    if (global->application.arena != NULL) {
-        tl_memory_arena_destroy(global->application.arena);
-        global->application.arena = NULL;
+    if (global->application.scene.allocator != NULL) {
+        k_memory_allocator_destroy(global->application.scene.allocator);
+        global->application.scene.allocator = NULL;
     }
 
     KDEBUG("Engine terminated in %llu micros", K_RUNTIME_PROFILER_ELAPSED);

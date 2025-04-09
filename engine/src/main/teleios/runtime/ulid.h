@@ -29,12 +29,12 @@
  * system entropy. Returns 1 if this failed and instead derived entropy
  * in userspace (or is uninitialized in the case of ULID_SECURE).
  */
-TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, i32 flags);
+TLUlidGenerator* tl_ulid_generator_init(KAllocator *allocator, i32 flags);
 
 /* Generate a new ULID.
  * A zero terminating byte is written to the output buffer.
  */
-TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *);
+TLUlid* tl_ulid_generate(KAllocator *allocator, TLUlidGenerator *);
 
 /* Decode a text ULID to a 128-bit binary ULID.
  * Returns non-zero if input was invalid.
@@ -42,6 +42,6 @@ TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *);
 // b8 tl_ulid_decode(u8 [16], const i8 *);
 
 /* The ulid textual representation */
-TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid);
+TLString* tl_ulid(KAllocator *allocator, TLUlid * ulid);
 
 #endif // __TELEIOS_RUNTIME_ULID__

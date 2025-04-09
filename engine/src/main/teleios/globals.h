@@ -23,7 +23,7 @@ typedef struct {
     TLString *yaml;
     TLString *rootfs;
     TLMap *properties;
-    TLMemoryArena* arena;
+    KAllocator* allocator;
 
     struct {
         struct {
@@ -52,9 +52,9 @@ typedef struct {
 
     struct {
         TLString *version;
-        TLMemoryArena *arena;
         b8 running;
         b8 paused;
+
         struct {
             f64 step;
             u32 number;
@@ -83,7 +83,7 @@ typedef struct {
 
         struct {
             TLString* name;
-            TLMemoryArena *arena;
+            KAllocator* allocator;
 
             struct {
                 vec4s clear_color;
@@ -117,7 +117,7 @@ typedef struct {
         } scene;
 
         struct {
-            TLMemoryArena *arena;
+            KAllocator* allocator;
             u32 number;
             u16 overflow;
             u16 per_second;

@@ -11,7 +11,7 @@ TLString * tl_filesystem_get_parent(TLString *path) {
 
     TL_CREATE_CHAR(value, index + 1)
     tl_char_copy(value, tl_string(path), index);
-    TLString *parent = tl_string_clone(tl_string_arena(path), value);
+    TLString *parent = tl_string_clone(tl_string_allocator(path), value);
 
     K_FRAME_POP_WITH(parent)
 }

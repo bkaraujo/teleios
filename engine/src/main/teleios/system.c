@@ -13,12 +13,12 @@ static TLUlidGenerator *generator;
 TLUlid* tl_ecs_create(void) {
     K_FRAME_PUSH
     if (generator == NULL) {
-        generator = tl_ulid_generator_init(global->application.scene.arena, ULID_PARANOID);
+        generator = tl_ulid_generator_init(global->application.scene.allocator, ULID_PARANOID);
     }
 
     for (u16 i = 0; i < TL_SCENE_MAX_ACTORS; ++i) {
         if (global->application.ecs.entity[i] != NULL) continue;
-        global->application.ecs.entity[i] = tl_ulid_generate(global->application.scene.arena, generator);
+        global->application.ecs.entity[i] = tl_ulid_generate(global->application.scene.allocator, generator);
         K_FRAME_POP_WITH(global->application.ecs.entity[i])
     }
 

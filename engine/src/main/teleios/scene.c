@@ -14,35 +14,35 @@
         K_FRAME_POP                    \
     }
 
-static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLString *value);
-static void tl_scene_load_depth(TLMemoryArena *arena, TLString *key, TLString *value);
-static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *value);
-static void tl_scene_load_camera(TLMemoryArena *arena, TLString *key, TLString *value);
-static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLString *key, TLString *value);
-static void tl_scene_load_actor_component(TLMemoryArena *arena, const char* actor, TLString *key, TLString *value);
+static void tl_scene_load_clear_color(KAllocator *allocator, TLString *key, TLString *value);
+static void tl_scene_load_depth(KAllocator *allocator, TLString *key, TLString *value);
+static void tl_scene_load_blend(KAllocator *allocator, TLString *key, TLString *value);
+static void tl_scene_load_camera(KAllocator *allocator, TLString *key, TLString *value);
+static void tl_scene_load_actor(KAllocator *allocator, const char* scene, TLString *key, TLString *value);
+static void tl_scene_load_actor_component(KAllocator *allocator, const char* actor, TLString *key, TLString *value);
 
 b8 tl_scene_load(const char* name) {
     K_FRAME_PUSH_WITH("%s", name)
     KDEBUG("Loading scene [%s]", name);
-    TLMemoryArena *scrape = tl_memory_arena_create(K_MEBI_BYTES(1));
+    KAllocator *scrape = k_memory_allocator_create(K_MEMORY_ALLOCATOR_LINEAR, K_MEBI_BYTES(1));
 
     if (global->properties == NULL || tl_map_length(global->properties) == 0) {
         KERROR("Failed to read runtime properties")
         K_FRAME_POP_WITH(false)
     }
 
-    if (global->application.scene.arena == NULL) {
-        global->application.scene.arena = tl_memory_arena_create(K_MEBI_BYTES(10));
+    if (global->application.scene.allocator == NULL) {
+        global->application.scene.allocator = k_memory_allocator_create(K_MEMORY_ALLOCATOR_LINEAR, K_MEBI_BYTES(10));
     } else {
-        tl_memory_arena_reset(global->application.scene.arena);
+        k_memory_allocator_reset(global->application.scene.allocator);
     }
 
-    global->application.scene.name = tl_string_clone(global->application.scene.arena, name);
+    global->application.scene.name = tl_string_clone(global->application.scene.allocator, name);
     // --------------------------------------------------------
     // Sequentially search for the scene with the desired name
     // --------------------------------------------------------
     b8 found = false;
-    char* scene = tl_memory_alloc(scrape, TL_YAML_MAX_SCENE_KEY + 1, TL_MEMORY_STRING);
+    char* scene = k_memory_allocator_alloc(scrape, TL_YAML_MAX_SCENE_KEY + 1, TL_MEMORY_STRING);
 
     for (u8 sequence = 0 ; sequence < U8_MAX ; sequence++) {
         snprintf(scene, TL_YAML_MAX_SCENE_KEY + 1, "application.scene.%d.", sequence);
@@ -60,7 +60,7 @@ b8 tl_scene_load(const char* name) {
         }
 
         if (found) break;
-        tl_memory_set(scene, 0 , TL_YAML_MAX_SCENE_KEY);
+        k_memory_set(scene, 0 , TL_YAML_MAX_SCENE_KEY);
     }
 
     if (!found) { KERROR("Scene [%s] not found", name) K_FRAME_POP_WITH(false) }
@@ -80,12 +80,12 @@ b8 tl_scene_load(const char* name) {
         if (tl_string_contains(key,     ".actor.")) tl_scene_load_actor      (scrape, scene, key, value);
     }
 
-    tl_memory_arena_destroy(scrape);
+    k_memory_allocator_destroy(scrape);
 
     K_FRAME_POP_WITH(true)
 }
 
-static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLString *value) {
+static void tl_scene_load_clear_color(KAllocator *allocator, TLString *key, TLString *value) {
     K_FRAME_PUSH_WITH("%s, %s", tl_string(key), tl_string(value))
     const char *current_pos = tl_string(value);
     char *endptr;
@@ -148,7 +148,7 @@ static void tl_scene_load_clear_color(TLMemoryArena *arena, TLString *key, TLStr
     K_FRAME_POP
 }
 
-static void tl_scene_load_depth(TLMemoryArena *arena, TLString *key, TLString *value) {
+static void tl_scene_load_depth(KAllocator *allocator, TLString *key, TLString *value) {
     K_FRAME_PUSH_WITH("%s, %s", tl_string(key), tl_string(value))
     if (tl_string_contains(key, "depth.enabled")) {
         global->application.scene.graphics.depth_enabled = true;
@@ -171,7 +171,7 @@ static void tl_scene_load_depth(TLMemoryArena *arena, TLString *key, TLString *v
     K_FRAME_POP
 }
 
-static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *value) {
+static void tl_scene_load_blend(KAllocator *allocator, TLString *key, TLString *value) {
     K_FRAME_PUSH_WITH("%s, %s", tl_string(key), tl_string(value))
     if (tl_string_contains(key, "blend.enabled")) {
         global->application.scene.graphics.blend_enabled = true;
@@ -237,33 +237,33 @@ static void tl_scene_load_blend(TLMemoryArena *arena, TLString *key, TLString *v
     K_FRAME_POP
 }
 
-static void tl_scene_load_camera(TLMemoryArena *arena, TLString *key, TLString *value) {
+static void tl_scene_load_camera(KAllocator *allocator, TLString *key, TLString *value) {
     K_FRAME_PUSH_WITH("%s, %s", tl_string(key), tl_string(value))
     KINFO("Camera : %s", tl_string(key))
     K_FRAME_POP
 }
 
-static TLString* tl_scene_is_valid_actor(TLMemoryArena *arena, const char* scene, TLString *key) {
+static TLString* tl_scene_is_valid_actor(KAllocator *allocator, const char* scene, TLString *key) {
     K_FRAME_PUSH_WITH("%s, %s", scene, tl_string(key))
 
-    char *actor = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 1, TL_MEMORY_STRING);
-    char *number = tl_memory_alloc(arena, 3, TL_MEMORY_STRING);
+    char *actor = k_memory_allocator_alloc(allocator, TL_YAML_MAX_ACTOR_KEY + 1, TL_MEMORY_STRING);
+    char *number = k_memory_allocator_alloc(allocator, 3, TL_MEMORY_STRING);
     for (u16 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
         tl_char_join(actor, TL_YAML_MAX_ACTOR_KEY, scene, "actor.");
         tl_char_from_i32(number, i, 10);
         tl_char_join(actor, TL_YAML_MAX_ACTOR_KEY, actor, number);
 
         if (tl_string_start_with(key, actor)) break;
-        tl_memory_set(actor, 0, TL_YAML_MAX_ACTOR_KEY);
+        k_memory_set(actor, 0, TL_YAML_MAX_ACTOR_KEY);
     }
 
     if (*actor == '\0') K_FRAME_POP_WITH(NULL)
-    TLString *string = tl_string_clone(arena, actor);
+    TLString *string = tl_string_clone(allocator, actor);
 
     K_FRAME_POP_WITH(string)
 }
 
-static TLUlid * tl_scene_create_actor(TLMemoryArena *arena, TLString* actor) {
+static TLUlid * tl_scene_create_actor(KAllocator *allocator, TLString* actor) {
     K_FRAME_PUSH_WITH("%s", actor)
     u32 empty_index = U32_MAX;
     for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
@@ -281,13 +281,13 @@ static TLUlid * tl_scene_create_actor(TLMemoryArena *arena, TLString* actor) {
     global->application.ecs.components.yaml[empty_index].entity = entity;
     KTRACE("global->application.ecs.components.yaml[%d].entity = %s", empty_index, entity->text)
     global->application.ecs.components.yaml[empty_index].prefix = actor;
-    KTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, actor)
+    KTRACE("global->application.ecs.components.yaml[%d].prefix = %s", empty_index, tl_string(actor))
 
     K_FRAME_POP_WITH(entity)
 }
 
-static void tl_scene_actor_create_name_component(TLMemoryArena *arena, TLUlid *entity, TLString *actor, TLString *value) {
-    K_FRAME_PUSH_WITH("0x%p, %s, %s, %s", arena, entity->text, tl_string(actor), tl_string(value))
+static void tl_scene_actor_create_name_component(KAllocator *allocator, TLUlid *entity, TLString *actor, TLString *value) {
+    K_FRAME_PUSH_WITH("0x%p, %s, %s, %s", allocator, entity->text, tl_string(actor), tl_string(value))
 
     u32 empty_index = U32_MAX;
     for (u32 i = 0 ; i < TL_SCENE_MAX_ACTORS ; ++i) {
@@ -315,21 +315,21 @@ static void tl_scene_actor_create_name_component(TLMemoryArena *arena, TLUlid *e
     K_FRAME_POP
 }
 
-static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLString *key, TLString *value) {
+static void tl_scene_load_actor(KAllocator *allocator, const char* scene, TLString *key, TLString *value) {
     K_FRAME_PUSH_WITH("%s, %s", tl_string(key), tl_string(value))
-    TLString *actor = tl_scene_is_valid_actor(arena, scene, key);
+    TLString *actor = tl_scene_is_valid_actor(allocator, scene, key);
     if (actor == NULL) { KWARN("Ignoring actor %s", actor) K_FRAME_POP }
 
-    TLUlid *entity = tl_scene_create_actor(arena, actor);
+    TLUlid *entity = tl_scene_create_actor(allocator, actor);
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // application.ecs.components.name
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     {
-        char *name = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 5, TL_MEMORY_STRING);
+        char *name = k_memory_allocator_alloc(allocator, TL_YAML_MAX_ACTOR_KEY + 5, TL_MEMORY_STRING);
         tl_char_join(name, TL_YAML_MAX_ACTOR_KEY + 5, tl_string(actor), ".name");
 
         if (tl_string_equals(key, name)) {
-            tl_scene_actor_create_name_component(arena, entity, actor, value);
+            tl_scene_actor_create_name_component(allocator, entity, actor, value);
             K_FRAME_POP
         }
     }
@@ -337,7 +337,7 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
     // application.ecs.components.*
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     {
-        char *desired = tl_memory_alloc(arena, TL_YAML_MAX_ACTOR_KEY + 11, TL_MEMORY_STRING);
+        char *desired = k_memory_allocator_alloc(allocator, TL_YAML_MAX_ACTOR_KEY + 11, TL_MEMORY_STRING);
         tl_char_join(desired, TL_YAML_MAX_ACTOR_KEY + 11, tl_string(actor), ".component.");
 
         if (tl_string_start_with(key, desired)) {
@@ -363,7 +363,7 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
                     if (global->application.ecs.components.script[i].entity == NULL) {
                         global->application.ecs.components.script[i].entity = entity;
 
-                        global->application.ecs.components.script[i].prefix = tl_string_clone(global->arena, prefix);
+                        global->application.ecs.components.script[i].prefix = tl_string_clone(global->allocator, prefix);
                         break;
                     }
 
@@ -377,7 +377,7 @@ static void tl_scene_load_actor(TLMemoryArena *arena, const char* scene, TLStrin
     K_FRAME_POP
 }
 
-static void tl_scene_load_actor_component(TLMemoryArena *arena, const char* actor, TLString *key, TLString *value) {
+static void tl_scene_load_actor_component(KAllocator *allocator, const char* actor, TLString *key, TLString *value) {
     K_FRAME_PUSH_WITH("%s, %s, %s", actor, tl_string(key), tl_string(value))
     K_FRAME_POP
 }

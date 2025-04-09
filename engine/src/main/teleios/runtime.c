@@ -197,14 +197,14 @@ b8 tl_runtime_initialize(void) {
         K_FRAME_POP_WITH(false)
     }
 
-    TLMemoryArena *scrape = tl_memory_arena_create(K_MEBI_BYTES(1));
+    KAllocator *scrape = k_memory_allocator_create(K_MEMORY_ALLOCATOR_LINEAR, K_MEBI_BYTES(1));
     TLIterator *it = tl_map_keys(scrape, global->properties);
     for (TLString* key = tl_iterator_next(it); key != NULL; key = tl_iterator_next(it)) {
         if (tl_string_start_with(key, "application.scenes.")) continue;
         const char *value = tl_string(tl_map_get(global->properties, tl_string(key)));
 
         if (tl_string_equals(key, "application.version")) {
-            global->application.version = tl_string_wrap(global->arena, value);
+            global->application.version = tl_string_wrap(global->allocator, value);
             KTRACE("global->application.version = %s", tl_string(global->application.version))
             continue;
         }
@@ -252,7 +252,7 @@ b8 tl_runtime_initialize(void) {
 
         if (tl_string_start_with(key, "engine.window.")) {
             if (tl_string_equals(key, "engine.window.title")) {
-                global->platform.window.title = tl_string_clone(global->arena, value);
+                global->platform.window.title = tl_string_clone(global->allocator, value);
                 KTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
                 continue;
             }
@@ -270,7 +270,8 @@ b8 tl_runtime_initialize(void) {
             }
         }
     }
-    tl_memory_arena_destroy(scrape);
+
+    k_memory_allocator_destroy(scrape);
 
     if (!tl_thread_initialize()) {
         KERROR("Failed to initialize threadpool")

@@ -181,41 +181,41 @@ struct TLString {
     u64 size;
     u64 length;
     const char *text;
-    TLMemoryArena *arena;
+    KAllocator *allocator;
     b8 is_view;
 };
 
-K_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
-    K_FRAME_PUSH_WITH("0x%p, %d", arena, size)
-    TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
+K_INLINE static TLString* tl_string_reserve(KAllocator *allocator, const u64 size) {
+    K_FRAME_PUSH_WITH("0x%p, %d", allocator, size)
+    TLString *string = k_memory_allocator_alloc(allocator, sizeof(struct TLString), TL_MEMORY_STRING);
     string->is_view = false;
-    string->arena = arena;
+    string->allocator = allocator;
     string->length = 0;
     if (size > 0) {
         string->size = size + 1; // extra byte for NULL character
-        string->text = tl_memory_alloc(arena, string->size, TL_MEMORY_STRING);
+        string->text = k_memory_allocator_alloc(allocator, string->size, TL_MEMORY_STRING);
     }
 
     K_FRAME_POP_WITH(string)
 }
 
-TLMemoryArena* tl_string_arena(TLString *string){
+KAllocator* tl_string_allocator(TLString *string){
     K_FRAME_PUSH_WITH("0x%p", string)
-    TLMemoryArena *arena = string->arena;
-    K_FRAME_POP_WITH(arena)
+    KAllocator *allocator = string->allocator;
+    K_FRAME_POP_WITH(allocator)
 }
 
-TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
-    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, string)
-    TLString *clone = tl_string_reserve(arena, tl_char_length(string));
+TLString* tl_string_clone(KAllocator *allocator, const char *string) {
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", allocator, string)
+    TLString *clone = tl_string_reserve(allocator, tl_char_length(string));
     clone->length = clone->size - 1;
-    tl_memory_copy((void*)clone->text, (void*)string, clone->length);
+    k_memory_copy((void*)clone->text, (void*)string, clone->length);
     K_FRAME_POP_WITH(clone)
 }
 
-TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
-    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, string)
-    TLString *wrap = tl_string_reserve(arena, 0);
+TLString* tl_string_wrap(KAllocator *allocator, const char *string) {
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", allocator, string)
+    TLString *wrap = tl_string_reserve(allocator, 0);
     wrap->is_view = true;
     wrap->text = string;
     wrap->length = tl_char_length(string);
@@ -229,7 +229,7 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
  * Written by Lukás Chmela
  * Released under GPLv3.
  */
-TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
+TLString* tl_string_from_i32(KAllocator *allocator, i32 value, const u8 base) {
     K_FRAME_PUSH_WITH("%d, %d", value, base)
 
     u32 digits = 0;
@@ -239,7 +239,7 @@ TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
         desired = desired / 10;
     } while(desired > 0);
 
-    TLString* string = tl_string_reserve(arena, digits);
+    TLString* string = tl_string_reserve(allocator, digits);
 
     // check that the base if valid
     if (base < 2 || base > 36) { K_FRAME_POP_WITH(string) }
@@ -276,9 +276,9 @@ void tl_string_join(const TLString *string, const char *other) {
     if (length == U32_MAX || length == 0) KFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
     ((TLString*)string)->size = string->size + length;
 
-    void *created = tl_memory_alloc(string->arena, string->size, TL_MEMORY_STRING);
-    tl_memory_copy(created, (void*)string->text, string->length);
-    tl_memory_copy(created + string->length, (void*)other, length);
+    void *created = k_memory_allocator_alloc(string->allocator, string->size, TL_MEMORY_STRING);
+    k_memory_copy(created, (void*)string->text, string->length);
+    k_memory_copy(created + string->length, (void*)other, length);
 
     ((TLString*)string)->text = created;
     ((TLString*)string)->length = string->size - 1;
@@ -292,8 +292,8 @@ K_INLINE const char * tl_string(TLString *string) {
     K_FRAME_POP_WITH(string->text)
 }
 
-TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offset, const u64 length) {
-    K_FRAME_PUSH_WITH("0x%p, 0x%p, %d, %d", arena, string, offset, length)
+TLString* tl_string_slice(KAllocator *allocator, TLString* string, const u64 offset, const u64 length) {
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, %d, %d", allocator, string, offset, length)
     //TODO implement tl_string_slice
     KFATAL("Implementation missing")
     K_FRAME_POP_WITH(NULL)
@@ -302,17 +302,17 @@ TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offs
 TLString* tl_string_duplicate(TLString *string) {
     K_FRAME_PUSH_WITH("0x%p", string)
 
-    TLString *duplicate = tl_string_reserve(string->arena, string->length);
+    TLString *duplicate = tl_string_reserve(string->allocator, string->length);
     duplicate->is_view = false;
     duplicate->length = string->length;
-    tl_memory_copy((void*)duplicate->text, (void*)string->text, string->length);
+    k_memory_copy((void*)duplicate->text, (void*)string->text, string->length);
 
     K_FRAME_POP_WITH(duplicate)
 }
 
 TLString* tl_string_view(TLString* string) {
     K_FRAME_PUSH_WITH("0x%p", string)
-    TLString *view = tl_string_reserve(string->arena, 0);
+    TLString *view = tl_string_reserve(string->allocator, 0);
     view->is_view = true;
     view->text = string->text;
     view->size = string->size;
@@ -398,6 +398,6 @@ b8 tl_string_equals(const TLString* string, const char* guess) {
 
 b8 tl_string_contains(TLString* string, const char* guess) {
     K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
-    b8 contains = tl_char_contains(string->text, guess);
+    const b8 contains = tl_char_contains(string->text, guess);
     K_FRAME_POP_WITH(contains)
 }

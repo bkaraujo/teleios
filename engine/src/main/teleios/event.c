@@ -1,4 +1,3 @@
-#include "runtime/memory.h"
 #include "teleios/core.h"
 #include "teleios/globals.h"
 static PFN_handler subscribers[TL_EVENT_MAXIMUM][U8_MAX] = { 0 };
@@ -8,7 +7,7 @@ static const char* tl_event_name(const TLEventCodes code) {
     switch (code) {
         default                             : {
                 u16 digits = tl_number_i32_digits(code);
-                char* buffer = tl_memory_alloc(global->arena, digits + 1, TL_MEMORY_STRING);
+                char* buffer = k_memory_allocator_alloc(global->allocator, digits + 1, TL_MEMORY_STRING);
                 tl_char_from_i32(buffer, code, 10);
                 K_FRAME_POP_WITH(buffer);
         }

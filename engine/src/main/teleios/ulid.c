@@ -37,9 +37,9 @@ static int platform_entropy(void *buf, const i32 len) {
 #endif
 }
 
-TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
-    K_FRAME_PUSH_WITH("0x%p, %d", arena, flags)
-    TLUlidGenerator* generator = tl_memory_alloc(arena, sizeof(TLUlidGenerator), TL_MEMORY_ULID);
+TLUlidGenerator* tl_ulid_generator_init(KAllocator *allocator, const i32 flags) {
+    K_FRAME_PUSH_WITH("0x%p, %d", allocator, flags)
+    TLUlidGenerator* generator = k_memory_allocator_alloc(allocator, sizeof(TLUlidGenerator), TL_MEMORY_ULID);
 
     generator->timestamp = 0;
     generator->flags = flags;
@@ -231,10 +231,10 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //     K_FRAME_POP_WITH(false)
 // }
 
-TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
-    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, generator)
+TLUlid* tl_ulid_generate(KAllocator *allocator, TLUlidGenerator *generator) {
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", allocator, generator)
     const u64 timestamp = k_time_epoch_micros() / 1000;
-    TLUlid* ulid = tl_memory_alloc(arena, sizeof(TLUlid), TL_MEMORY_ULID);
+    TLUlid* ulid = k_memory_allocator_alloc(allocator, sizeof(TLUlid), TL_MEMORY_ULID);
 
     if (!(generator->flags & ULID_RELAXED) && generator->timestamp == timestamp) {
         /* Chance of 80-bit overflow is so small that it's not considered. */
@@ -273,8 +273,8 @@ TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
     K_FRAME_POP_WITH(ulid)
 }
 
-TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid) {
-    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, ulid)
-    TLString* string = tl_string_clone(arena, ulid->text);
+TLString* tl_ulid(KAllocator *allocator, TLUlid * ulid) {
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", allocator, ulid)
+    TLString* string = tl_string_clone(allocator, ulid->text);
     K_FRAME_POP_WITH(string)
 }

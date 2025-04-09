@@ -3,13 +3,13 @@
 #include "teleios/globals.h"
 
 void tl_input_update() {
-    tl_memory_copy(
+    k_memory_copy(
         &global->application.frame.last.input,
         &global->application.frame.current.input,
         sizeof(TLInput)
     );
 
-    tl_memory_copy(
+    k_memory_copy(
         &global->application.frame.current.input,
         &global->platform.input,
         sizeof(TLInput)

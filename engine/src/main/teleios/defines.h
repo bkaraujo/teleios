@@ -6,12 +6,11 @@
 
 #define TL_ARR_LENGTH(a,t) (sizeof(a) / sizeof(t))
 #define TL_ARR_SIZE(a,t) ((sizeof(a) / sizeof(t)) * sizeof(t))
-#define TL_CREATE_CHAR(name, size) char name[size]; tl_memory_set(name, 0 , size);
+#define TL_CREATE_CHAR(name, size) char name[size]; k_memory_set(name, 0 , size);
 
 // ---------------------------------
 // Globals
 // ---------------------------------
-typedef struct TLMemoryArena TLMemoryArena;
 typedef struct TLString TLString;
 
 typedef struct TLList TLStack;

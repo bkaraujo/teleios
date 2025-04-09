@@ -29,18 +29,12 @@ int main (const int argc, const char *argv[]) {
         exit(99);
     }
 
-    if (!tl_memory_initialize()) {
-        KERROR("Memory failed to initialize")
-        if (!tl_platform_terminate()) KFATAL("Platform failed to terminate")
-        exit(99);
-    }
-
     global->application.running = true;
-    global->arena = tl_memory_arena_create(K_MEBI_BYTES(10));
+    global->allocator = k_memory_allocator_create(K_MEMORY_ALLOCATOR_LINEAR, K_MEBI_BYTES(10));
 
-    global->yaml = tl_string_clone(global->arena, argv[1]);
+    global->yaml = tl_string_clone(global->allocator, argv[1]);
     global->rootfs = tl_filesystem_get_parent(global->yaml);
-    global->properties = tl_map_create(global->arena);
+    global->properties = tl_map_create(global->allocator);
 
     tl_serializer_walk(global->properties);
 
@@ -86,13 +80,8 @@ int main (const int argc, const char *argv[]) {
         exit(99);
     }
 
-    tl_memory_arena_destroy(global->arena);
-
-    if (!tl_memory_terminate()) {
-        KERROR("Memory failed to terminate")
-        if (!tl_platform_terminate()) KFATAL("Platform failed to terminate")
-        exit(99);
-    }
+    k_memory_allocator_destroy(global->allocator);
+    global->allocator = NULL;
 
     if (!tl_platform_terminate()) KFATAL("Platform failed to terminate")
 
@@ -130,8 +119,8 @@ static void tl_serializer_walk(TLMap *properties) {
     u8 block_index = 0;
     u16 prefix_index = 0;
     yaml_token_t token;
-    TLMemoryArena *arena = tl_memory_arena_create(K_KIBI_BYTES(4));
-    TLList *sequences = tl_list_create(arena);
+    KAllocator *allocator = k_memory_allocator_create(K_MEMORY_ALLOCATOR_LINEAR, K_KIBI_BYTES(4));
+    TLList *sequences = tl_list_create(allocator);
     char element[U8_MAX]; // current YAML_KEY_TOKEN
     char prefix[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
     char property[TL_YAML_PROPERTY_MAX_SIZE];
@@ -151,10 +140,10 @@ static void tl_serializer_walk(TLMap *properties) {
                 // -----------------------------------------------------------
                 // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
-                TLTuple *tuple = tl_memory_alloc(arena, sizeof(TLTuple), TL_MEMORY_SERIALIZER);
+                TLTuple *tuple = k_memory_allocator_alloc(allocator, sizeof(TLTuple), TL_MEMORY_SERIALIZER);
                 tuple->sequence = 0;
 
-                tuple->name = tl_string_clone(arena, prefix);
+                tuple->name = tl_string_clone(allocator, prefix);
                 tl_string_join(tuple->name, element);
                 tl_string_join(tuple->name, ".");
 
@@ -170,18 +159,18 @@ static void tl_serializer_walk(TLMap *properties) {
                 // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
                 if (block_index != 0) {
-                    tl_memory_copy(prefix + prefix_index, element, block_index);
+                    k_memory_copy(prefix + prefix_index, element, block_index);
                     prefix_index += block_index;
 
-                    tl_memory_copy(prefix + prefix_index, ".", 1);
+                    k_memory_copy(prefix + prefix_index, ".", 1);
                     prefix_index++;
                 }
                 // -----------------------------------------------------------
                 // Copy the scalar content to the 'block'
                 // -----------------------------------------------------------
-                tl_memory_copy(element, token.data.scalar.value, token.data.scalar.length);
+                k_memory_copy(element, token.data.scalar.value, token.data.scalar.length);
                 if (block_index > token.data.scalar.length) {
-                    tl_memory_set(element + token.data.scalar.length, 0, block_index - token.data.scalar.length);
+                    k_memory_set(element + token.data.scalar.length, 0, block_index - token.data.scalar.length);
                 }
                 block_index = token.data.scalar.length;
             } break;
@@ -193,10 +182,10 @@ static void tl_serializer_walk(TLMap *properties) {
                 // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
                 if (block_index != 0) {
-                    tl_memory_copy(prefix + prefix_index, element, block_index);
+                    k_memory_copy(prefix + prefix_index, element, block_index);
                     prefix_index += block_index;
 
-                    tl_memory_copy(prefix + prefix_index, ".", 1);
+                    k_memory_copy(prefix + prefix_index, ".", 1);
                     prefix_index++;
                 }
                 // -----------------------------------------------------------
@@ -210,16 +199,16 @@ static void tl_serializer_walk(TLMap *properties) {
                 TLIterator *iterator = tl_list_iterator_create(NULL, sequences);
                 for (TLTuple *tuple = tl_iterator_next(iterator) ; tuple != NULL; tuple = tl_iterator_next(iterator)) {
                     if (tl_string_equals(tuple->name, prefix)) {
-                        string = tl_string_from_i32(arena, (i32) tuple->sequence, 10);
+                        string = tl_string_from_i32(allocator, (i32) tuple->sequence, 10);
                         tuple->sequence++;
                     }
                 }
 
                 u32 length = tl_string_length(string);
-                tl_memory_copy(element, (void*) tl_string(string), length);
+                k_memory_copy(element, (void*) tl_string(string), length);
 
                 if (block_index > length) {
-                    tl_memory_set(element + length, 0, block_index - length);
+                    k_memory_set(element + length, 0, block_index - length);
                 }
 
                 block_index = tl_string_length(string);
@@ -232,9 +221,9 @@ static void tl_serializer_walk(TLMap *properties) {
                 // -----------------------------------------------------------
                 // Copy the scalar content to the 'block'
                 // -----------------------------------------------------------
-                tl_memory_copy(element, token.data.scalar.value, token.data.scalar.length);
+                k_memory_copy(element, token.data.scalar.value, token.data.scalar.length);
                 if (block_index > token.data.scalar.length) {
-                    tl_memory_set(element + token.data.scalar.length, 0, block_index - token.data.scalar.length);
+                    k_memory_set(element + token.data.scalar.length, 0, block_index - token.data.scalar.length);
                 }
 
                 block_index = token.data.scalar.length;
@@ -245,7 +234,7 @@ static void tl_serializer_walk(TLMap *properties) {
             case YAML_SCALAR_TOKEN: {
                 k_memory_set(property, 0, TL_YAML_PROPERTY_MAX_SIZE);
                 tl_char_join(property, TL_YAML_PROPERTY_MAX_SIZE, prefix, element);
-                tl_map_put(properties, property, tl_string_clone(global->arena, (char*) token.data.scalar.value));
+                tl_map_put(properties, property, tl_string_clone(global->allocator, (char*) token.data.scalar.value));
             } break;
             // #########################################################################################################
             // YAML_BLOCK_END_TOKEN
@@ -254,7 +243,7 @@ static void tl_serializer_walk(TLMap *properties) {
                 b8 found = false;
                 for (u16 i = prefix_index - 2 ; i > 0 ; --i) {
                     if (*(prefix + i)  == '.') {
-                        tl_memory_set(prefix + i + 1, 0, U16_MAX - i);
+                        k_memory_set(prefix + i + 1, 0, U16_MAX - i);
                         prefix_index = i + 1;
                         found = true;
                         break;
@@ -262,11 +251,11 @@ static void tl_serializer_walk(TLMap *properties) {
                 }
 
                 if (!found) {
-                    tl_memory_set(prefix, 0, U16_MAX);
+                    k_memory_set(prefix, 0, U16_MAX);
                     prefix_index = 0;
                 }
 
-                tl_memory_set(element, 0, U8_MAX - block_index);
+                k_memory_set(element, 0, U8_MAX - block_index);
                 block_index = 0;
             } break;
         }
@@ -278,7 +267,7 @@ static void tl_serializer_walk(TLMap *properties) {
 
     yaml_token_delete(&token);
     yaml_parser_delete(&parser);
-    tl_memory_arena_destroy(arena);
+    k_memory_allocator_destroy(allocator);
 
     K_FRAME_POP
 }

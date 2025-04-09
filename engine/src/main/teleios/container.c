@@ -31,28 +31,28 @@ struct TLList {
     u64 length;
     struct TLNode* head;
     struct TLNode* tail;
-    TLMemoryArena *arena;
+    KAllocator *allocator;
 } ;
 
-static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
-    K_FRAME_PUSH_WITH("0x%p, 0X%p", arena, value)
+static struct TLNode* tl_list_create_node(KAllocator *allocator, void *value) {
+    K_FRAME_PUSH_WITH("0x%p, 0X%p", allocator, value)
 
-    struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
+    struct TLNode* created = k_memory_allocator_alloc(allocator, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
     if (created == NULL) KFATAL("Failed to allocate struct TLNode")
     created->payload = value;
 
     K_FRAME_POP_WITH(created)
 }
 
-TLList* tl_list_create(TLMemoryArena *arena) {
-    K_FRAME_PUSH_WITH("0x%p", arena)
-    TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
+TLList* tl_list_create(KAllocator *allocator) {
+    K_FRAME_PUSH_WITH("0x%p", allocator)
+    TLList* list = k_memory_allocator_alloc(allocator, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
     if (list == NULL) {
         KERROR("Failed to allocate TLList")
         K_FRAME_POP_WITH(NULL)
     }
 
-    list->arena = arena;
+    list->allocator = allocator;
     list->length = 0;
 
     K_FRAME_POP_WITH(list)
@@ -119,7 +119,7 @@ void tl_list_add(TLList* list, void *value) {
         K_FRAME_POP
     }
 
-    struct TLNode* created = tl_list_create_node(list->arena, value);
+    struct TLNode* created = tl_list_create_node(list->allocator, value);
 
     if (list->head == NULL) {
         list->length++;
@@ -223,7 +223,7 @@ b8 tl_list_after(TLList* list, void *item, void *value) {
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == item) {
-            struct TLNode* created = tl_list_create_node(list->arena, value);
+            struct TLNode* created = tl_list_create_node(list->allocator, value);
 
             created->next = node->next;
             created->previous = node;
@@ -262,7 +262,7 @@ b8 tl_list_before(TLList* list, void *item, void *value) {
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == item) {
-            struct TLNode* created = tl_list_create_node(list->arena, value);
+            struct TLNode* created = tl_list_create_node(list->allocator, value);
 
             created->next = node;
             created->previous = node->previous;
@@ -325,9 +325,9 @@ static void* tl_list_iterator_next(TLIterator *iterator) {
     K_FRAME_POP_WITH(value)
 }
 
-TLIterator* tl_list_iterator_create(TLMemoryArena *arena, TLList* list) {
+TLIterator* tl_list_iterator_create(KAllocator *allocator, TLList* list) {
     K_FRAME_PUSH_WITH("0x%p", list)
-    TLIterator* iterator = tl_memory_alloc(arena == NULL ? list->arena : arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
+    TLIterator* iterator = k_memory_allocator_alloc(allocator == NULL ? list->allocator : allocator, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = 0;
     iterator->capacity = list->length;
     iterator->node = list->head;
@@ -340,10 +340,10 @@ TLIterator* tl_list_iterator_create(TLMemoryArena *arena, TLList* list) {
 //                                                     STACK
 //
 // #####################################################################################################################
-TLStack* tl_stack_create(TLMemoryArena *arena)  {
-    K_FRAME_PUSH_WITH("0x%p", arena)
-    TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
-    stack = tl_list_create(arena);
+TLStack* tl_stack_create(KAllocator *allocator)  {
+    K_FRAME_PUSH_WITH("0x%p", allocator)
+    TLStack* stack = k_memory_allocator_alloc(allocator, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
+    stack = tl_list_create(allocator);
     K_FRAME_POP_WITH(stack)
 }
 
@@ -376,7 +376,7 @@ u64 tl_stack_length(TLStack* stack) {
 
 TLIterator* tl_stack_iterator_create(TLStack* stack) {
     K_FRAME_PUSH_WITH("0x%p", stack)
-    TLIterator* iterator = tl_memory_alloc(stack->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
+    TLIterator* iterator = k_memory_allocator_alloc(stack->allocator, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = 0;
     iterator->capacity = stack->length;
     iterator->node = stack->head;
@@ -389,16 +389,16 @@ TLIterator* tl_stack_iterator_create(TLStack* stack) {
 //
 // #####################################################################################################################
 struct TLMapEntry { TLString *key; void *payload; };
-struct TLMap { TLMemoryArena *arena; struct TLMapEntry *values; u16 size; u16 length; };
+struct TLMap { KAllocator *allocator; struct TLMapEntry *values; u16 size; u16 length; };
 
-TLMap* tl_map_create(TLMemoryArena *arena) {
-    K_FRAME_PUSH_WITH("0x%p", arena)
-    if (arena == NULL) KFATAL("Arena is NULL")
+TLMap* tl_map_create(KAllocator *allocator) {
+    K_FRAME_PUSH_WITH("0x%p", allocator)
+    if (allocator == NULL) KFATAL("allocator is NULL")
 
-    TLMap *map = tl_memory_alloc(arena, sizeof(TLMap), TL_MEMORY_CONTAINER_MAP);
+    TLMap *map = k_memory_allocator_alloc(allocator, sizeof(TLMap), TL_MEMORY_CONTAINER_MAP);
     map->size = 10;
     map->length = 0;
-    map->arena = arena;
+    map->allocator = allocator;
 
     K_FRAME_POP_WITH(map)
 }
@@ -411,14 +411,14 @@ void tl_map_put(TLMap* map, const char *key, void *value) {
 
     if (map->values == NULL) {
         KTRACE("TLMap 0x%p initialized with capacity of %d", map, map->size)
-        map->values = tl_memory_alloc(map->arena, map->size * sizeof(struct TLMapEntry), TL_MEMORY_CONTAINER_NODE);
+        map->values = k_memory_allocator_alloc(map->allocator, map->size * sizeof(struct TLMapEntry), TL_MEMORY_CONTAINER_NODE);
     }
 
     if (map->length >= map->size) {
         u16 new_size = (u16)((f32)map->size * 1.75f) + 1;
         KTRACE("TLMap 0x%p resized from %d to %d capacity", map, map->size, new_size)
-        void *new_values = tl_memory_alloc(map->arena, new_size * sizeof(struct TLMapEntry), TL_MEMORY_CONTAINER_NODE);
-        tl_memory_copy(new_values, map->values, map->size * sizeof(struct TLMapEntry));
+        void *new_values = k_memory_allocator_alloc(map->allocator, new_size * sizeof(struct TLMapEntry), TL_MEMORY_CONTAINER_NODE);
+        k_memory_copy(new_values, map->values, map->size * sizeof(struct TLMapEntry));
         map->size = new_size;
         map->values = new_values;
     }
@@ -432,7 +432,7 @@ void tl_map_put(TLMap* map, const char *key, void *value) {
         }
     }
 
-    map->values[map->length].key = tl_string_clone(map->arena, key);
+    map->values[map->length].key = tl_string_clone(map->allocator, key);
     map->values[map->length].payload = value;
     map->length++;
     K_FRAME_POP
@@ -471,14 +471,14 @@ void tl_map_remove(TLMap* map, const char *key) {
 
     for (u16 i = 0; i < map->size; i++) {
         if (tl_string_equals(map->values[i].key, key)) {
-            tl_memory_copy(
+            k_memory_copy(
                 map->values + i,
                 map->values + i + 1,
                 sizeof(struct TLMapEntry) * (map->size - map->length - 1)
             );
 
             map->length--;
-            tl_memory_set(
+            k_memory_set(
                 map->values + map->length,
                 0,
                 sizeof(struct TLMapEntry) * (map->size - map->length)
@@ -489,17 +489,17 @@ void tl_map_remove(TLMap* map, const char *key) {
     K_FRAME_POP
 }
 
-TLIterator* tl_map_keys(TLMemoryArena *arena, TLMap* map) {
+TLIterator* tl_map_keys(KAllocator *allocator, TLMap* map) {
     K_FRAME_PUSH_WITH("0x%p", map)
     if (map == NULL) KFATAL("TLMap is NULL")
 
-    TLList *keys = tl_list_create(map->arena);
+    TLList *keys = tl_list_create(map->allocator);
     if (map->length == 0) K_FRAME_POP_WITH(NULL)
 
     for (u16 i = 0; i < map->length; ++i) {
         tl_list_add(keys, map->values[i].key);
     }
 
-    TLIterator *it = tl_list_iterator_create(arena, keys);
+    TLIterator *it = tl_list_iterator_create(allocator, keys);
     K_FRAME_POP_WITH(it)
 }
