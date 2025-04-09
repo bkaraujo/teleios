@@ -2,16 +2,16 @@
 #include "teleios/runtime.h"
 
 TLString * tl_filesystem_get_parent(TLString *path) {
-    BKS_TRACE_PUSHA("0x%p", path)
-    if (path == NULL) BKS_TRACE_POPV(NULL)
+    K_FRAME_PUSH_WITH("0x%p", path)
+    if (path == NULL) K_FRAME_POP_WITH(NULL)
 
     const u32 index = tl_string_last_index_of(path, '/');
-    if (index == U32_MAX) BKS_TRACE_POPV(NULL)
+    if (index == U32_MAX) K_FRAME_POP_WITH(NULL)
 
 
     TL_CREATE_CHAR(value, index + 1)
     tl_char_copy(value, tl_string(path), index);
     TLString *parent = tl_string_clone(tl_string_arena(path), value);
 
-    BKS_TRACE_POPV(parent)
+    K_FRAME_POP_WITH(parent)
 }

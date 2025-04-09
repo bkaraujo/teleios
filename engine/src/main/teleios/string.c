@@ -6,25 +6,25 @@
 //                                                     STRING
 //
 // #####################################################################################################################
-BKS_INLINE u32 tl_char_length(const char *string) {
-    BKS_TRACE_PUSHA("0x%p", string)
-    if (string == NULL ) BKS_TRACE_POPV(U32_MAX);
-    if (*string == '\0') BKS_TRACE_POPV(0);
+K_INLINE u32 tl_char_length(const char *string) {
+    K_FRAME_PUSH_WITH("0x%p", string)
+    if (string == NULL ) K_FRAME_POP_WITH(U32_MAX);
+    if (*string == '\0') K_FRAME_POP_WITH(0);
 
     u32 index = 0;
 
     const char* character = string;
     while (*character++ != '\0') {
         if (index++ == U32_MAX) {
-            BKSFATAL("Failed to find string length")
+            KFATAL("Failed to find string length")
         }
     }
 
-    BKS_TRACE_POPV(index)
+    K_FRAME_POP_WITH(index)
 }
 
-BKS_INLINE u32 tl_char_last_index_of(const char *string, const char character) {
-    BKS_TRACE_PUSHA("0x%p, %c", string, character)
+K_INLINE u32 tl_char_last_index_of(const char *string, const char character) {
+    K_FRAME_PUSH_WITH("0x%p, %c", string, character)
     u32 index = 0;
     const char* s = string;
     for (u32 i = 0; *s != '\0' ; ++s) {
@@ -33,71 +33,71 @@ BKS_INLINE u32 tl_char_last_index_of(const char *string, const char character) {
         }
 
         if (++i == U32_MAX) {
-            BKSFATAL("Failed to find string length")
+            KFATAL("Failed to find string length")
         }
     }
 
-    BKS_TRACE_POPV(index)
+    K_FRAME_POP_WITH(index)
 }
 
-BKS_INLINE u32 tl_char_index_of(const char *string, const char token) {
-    BKS_TRACE_PUSHA("0x%p, %c", string, token)
+K_INLINE u32 tl_char_index_of(const char *string, const char token) {
+    K_FRAME_PUSH_WITH("0x%p, %c", string, token)
     const char* s = string;
     for (u32 i = 0; *s != '\0' ; ++s) {
         if (*s == token) {
-            BKS_TRACE_POPV(i)
+            K_FRAME_POP_WITH(i)
         }
 
         if (++i == U32_MAX) {
-            BKSFATAL("Failed to find string length")
+            KFATAL("Failed to find string length")
         }
     }
 
-    BKS_TRACE_POPV(U32_MAX)
+    K_FRAME_POP_WITH(U32_MAX)
 }
 
 b8 tl_char_equals(const char *string, const char *guess) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, guess)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        BKS_TRACE_POPV(false)
+        K_FRAME_POP_WITH(false)
     }
 
     const u64 length = tl_char_length(string);
     if (tl_char_length(guess) != length) {
-        BKS_TRACE_POPV(false)
+        K_FRAME_POP_WITH(false)
     }
 
     for (u64 i = 0; i < length; ++i) {
         if (string[i] != guess[i]) {
-            BKS_TRACE_POPV(false)
+            K_FRAME_POP_WITH(false)
         }
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_char_start_with(const char *string, const char *guess) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, guess)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        BKS_TRACE_POPV(false)
+        K_FRAME_POP_WITH(false)
     }
 
     const u64 length = tl_char_length(guess);
     if (length > tl_char_length(string)) {
-        BKS_TRACE_POPV(false)
+        K_FRAME_POP_WITH(false)
     }
 
     for (u64 i = 0; i < length; ++i) {
         if (string[i] != guess[i]) {
-            BKS_TRACE_POPV(false)
+            K_FRAME_POP_WITH(false)
         }
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 u32 tl_char_copy(char *target, const char *source, const u32 length) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p, %d", target, source, length)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, %d", target, source, length)
 
     u32 copied = 0;
     for (u32 i = 0; i < length ; ++i) {
@@ -105,21 +105,21 @@ u32 tl_char_copy(char *target, const char *source, const u32 length) {
         copied++;
     }
 
-    BKS_TRACE_POPV(copied)
+    K_FRAME_POP_WITH(copied)
 }
 
-BKS_INLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const char *str1) {
-    BKS_TRACE_PUSHA("0x%p, %d, %s, %s", buffer, size, str0, str1)
-    if (tl_char_length(str0) + tl_char_length(str1) > size) BKS_TRACE_POP
+K_INLINE void tl_char_join(char *buffer, const u64 size, const char *str0, const char *str1) {
+    K_FRAME_PUSH_WITH("0x%p, %d, %s, %s", buffer, size, str0, str1)
+    if (tl_char_length(str0) + tl_char_length(str1) > size) K_FRAME_POP
     sprintf(buffer, "%s%s", str0, str1);
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
-BKS_INLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p, %d, %d", buffer, value, base)
+K_INLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, %d, %d", buffer, value, base)
 
     // check that the base if valid
-    if (base < 2 || base > 36) { BKS_TRACE_POP }
+    if (base < 2 || base > 36) { K_FRAME_POP }
 
     int tmp_value;
     char *ptr  = buffer;
@@ -142,11 +142,11 @@ BKS_INLINE void tl_char_from_i32(char *buffer, i32 value, const u8 base) {
         *ptr1++ = tmp_char;
     }
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 b8 tl_char_contains(const char *string, const char *token) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, token)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, token)
 
     // const char *s = string;
     // while (*s != '\0') {
@@ -164,13 +164,13 @@ b8 tl_char_contains(const char *string, const char *token) {
     //             t++;
     //         }
     //
-    //         if (found) BKS_TRACE_POPV(true)
+    //         if (found) K_FRAME_POP_WITH(true)
     //     }
     //
     //     s++;
     // }
 
-    BKS_TRACE_POPV(strstr(string, token) != NULL)
+    K_FRAME_POP_WITH(strstr(string, token) != NULL)
 }
 // #####################################################################################################################
 //
@@ -185,8 +185,8 @@ struct TLString {
     b8 is_view;
 };
 
-BKS_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
-    BKS_TRACE_PUSHA("0x%p, %d", arena, size)
+K_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 size) {
+    K_FRAME_PUSH_WITH("0x%p, %d", arena, size)
     TLString *string = tl_memory_alloc(arena, sizeof(struct TLString), TL_MEMORY_STRING);
     string->is_view = false;
     string->arena = arena;
@@ -196,32 +196,32 @@ BKS_INLINE static TLString* tl_string_reserve(TLMemoryArena *arena, const u64 si
         string->text = tl_memory_alloc(arena, string->size, TL_MEMORY_STRING);
     }
 
-    BKS_TRACE_POPV(string)
+    K_FRAME_POP_WITH(string)
 }
 
 TLMemoryArena* tl_string_arena(TLString *string){
-    BKS_TRACE_PUSHA("0x%p", string)
+    K_FRAME_PUSH_WITH("0x%p", string)
     TLMemoryArena *arena = string->arena;
-    BKS_TRACE_POPV(arena)
+    K_FRAME_POP_WITH(arena)
 }
 
 TLString* tl_string_clone(TLMemoryArena *arena, const char *string) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", arena, string)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, string)
     TLString *clone = tl_string_reserve(arena, tl_char_length(string));
     clone->length = clone->size - 1;
     tl_memory_copy((void*)clone->text, (void*)string, clone->length);
-    BKS_TRACE_POPV(clone)
+    K_FRAME_POP_WITH(clone)
 }
 
 TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", arena, string)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, string)
     TLString *wrap = tl_string_reserve(arena, 0);
     wrap->is_view = true;
     wrap->text = string;
     wrap->length = tl_char_length(string);
     wrap->size = wrap->length + 1;
 
-    BKS_TRACE_POPV(wrap)
+    K_FRAME_POP_WITH(wrap)
 }
 
 /**
@@ -230,7 +230,7 @@ TLString* tl_string_wrap(TLMemoryArena *arena, const char *string) {
  * Released under GPLv3.
  */
 TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
-    BKS_TRACE_PUSHA("%d, %d", value, base)
+    K_FRAME_PUSH_WITH("%d, %d", value, base)
 
     u32 digits = 0;
     i32 desired = value;
@@ -242,7 +242,7 @@ TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
     TLString* string = tl_string_reserve(arena, digits);
 
     // check that the base if valid
-    if (base < 2 || base > 36) { BKS_TRACE_POPV(string) }
+    if (base < 2 || base > 36) { K_FRAME_POP_WITH(string) }
 
     int tmp_value;
     char *ptr  = (char*) string->text;
@@ -267,13 +267,13 @@ TLString* tl_string_from_i32(TLMemoryArena *arena, i32 value, const u8 base) {
         string->length++;
     }
 
-    BKS_TRACE_POPV(string)
+    K_FRAME_POP_WITH(string)
 }
 
 void tl_string_join(const TLString *string, const char *other) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, other)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, other)
     const u64 length = tl_char_length(other);
-    if (length == U32_MAX || length == 0) BKSFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
+    if (length == U32_MAX || length == 0) KFATAL("Failed to join:\n\n - 0%xs\n - %s", string->text, other)
     ((TLString*)string)->size = string->size + length;
 
     void *created = tl_memory_alloc(string->arena, string->size, TL_MEMORY_STRING);
@@ -284,120 +284,120 @@ void tl_string_join(const TLString *string, const char *other) {
     ((TLString*)string)->length = string->size - 1;
     ((TLString*)string)->is_view = false;
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
-BKS_INLINE const char * tl_string(TLString *string) {
-    BKS_TRACE_PUSHA("0x%p", string)
-    BKS_TRACE_POPV(string->text)
+K_INLINE const char * tl_string(TLString *string) {
+    K_FRAME_PUSH_WITH("0x%p", string)
+    K_FRAME_POP_WITH(string->text)
 }
 
 TLString* tl_string_slice(TLMemoryArena *arena, TLString* string, const u64 offset, const u64 length) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p, %d, %d", arena, string, offset, length)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, %d, %d", arena, string, offset, length)
     //TODO implement tl_string_slice
-    BKSFATAL("Implementation missing")
-    BKS_TRACE_POPV(NULL)
+    KFATAL("Implementation missing")
+    K_FRAME_POP_WITH(NULL)
 }
 
 TLString* tl_string_duplicate(TLString *string) {
-    BKS_TRACE_PUSHA("0x%p", string)
+    K_FRAME_PUSH_WITH("0x%p", string)
 
     TLString *duplicate = tl_string_reserve(string->arena, string->length);
     duplicate->is_view = false;
     duplicate->length = string->length;
     tl_memory_copy((void*)duplicate->text, (void*)string->text, string->length);
 
-    BKS_TRACE_POPV(duplicate)
+    K_FRAME_POP_WITH(duplicate)
 }
 
 TLString* tl_string_view(TLString* string) {
-    BKS_TRACE_PUSHA("0x%p", string)
+    K_FRAME_PUSH_WITH("0x%p", string)
     TLString *view = tl_string_reserve(string->arena, 0);
     view->is_view = true;
     view->text = string->text;
     view->size = string->size;
     view->length = string->length;
-    BKS_TRACE_POPV(view)
+    K_FRAME_POP_WITH(view)
 }
 
 u32 tl_string_length(TLString *string) {
-    BKS_TRACE_PUSHA("0x%p", string)
+    K_FRAME_PUSH_WITH("0x%p", string)
     if (string == NULL) {
-        BKS_TRACE_POPV(-1)
+        K_FRAME_POP_WITH(-1)
     }
-    BKS_TRACE_POPV(string->length)
+    K_FRAME_POP_WITH(string->length)
 }
 
 u32 tl_string_index_of(TLString* string, const char token) {
-    BKS_TRACE_PUSHA("0x%p, %s", string, token)
+    K_FRAME_PUSH_WITH("0x%p, %s", string, token)
     for (u64 i = 0; i < string->length; ++i) {
-        if (string->text[i] == token) BKS_TRACE_POPV(i);
+        if (string->text[i] == token) K_FRAME_POP_WITH(i);
     }
-    BKS_TRACE_POPV(U32_MAX)
+    K_FRAME_POP_WITH(U32_MAX)
 }
 
 u32 tl_string_last_index_of(TLString* string, const char token) {
-    BKS_TRACE_PUSHA("0x%p, %c", string, token)
-    if (string == NULL) BKS_TRACE_POPV(U32_MAX);
-    if (string->length == 0) BKS_TRACE_POPV(U32_MAX)
+    K_FRAME_PUSH_WITH("0x%p, %c", string, token)
+    if (string == NULL) K_FRAME_POP_WITH(U32_MAX);
+    if (string->length == 0) K_FRAME_POP_WITH(U32_MAX)
 
     for (u64 i = string->length - 1; i > 0; --i) {
-        if (string->text[i] == token) BKS_TRACE_POPV(i);
+        if (string->text[i] == token) K_FRAME_POP_WITH(i);
     }
 
-    BKS_TRACE_POPV(U8_MAX)
+    K_FRAME_POP_WITH(U8_MAX)
 }
 
 b8 tl_string_start_with(TLString* string, const char* guess) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, guess)
-    if (string == NULL || guess == NULL) BKS_TRACE_POPV(false)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
+    if (string == NULL || guess == NULL) K_FRAME_POP_WITH(false)
 
     const u64 length = tl_char_length(guess);
-    if (length > string->length) BKS_TRACE_POPV(false)
+    if (length > string->length) K_FRAME_POP_WITH(false)
 
     for (u64 i = 0; i < length; ++i) {
         if (string->text[i] != guess[i])
-            BKS_TRACE_POPV(false)
+            K_FRAME_POP_WITH(false)
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_string_ends_with(TLString* string, const char* guess) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, guess)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
     //TODO implement tl_string_ends_with
-    BKSFATAL("Implementation missing")
-    BKS_TRACE_POPV(false)
+    KFATAL("Implementation missing")
+    K_FRAME_POP_WITH(false)
 }
 
 b8 tl_string_is_view(const TLString* string) {
-    BKS_TRACE_PUSHA("0x%p", string)
+    K_FRAME_PUSH_WITH("0x%p", string)
     if (string == NULL) {
-        BKS_TRACE_POPV(false)
+        K_FRAME_POP_WITH(false)
     }
 
-    BKS_TRACE_POPV(string->is_view)
+    K_FRAME_POP_WITH(string->is_view)
 }
 
 b8 tl_string_equals(const TLString* string, const char* guess) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, guess)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
     if (string == NULL || guess == NULL) {
-        BKS_TRACE_POPV(false)
+        K_FRAME_POP_WITH(false)
     }
 
     const u64 length = tl_char_length(guess);
-    if (string->length != length) BKS_TRACE_POPV(false)
+    if (string->length != length) K_FRAME_POP_WITH(false)
 
     for (u64 i = 0; i < string->length; ++i) {
         if (string->text[i] != guess[i])
-            BKS_TRACE_POPV(false)
+            K_FRAME_POP_WITH(false)
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_string_contains(TLString* string, const char* guess) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", string, guess)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", string, guess)
     b8 contains = tl_char_contains(string->text, guess);
-    BKS_TRACE_POPV(contains)
+    K_FRAME_POP_WITH(contains)
 }

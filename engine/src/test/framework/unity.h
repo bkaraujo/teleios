@@ -6,7 +6,7 @@
 
 #define TL_TEST_ASSERT(condition, message)                 \
     if (!(condition)) {                                    \
-        BKSERROR("Teste falhou: %s na linha %d\n", message) \
+        KERROR("Teste falhou: %s na linha %d\n", message) \
         return 1; /* Indica falha no teste */              \
     }
 

@@ -2,43 +2,43 @@
 #include "teleios/globals.h"
 
 b8 tl_graphics_initialize(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
-    BKSTRACE("Initializing Graphics Engine");
+    KTRACE("Initializing Graphics Engine");
     glfwMakeContextCurrent(global->platform.window.handle);
 
-    BKSDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
+    KDEBUG("CGLM_VERSION %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        BKSERROR("Failed to initialize GLAD")
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to initialize GLAD")
+        K_FRAME_POP_WITH(false)
     }
 
-    BKSDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
+    KDEBUG("GL_VERSION %s", glGetString(GL_VERSION))
 
     if (global->platform.graphics.vsync) {
-        BKSDEBUG("vsync: on")
+        KDEBUG("vsync: on")
         glfwSwapInterval(1);
     } else {
-        BKSDEBUG("vsync: off")
+        KDEBUG("vsync: off")
         glfwSwapInterval(0);
     }
 
     if (global->platform.graphics.wireframe) {
-        BKSDEBUG("wireframe: on")
+        KDEBUG("wireframe: on")
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else {
-        BKSDEBUG("wireframe: off")
+        KDEBUG("wireframe: off")
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_graphics_terminate(void) {
-    BKS_TRACE_PUSH
-    BKSTRACE("Terminating Graphics Engine");
-    bks_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
+    K_FRAME_PUSH
+    KTRACE("Terminating Graphics Engine");
+    k_memory_set(&global->platform.graphics, 0, sizeof(global->platform.graphics));
     glfwMakeContextCurrent(NULL);
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }

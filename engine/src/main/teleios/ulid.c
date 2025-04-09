@@ -1,15 +1,15 @@
 #include "teleios/core.h"
 #include "teleios/runtime.h"
 
-#ifdef BKS_PLATFORM_WINDOWS
+#ifdef K_PLATFORM_WINDOWS
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
 #   pragma comment(lib, "advapi32.lib")
-#elif BKS_PLATFORM_LINUX
+#elif K_PLATFORM_LINUX
 // #   define _GNU_SOURCE
 #   include <sys/time.h>
 #   include <sys/syscall.h>
-#elif BKS_PLATFORM_POSIX
+#elif K_PLATFORM_POSIX
 #   define _POSIX_C_SOURCE 200112L
 #   include <sys/time.h>
 #else
@@ -19,13 +19,13 @@
 #include <time.h>
 
 static int platform_entropy(void *buf, const i32 len) {
-    BKS_TRACE_PUSHA("0x%p, %d", buf, len)
+    K_FRAME_PUSH_WITH("0x%p, %d", buf, len)
 #if _WIN32
     BOOLEAN NTAPI SystemFunction036(PVOID, ULONG);
-    BKS_TRACE_POPV(!SystemFunction036(buf, len))
+    K_FRAME_POP_WITH(!SystemFunction036(buf, len))
 #elif __linux__
     i32 result = syscall(SYS_getrandom, buf, len, 0);
-    BKS_TRACE_POPV(result != len)
+    K_FRAME_POP_WITH(result != len)
 #else
     int r = 0;
     FILE *f = fopen("/dev/urandom", "rb");
@@ -33,12 +33,12 @@ static int platform_entropy(void *buf, const i32 len) {
         r = fread(buf, len, 1, f);
         fclose(f);
     }
-    BKS_TRACE_POPV(!r)
+    K_FRAME_POP_WITH(!r)
 #endif
 }
 
 TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
-    BKS_TRACE_PUSHA("0x%p, %d", arena, flags)
+    K_FRAME_PUSH_WITH("0x%p, %d", arena, flags)
     TLUlidGenerator* generator = tl_memory_alloc(arena, sizeof(TLUlidGenerator), TL_MEMORY_ULID);
 
     generator->timestamp = 0;
@@ -68,13 +68,13 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
             generator->s[j] = tmp;
         }
 
-        BKS_TRACE_POPV(generator)
+        K_FRAME_POP_WITH(generator)
     }
 
     if (!(flags & ULID_SECURE)) {
         /* Failed to read entropy from OS, so generate some. */
         u64 now, n = 0;
-        const u64 start = bks_time_epoch_millis();
+        const u64 start = k_time_epoch_millis();
 
         do {
             struct {
@@ -84,7 +84,7 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
                 void *stackgap;
             } noise;
 
-            noise.ts = now = bks_time_epoch_millis();
+            noise.ts = now = k_time_epoch_millis();
             noise.clk = clock();
             noise.stackgap = &noise;
             noise.n = (i64) n;
@@ -97,10 +97,10 @@ TLUlidGenerator* tl_ulid_generator_init(TLMemoryArena *arena, const i32 flags) {
                 generator->s[j] = tmp;
             }
         } while (n++ < 1UL << 16 || now - start < 500000ULL);
-        BKS_TRACE_POPV(generator)
+        K_FRAME_POP_WITH(generator)
     }
 
-    BKS_TRACE_POPV(NULL)
+    K_FRAME_POP_WITH(NULL)
 }
 
 void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
@@ -169,7 +169,7 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 }
 
 // static b8 ulid_decode(u8 ulid[16], const i8 *s) {
-//     BKS_TRACE_PUSHA("0x%p, 0x%p", ulid, s)
+//     K_FRAME_PUSH_WITH("0x%p, 0x%p", ulid, s)
 //     static const i8 v[] = {
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -205,11 +205,11 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1
 //     };
 //     if (v[(i32)s[0]] > 7)
-//         BKS_TRACE_POPV(true)
+//         K_FRAME_POP_WITH(true)
 //
 //     for (i32 i = 0; i < 26; i++)
 //         if (v[(i32)s[i]] == -1)
-//             BKS_TRACE_POPV(true)
+//             K_FRAME_POP_WITH(true)
 //
 //     ulid[ 0] = v[(i32)s[ 0]] << 5 | v[(i32)s[ 1]] >> 0;
 //     ulid[ 1] = v[(i32)s[ 2]] << 3 | v[(i32)s[ 3]] >> 2;
@@ -228,12 +228,12 @@ void tl_ulid_encode(TLUlid* ulid, const u8 binary[16]) {
 //     ulid[14] = v[(i32)s[22]] << 7 | v[(i32)s[23]] << 2 | v[(i32)s[24]] >> 3;
 //     ulid[15] = v[(i32)s[24]] << 5 | v[(i32)s[25]] >> 0;
 //
-//     BKS_TRACE_POPV(false)
+//     K_FRAME_POP_WITH(false)
 // }
 
 TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", arena, generator)
-    const u64 timestamp = bks_time_epoch_micros() / 1000;
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, generator)
+    const u64 timestamp = k_time_epoch_micros() / 1000;
     TLUlid* ulid = tl_memory_alloc(arena, sizeof(TLUlid), TL_MEMORY_ULID);
 
     if (!(generator->flags & ULID_RELAXED) && generator->timestamp == timestamp) {
@@ -243,7 +243,7 @@ TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
                 break;
 
         tl_ulid_encode(ulid, generator->last);
-        BKS_TRACE_POPV(ulid)
+        K_FRAME_POP_WITH(ulid)
     }
 
     /* Fill out timestamp */
@@ -270,11 +270,11 @@ TLUlid* tl_ulid_generate(TLMemoryArena *arena, TLUlidGenerator *generator) {
         generator->last[6] &= 0x7f;
 
     tl_ulid_encode(ulid, generator->last);
-    BKS_TRACE_POPV(ulid)
+    K_FRAME_POP_WITH(ulid)
 }
 
 TLString* tl_ulid(TLMemoryArena *arena, TLUlid * ulid) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", arena, ulid)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", arena, ulid)
     TLString* string = tl_string_clone(arena, ulid->text);
-    BKS_TRACE_POPV(string)
+    K_FRAME_POP_WITH(string)
 }

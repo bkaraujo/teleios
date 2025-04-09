@@ -1,7 +1,7 @@
 #ifndef __TELEIOS_DEFINES__
 #define __TELEIOS_DEFINES__
 
-#include "bks/bks.h"
+#include "libk/libk.h"
 #include "cglm/types-struct.h"
 
 #define TL_ARR_LENGTH(a,t) (sizeof(a) / sizeof(t))

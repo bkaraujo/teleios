@@ -1,7 +1,7 @@
 #include "teleios/core.h"
 
-BKS_INLINE u16 tl_number_i32_digits(const i32 number) {
-    BKS_TRACE_PUSHA("%d", number)
+K_INLINE u16 tl_number_i32_digits(const i32 number) {
+    K_FRAME_PUSH_WITH("%d", number)
     u16 digits = 0;
     i32 desired = number;
 
@@ -9,5 +9,5 @@ BKS_INLINE u16 tl_number_i32_digits(const i32 number) {
         digits++;
         desired = desired / 10;
     } while(desired > 0);
-    BKS_TRACE_POPV(digits)
+    K_FRAME_POP_WITH(digits)
 }

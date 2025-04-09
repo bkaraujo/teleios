@@ -5,13 +5,13 @@
 #include "teleios/application.h"
 
 b8 tl_application_load(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
     // --------------------------------------------------------
     // Load the desired scene
     // --------------------------------------------------------
     if (!tl_scene_load("main")) {
-        BKSERROR("Failed to load scene [main]");
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to load scene [main]");
+        K_FRAME_POP_WITH(false)
     }
     // --------------------------------------------------------
     // Apply the scene's settings
@@ -39,41 +39,41 @@ b8 tl_application_load(void) {
     // u8 world = tl_layer_create("world");
     // u8 gui = tl_layer_create("gui");
 
-    BKSDEBUG("Application initialized in %llu micros", BKS_PROFILER_MICROS);
-    BKS_TRACE_POPV(true)
+    KDEBUG("Application initialized in %llu micros", K_RUNTIME_PROFILER_ELAPSED);
+    K_FRAME_POP_WITH(true)
 }
 
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
-    BKS_TRACE_PUSHA("0x%p", event)
+    K_FRAME_PUSH_WITH("0x%p", event)
 
     global->application.paused = true;
 
     global->application.frame.per_second = 0;
     global->application.simulation.per_second = 0;
-    BKSINFO("Simulation paused")
+    KINFO("Simulation paused")
 
-    BKS_TRACE_POPV(TL_EVENT_NOT_CONSUMED)
+    K_FRAME_POP_WITH(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_closed(const TLEvent *event) {
-    BKS_TRACE_PUSHA("0x%p", event)
+    K_FRAME_PUSH_WITH("0x%p", event)
 
     global->application.running = false;
 
-    BKS_TRACE_POPV(TL_EVENT_NOT_CONSUMED)
+    K_FRAME_POP_WITH(TL_EVENT_NOT_CONSUMED)
 }
 
 static TLEventStatus tl_process_window_restored(const TLEvent *event) {
-    BKS_TRACE_PUSHA("0x%p", event)
+    K_FRAME_PUSH_WITH("0x%p", event)
 
     global->application.paused = false;
-    BKSINFO("Simulation resumed")
+    KINFO("Simulation resumed")
 
-    BKS_TRACE_POPV(TL_EVENT_NOT_CONSUMED)
+    K_FRAME_POP_WITH(TL_EVENT_NOT_CONSUMED)
 }
 
 b8 tl_application_initialize(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
     global->application.frame.number = 0;
     global->application.frame.overflow = 0;
@@ -83,26 +83,26 @@ b8 tl_application_initialize(void) {
     global->application.simulation.overflow = 0;
     global->application.simulation.per_second = 0;
 
-    global->application.arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
+    global->application.arena = tl_memory_arena_create(K_MEBI_BYTES(10));
 
     tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
     tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
     tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
 
 
-    BKSDEBUG("Engine initialized in %llu micros", BKS_PROFILER_MICROS);
-    BKS_TRACE_POPV(true)
+    KDEBUG("Engine initialized in %llu micros", K_RUNTIME_PROFILER_ELAPSED);
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_application_run(void) {
-    BKS_TRACE_PUSH
-    BKSClock t1, t2;
-    bks_time_clock(&t1);
+    K_FRAME_PUSH
+    KClock t1, t2;
+    k_time_clock(&t1);
 
     f64 accumulator = 0.0f;
     f64 lastTime = glfwGetTime();
 
-    global->application.frame.arena = tl_memory_arena_create(BKS_MEBI_BYTES(10));
+    global->application.frame.arena = tl_memory_arena_create(K_MEBI_BYTES(10));
 
     glfwShowWindow(global->platform.window.handle);
     while (global->application.running) {
@@ -113,7 +113,7 @@ b8 tl_application_run(void) {
             global->application.frame.number++;
             if (global->application.frame.number == 0) {
                 global->application.frame.overflow++;
-                BKSWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
+                KWARN("global->application.frame.overflow = %u", global->application.frame.overflow)
             }
 
             // =========================================================
@@ -124,7 +124,7 @@ b8 tl_application_run(void) {
                 global->application.simulation.number++;
                 if (global->application.simulation.number == 0) {
                     global->application.simulation.overflow++;
-                    BKSWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
+                    KWARN("global->application.simulation.overflow = %u", global->application.simulation.overflow)
                 }
 
                 global->application.simulation.per_second++;
@@ -156,10 +156,10 @@ b8 tl_application_run(void) {
         // =========================================================
         // FPS calculation
         // =========================================================
-        bks_time_clock(&t2);
+        k_time_clock(&t2);
         if (t1.second != t2.second) {
-            bks_memory_copy(&t1, &t2, sizeof(BKSClock));
-            BKSDEBUG("FPS %llu, UPS %llu", global->application.frame.per_second, global->application.simulation.per_second);
+            k_memory_copy(&t1, &t2, sizeof(KClock));
+            KDEBUG("FPS %llu, UPS %llu", global->application.frame.per_second, global->application.simulation.per_second);
             global->application.frame.per_second = global->application.simulation.per_second = 0;
         }
         // =========================================================
@@ -175,11 +175,11 @@ b8 tl_application_run(void) {
     global->application.simulation.per_second = 0;
     glfwHideWindow(global->platform.window.handle);
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_application_terminate(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
     if (global->application.frame.arena != NULL) {
         tl_memory_arena_destroy(global->application.frame.arena);
@@ -196,6 +196,6 @@ b8 tl_application_terminate(void) {
         global->application.arena = NULL;
     }
 
-    BKSDEBUG("Engine terminated in %llu micros", BKS_PROFILER_MICROS);
-    BKS_TRACE_POPV(true)
+    KDEBUG("Engine terminated in %llu micros", K_RUNTIME_PROFILER_ELAPSED);
+    K_FRAME_POP_WITH(true)
 }

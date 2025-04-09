@@ -10,3 +10,6 @@
 [submodule "engine/libs/liblua"]
 	path = engine/libs/liblua
 	url = https://github.com/bkaraujo/Lua
+[submodule "engine/libs/libk"]
+	path = engine/libs/libk
+	url = git@github.com:bkaraujo/libk.git

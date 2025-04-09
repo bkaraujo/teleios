@@ -3,10 +3,10 @@
 #include "teleios/runtime/libs.h"
 #include "teleios/globals.h"
 
-#define TLSCRIPTERR(s) BKS_TRACE_POPV(luaL_error(state, s))
+#define TLSCRIPTERR(s) K_FRAME_POP_WITH(luaL_error(state, s))
 
 static i32 tl_script__application_exit(lua_State *state) {
-    BKS_TRACE_PUSHA("0x%p", state)
+    K_FRAME_PUSH_WITH("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -18,11 +18,11 @@ static i32 tl_script__application_exit(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    BKS_TRACE_POPV(0)
+    K_FRAME_POP_WITH(0)
 }
 
 static i32 tl_script__is_key_pressed(lua_State *state) {
-    BKS_TRACE_PUSHA("0x%p", state)
+    K_FRAME_PUSH_WITH("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -36,11 +36,11 @@ static i32 tl_script__is_key_pressed(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    BKS_TRACE_POPV(1)
+    K_FRAME_POP_WITH(1)
 }
 
 static i32 tl_script__is_key_released(lua_State *state) {
-    BKS_TRACE_PUSHA("0x%p", state)
+    K_FRAME_PUSH_WITH("0x%p", state)
     // =========================================================================
     // Parameters validation
     // =========================================================================
@@ -54,18 +54,18 @@ static i32 tl_script__is_key_released(lua_State *state) {
     // =========================================================================
     // LUA stack push
     // =========================================================================
-    BKS_TRACE_POPV(1)
+    K_FRAME_POP_WITH(1)
 }
 
 b8 tl_script_initialize(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
-    BKSTRACE("Initializing Script Engine");
+    KTRACE("Initializing Script Engine");
 
-    BKSDEBUG("LUA_VERSION %s.%s.%s", LUA_VERSION_MAJOR, LUA_VERSION_MINOR, LUA_VERSION_RELEASE);
+    KDEBUG("LUA_VERSION %s.%s.%s", LUA_VERSION_MAJOR, LUA_VERSION_MINOR, LUA_VERSION_RELEASE);
     global->platform.script.state = luaL_newstate();
     if (global->platform.script.state == NULL) {
-        BKSERROR("Failed to initialize LUA")
+        KERROR("Failed to initialize LUA")
     }
 
     luaL_openlibs(global->platform.script.state);
@@ -87,13 +87,13 @@ b8 tl_script_initialize(void) {
     luaL_newlib(global->platform.script.state, teleios_application);
     lua_setglobal(global->platform.script.state, "teleios_application");
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_script_terminate(void) {
-    BKS_TRACE_PUSH
-    BKSTRACE("Terminating Script Engine");
+    K_FRAME_PUSH
+    KTRACE("Terminating Script Engine");
     lua_close(global->platform.script.state);
     global->platform.script.state = NULL;
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }

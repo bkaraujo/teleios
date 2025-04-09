@@ -2,22 +2,22 @@
 #include "teleios/globals.h"
 
 b8 tl_platform_initialize(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
-    BKSDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
+    KDEBUG("GLFW_VERSION %d.%d.%d", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION)
 
-    BKSTRACE("Initializing GLFW");
+    KTRACE("Initializing GLFW");
     if (!glfwInit()) {
-        BKSERROR("Failed to initialize GLFW")
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to initialize GLFW")
+        K_FRAME_POP_WITH(false)
     }
 
-    BKSDEBUG("Platform initialized in %llu micros", BKS_PROFILER_MICROS);
-    BKS_TRACE_POPV(true)
+    KDEBUG("Platform initialized in %llu micros", K_RUNTIME_PROFILER_ELAPSED);
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_platform_terminate(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
     glfwTerminate();
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }

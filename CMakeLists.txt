@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.30)
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_BUILD_TYPE debug)
 
 project(teleios C)
+# ==========================================
+#
+#                   LIBK
+#
+# ==========================================
+add_subdirectory(engine/libs/libk)
+include_directories(engine/libs/libk/src/main)
 # ==========================================
 #
 #                   GLFW
@@ -53,6 +60,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "teleios")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-unused-parameter")
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra)
 
+target_link_libraries(${PROJECT_NAME} libk)
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} cglm)
 target_link_libraries(${PROJECT_NAME} yaml)

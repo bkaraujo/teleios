@@ -116,7 +116,7 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
 }
 
 static b8 tl_window_create(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -146,8 +146,8 @@ static b8 tl_window_create(void) {
     );
 
     if (global->platform.window.handle == NULL) {
-        BKSERROR("Failed to create GLFW window");
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to create GLFW window");
+        K_FRAME_POP_WITH(false)
     }
     // --------------------------------------------------------------------------------------
     // Cache state
@@ -182,7 +182,7 @@ static b8 tl_window_create(void) {
     glfwSetScrollCallback           (global->platform.window.handle, tl_window_callback_input_cursor_scroll);
     glfwSetCursorEnterCallback      (global->platform.window.handle, tl_window_callback_input_cursor_entered);
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 // #####################################################################################################################
 //
@@ -190,14 +190,14 @@ static b8 tl_window_create(void) {
 //
 // #####################################################################################################################
 b8 tl_runtime_initialize(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
     if (global->properties == NULL || tl_map_length(global->properties) == 0) {
-        BKSERROR("Failed to read runtime properties")
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to read runtime properties")
+        K_FRAME_POP_WITH(false)
     }
 
-    TLMemoryArena *scrape = tl_memory_arena_create(BKS_MEBI_BYTES(1));
+    TLMemoryArena *scrape = tl_memory_arena_create(K_MEBI_BYTES(1));
     TLIterator *it = tl_map_keys(scrape, global->properties);
     for (TLString* key = tl_iterator_next(it); key != NULL; key = tl_iterator_next(it)) {
         if (tl_string_start_with(key, "application.scenes.")) continue;
@@ -205,33 +205,33 @@ b8 tl_runtime_initialize(void) {
 
         if (tl_string_equals(key, "application.version")) {
             global->application.version = tl_string_wrap(global->arena, value);
-            BKSTRACE("global->application.version = %s", tl_string(global->application.version))
+            KTRACE("global->application.version = %s", tl_string(global->application.version))
             continue;
         }
 
         if ( ! tl_string_start_with(key, "engine.")) continue;
 
         if (tl_string_equals(key, "engine.logging.level")) {
-            if (tl_char_equals(value, "verbose")) { bks_logger_loglevel(BKS_LOG_LEVEL_VERBOSE); continue; }
-            if (tl_char_equals(value,   "trace")) { bks_logger_loglevel(  BKS_LOG_LEVEL_TRACE); continue; }
-            if (tl_char_equals(value,   "debug")) { bks_logger_loglevel(  BKS_LOG_LEVEL_DEBUG); continue; }
-            if (tl_char_equals(value,    "info")) { bks_logger_loglevel(   BKS_LOG_LEVEL_INFO); continue; }
-            if (tl_char_equals(value,    "warn")) { bks_logger_loglevel(   BKS_LOG_LEVEL_WARN); continue; }
-            if (tl_char_equals(value,   "error")) { bks_logger_loglevel(  BKS_LOG_LEVEL_ERROR); continue; }
-            if (tl_char_equals(value,   "fatal")) { bks_logger_loglevel(  BKS_LOG_LEVEL_FATAL); continue; }
+            if (tl_char_equals(value, "verbose")) { k_logger_loglevel(K_LOG_LEVEL_VERBOSE); continue; }
+            if (tl_char_equals(value,   "trace")) { k_logger_loglevel(  K_LOG_LEVEL_TRACE); continue; }
+            if (tl_char_equals(value,   "debug")) { k_logger_loglevel(  K_LOG_LEVEL_DEBUG); continue; }
+            if (tl_char_equals(value,    "info")) { k_logger_loglevel(   K_LOG_LEVEL_INFO); continue; }
+            if (tl_char_equals(value,    "warn")) { k_logger_loglevel(   K_LOG_LEVEL_WARN); continue; }
+            if (tl_char_equals(value,   "error")) { k_logger_loglevel(  K_LOG_LEVEL_ERROR); continue; }
+            if (tl_char_equals(value,   "fatal")) { k_logger_loglevel(  K_LOG_LEVEL_FATAL); continue; }
         }
 
 
         if (tl_string_start_with(key, "engine.graphics.")) {
             if (tl_string_equals(key, "engine.graphics.vsync")) {
                 global->platform.graphics.vsync = tl_char_equals(value, "true");
-                BKSTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
+                KTRACE("global->platform.graphics.vsync = %d", global->platform.graphics.vsync)
                 continue;
             }
 
             if (tl_string_equals(key, "engine.graphics.wireframe")) {
                 global->platform.graphics.wireframe = tl_char_equals(value, "true");
-                BKSTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
+                KTRACE("global->platform.graphics.wireframe = %d", global->platform.graphics.wireframe)
                 continue;
             }
         }
@@ -240,12 +240,12 @@ b8 tl_runtime_initialize(void) {
             if (tl_string_equals(key, "engine.simulation.step")) {
                 u8 step = strtol(value, (void*)(value + tl_char_length(value)), 10);
                 if (step == 0) {
-                    BKSWARN("Failed to read [%s] assuming 24", tl_string(key));
+                    KWARN("Failed to read [%s] assuming 24", tl_string(key));
                     step = 24;
                 }
 
                 global->application.simulation.step = 1.0f / (f64) step;
-                BKSTRACE("global->simulation.step = %f", global->application.simulation.step)
+                KTRACE("global->simulation.step = %f", global->application.simulation.step)
                 continue;
             }
         }
@@ -253,7 +253,7 @@ b8 tl_runtime_initialize(void) {
         if (tl_string_start_with(key, "engine.window.")) {
             if (tl_string_equals(key, "engine.window.title")) {
                 global->platform.window.title = tl_string_clone(global->arena, value);
-                BKSTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
+                KTRACE("global->platform.window.title = %s", tl_string(global->platform.window.title))
                 continue;
             }
 
@@ -265,7 +265,7 @@ b8 tl_runtime_initialize(void) {
                 if (tl_char_equals(value, "UHD")) { global->platform.window.size.x = TL_VIDEO_RESOLUTION_UHD; }
 
                 global->platform.window.size.y = (global->platform.window.size.x * 9) / 16;
-                BKSTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
+                KTRACE("global->platform.window.size = %u x %u", global->platform.window.size.x, global->platform.window.size.y)
                 continue;
             }
         }
@@ -273,46 +273,46 @@ b8 tl_runtime_initialize(void) {
     tl_memory_arena_destroy(scrape);
 
     if (!tl_thread_initialize()) {
-        BKSERROR("Failed to initialize threadpool")
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to initialize threadpool")
+        K_FRAME_POP_WITH(false)
     }
 
     if (!tl_window_create()) {
-        BKSERROR("Failed to create application window");
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to create application window");
+        K_FRAME_POP_WITH(false)
     }
 
     if (!tl_script_initialize()) {
-        BKSERROR("Failed to initialize script engine");
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to initialize script engine");
+        K_FRAME_POP_WITH(false)
     }
 
     if (!tl_graphics_initialize()) {
-        BKSERROR("Failed to initialize Graphics API")
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to initialize Graphics API")
+        K_FRAME_POP_WITH(false)
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_runtime_terminate(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
 
     if (!tl_script_terminate()) {
-        BKSERROR("Failed to terminate script engine");
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to terminate script engine");
+        K_FRAME_POP_WITH(false)
     }
 
     if (!tl_graphics_terminate()) {
-        BKSERROR("Failed to terminate graphics engine");
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to terminate graphics engine");
+        K_FRAME_POP_WITH(false)
     }
 
 
     if (!tl_thread_terminate()) {
-        BKSERROR("Failed to terminate threadpool")
-        BKS_TRACE_POPV(false)
+        KERROR("Failed to terminate threadpool")
+        K_FRAME_POP_WITH(false)
     }
 
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }

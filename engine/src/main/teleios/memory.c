@@ -17,52 +17,52 @@ struct TLMemoryArena {
 static TLMemoryArena *arenas[U8_MAX];
 
 b8 tl_memory_initialize(void) {
-    BKS_TRACE_PUSH
-    bks_memory_set(arenas, 0, sizeof(arenas));
-    BKS_TRACE_POPV(true)
+    K_FRAME_PUSH
+    k_memory_set(arenas, 0, sizeof(arenas));
+    K_FRAME_POP_WITH(true)
 }
 
 b8 tl_memory_terminate(void) {
-    BKS_TRACE_PUSH
+    K_FRAME_PUSH
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arenas[i] != NULL) {
-            BKSERROR("TLMemoryArena 0x%p is live", arenas[i]);
+            KERROR("TLMemoryArena 0x%p is live", arenas[i]);
         }
     }
-    BKS_TRACE_POPV(true)
+    K_FRAME_POP_WITH(true)
 }
 
 static const char* tl_memory_name(const TLMemoryTag tag) {
-    BKS_TRACE_PUSHA("%d", tag)
+    K_FRAME_PUSH_WITH("%d", tag)
     switch (tag) {
-        case TL_MEMORY_BLOCK                : BKS_TRACE_POPV("TL_MEMORY_BLOCK")
-        case TL_MEMORY_SERIALIZER           : BKS_TRACE_POPV("TL_MEMORY_SERIALIZER")
-        case TL_MEMORY_CONTAINER_LIST       : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_LIST")
-        case TL_MEMORY_CONTAINER_STACK      : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_STACK")
-        case TL_MEMORY_CONTAINER_NODE       : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_NODE")
-        case TL_MEMORY_CONTAINER_MAP        : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_MAP")
-        case TL_MEMORY_CONTAINER_MAP_ENTRY  : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_MAP_ENTRY")
-        case TL_MEMORY_CONTAINER_ITERATOR   : BKS_TRACE_POPV("TL_MEMORY_CONTAINER_ITERATOR")
-        case TL_MEMORY_STRING               : BKS_TRACE_POPV("TL_MEMORY_STRING")
-        case TL_MEMORY_PROFILER             : BKS_TRACE_POPV("TL_MEMORY_PROFILER")
-        case TL_MEMORY_SCENE                : BKS_TRACE_POPV("TL_MEMORY_SCENE")
-        case TL_MEMORY_ECS_COMPONENT        : BKS_TRACE_POPV("TL_MEMORY_ECS_COMPONENT")
-        case TL_MEMORY_ULID                 : BKS_TRACE_POPV("TL_MEMORY_ULID")
-        case TL_MEMORY_THREAD               : BKS_TRACE_POPV("TL_MEMORY_THREAD")
-        case TL_MEMORY_MAXIMUM              : BKS_TRACE_POPV("TL_MEMORY_MAXIMUM")
+        case TL_MEMORY_BLOCK                : K_FRAME_POP_WITH("TL_MEMORY_BLOCK")
+        case TL_MEMORY_SERIALIZER           : K_FRAME_POP_WITH("TL_MEMORY_SERIALIZER")
+        case TL_MEMORY_CONTAINER_LIST       : K_FRAME_POP_WITH("TL_MEMORY_CONTAINER_LIST")
+        case TL_MEMORY_CONTAINER_STACK      : K_FRAME_POP_WITH("TL_MEMORY_CONTAINER_STACK")
+        case TL_MEMORY_CONTAINER_NODE       : K_FRAME_POP_WITH("TL_MEMORY_CONTAINER_NODE")
+        case TL_MEMORY_CONTAINER_MAP        : K_FRAME_POP_WITH("TL_MEMORY_CONTAINER_MAP")
+        case TL_MEMORY_CONTAINER_MAP_ENTRY  : K_FRAME_POP_WITH("TL_MEMORY_CONTAINER_MAP_ENTRY")
+        case TL_MEMORY_CONTAINER_ITERATOR   : K_FRAME_POP_WITH("TL_MEMORY_CONTAINER_ITERATOR")
+        case TL_MEMORY_STRING               : K_FRAME_POP_WITH("TL_MEMORY_STRING")
+        case TL_MEMORY_PROFILER             : K_FRAME_POP_WITH("TL_MEMORY_PROFILER")
+        case TL_MEMORY_SCENE                : K_FRAME_POP_WITH("TL_MEMORY_SCENE")
+        case TL_MEMORY_ECS_COMPONENT        : K_FRAME_POP_WITH("TL_MEMORY_ECS_COMPONENT")
+        case TL_MEMORY_ULID                 : K_FRAME_POP_WITH("TL_MEMORY_ULID")
+        case TL_MEMORY_THREAD               : K_FRAME_POP_WITH("TL_MEMORY_THREAD")
+        case TL_MEMORY_MAXIMUM              : K_FRAME_POP_WITH("TL_MEMORY_MAXIMUM")
     }
 
-    BKS_TRACE_POPV("TL_MEMORY_???")
+    K_FRAME_POP_WITH("TL_MEMORY_???")
 }
 
 TLMemoryArena* tl_memory_arena_create(const u64 size) {
-    BKS_TRACE_PUSHA("%d", size)
+    K_FRAME_PUSH_WITH("%d", size)
     // ----------------------------------------------------------
     // Create the memory arena
     // ----------------------------------------------------------
-    TLMemoryArena *arena = bks_memory_alloc(sizeof(TLMemoryArena));
-    if (arena == NULL) BKSFATAL("Failed to allocate TLMemoryArena");
-    bks_memory_set(arena, 0, sizeof(TLMemoryArena));
+    TLMemoryArena *arena = k_memory_alloc(sizeof(TLMemoryArena));
+    if (arena == NULL) KFATAL("Failed to allocate TLMemoryArena");
+    k_memory_set(arena, 0, sizeof(TLMemoryArena));
     arena->page_size = size;
     // ----------------------------------------------------------
     // Keep track of the created arena
@@ -70,27 +70,27 @@ TLMemoryArena* tl_memory_arena_create(const u64 size) {
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arenas[i] == NULL) {
             arenas[i] = arena;
-            BKSDEBUG("TLMemoryArena 0x%p created with page length of %d bytes", arena, arena->page_size)
-            BKS_TRACE_POPV(arena)
+            KDEBUG("TLMemoryArena 0x%p created with page length of %d bytes", arena, arena->page_size)
+            K_FRAME_POP_WITH(arena)
         }
     }
 
-    BKSFATAL("Failed to allocate TLMemoryArena");
+    KFATAL("Failed to allocate TLMemoryArena");
 }
 
 void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag tag) {
-    BKS_TRACE_PUSHA("0x%p, %llu, %d", arena, size, tag)
+    K_FRAME_PUSH_WITH("0x%p, %llu, %d", arena, size, tag)
     // -------------------------------------------------
     // Ensure that the Arena can hold the desired length
     // -------------------------------------------------
     if (size == 0) {
-        BKSFATAL("TLMemoryArena 0x%p allocation length must be greater then 0", arena)
-        BKS_TRACE_POPV(NULL)
+        KFATAL("TLMemoryArena 0x%p allocation length must be greater then 0", arena)
+        K_FRAME_POP_WITH(NULL)
     }
 
     if (size > arena->page_size) {
-        BKSFATAL("TLMemoryArena with page length of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
-        BKS_TRACE_POPV(NULL)
+        KFATAL("TLMemoryArena with page length of %d bytes. It cannot allocate %d bytes", arena, arena->page_size, size)
+        K_FRAME_POP_WITH(NULL)
     }
     // -------------------------------------------------
     // Find a suitable TLMemoryPage within the arena
@@ -100,9 +100,9 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
 
         // Initialize a new TLMemoryPage
         if (arena->page[i].payload == NULL) {
-            arena->page[i].payload = bks_memory_alloc(arena->page_size);
-            BKSTRACE("TLMemoryArena 0x%p initializing page %d at 0x%p", arena, i, arena->page[i].payload)
-            bks_memory_set(arena->page[i].payload, 0, arena->page_size);
+            arena->page[i].payload = k_memory_alloc(arena->page_size);
+            KTRACE("TLMemoryArena 0x%p initializing page %d at 0x%p", arena, i, arena->page[i].payload)
+            k_memory_set(arena->page[i].payload, 0, arena->page_size);
 
             found = i;
             break;
@@ -116,8 +116,8 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
     }
 
     if (found == U8_MAX) {
-        BKSWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
-        BKS_TRACE_POPV(NULL)
+        KWARN("TLMemoryArena 0x%p no suitable TLMemoryPage", arena)
+        K_FRAME_POP_WITH(NULL)
     }
     // -------------------------------------------------
     // Adjust the TLMemoryArena internal state
@@ -133,76 +133,76 @@ void *tl_memory_alloc(TLMemoryArena *arena, const u64 size, const TLMemoryTag ta
     // -------------------------------------------------
     // Hand out the memory pointer
     // -------------------------------------------------
-    BKS_TRACE_POPV(address)
+    K_FRAME_POP_WITH(address)
 }
 
-BKS_INLINE static u8 tl_memory_arena_get_index(const TLMemoryArena *arena) {
-    BKS_TRACE_PUSHA("0x%p", arena)
+K_INLINE static u8 tl_memory_arena_get_index(const TLMemoryArena *arena) {
+    K_FRAME_PUSH_WITH("0x%p", arena)
 
     if (arena == NULL) {
-        BKSWARN("TLMemoryArena is NULL")
-        BKS_TRACE_POPV(false)
+        KWARN("TLMemoryArena is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     for (u8 i = 0 ; i < U8_MAX ; ++i) {
         if (arenas[i] == NULL) continue;
         if (arenas[i] == arena) {
-            BKS_TRACE_POPV(i)
+            K_FRAME_POP_WITH(i)
         }
     }
 
-    BKSFATAL("TLMemoryArena 0x%p not found", arena)
+    KFATAL("TLMemoryArena 0x%p not found", arena)
 }
 
-BKS_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
-    BKS_TRACE_PUSHA("%d", index)
+K_INLINE static void tl_memory_arena_do_destroy(const u8 index) {
+    K_FRAME_PUSH_WITH("%d", index)
     TLMemoryArena *arena = arenas[index];
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload != NULL) {
-            BKSDEBUG("TLMemoryArena 0x%p releasing page %d at 0x%p", arena, i, arena->page[i].payload)
-            bks_memory_free(arena->page[i].payload);
+            KDEBUG("TLMemoryArena 0x%p releasing page %d at 0x%p", arena, i, arena->page[i].payload)
+            k_memory_free(arena->page[i].payload);
             arena->page[i].payload = NULL;
         }
     }
 
     for (u32 i = 0 ; i < TL_MEMORY_MAXIMUM ; ++i) {
         if (arenas[index]->tagged_size[i] != 0) {
-            BKSVERBOSE("TLMemoryArena 0x%p at %-30s: [%03d] %llu bytes", arena, tl_memory_name(i), arena->tagged_count[i], arena->tagged_size[i]);
+            KVERBOSE("TLMemoryArena 0x%p at %-30s: [%03d] %llu bytes", arena, tl_memory_name(i), arena->tagged_count[i], arena->tagged_size[i]);
         }
     }
 
-    bks_memory_free(arena);
+    k_memory_free(arena);
     arenas[index] = NULL;
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void tl_memory_arena_reset(TLMemoryArena *arena) {
-    BKS_TRACE_PUSHA("0x%p", arena)
+    K_FRAME_PUSH_WITH("0x%p", arena)
     for (u32 i = 0 ; i < TL_ARR_LENGTH(arena->page, TLMemoryPage) ; ++i) {
         if (arena->page[i].payload == NULL) break;
 
         arena->page[i].index = 0;
         tl_memory_set(arena->page[i].payload, 0, arena->page_size);
     }
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void tl_memory_arena_destroy(TLMemoryArena *arena) {
-    BKS_TRACE_PUSHA("0x%p", arena)
+    K_FRAME_PUSH_WITH("0x%p", arena)
     const u8 index = tl_memory_arena_get_index(arena);
     tl_memory_arena_do_destroy(index);
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void tl_memory_set(void *block, const i32 value, const u64 size) {
-    BKS_TRACE_PUSHA("0x%p, %d, %llu", block, value, size)
-    bks_memory_set(block, value, size);
-    BKS_TRACE_POP
+    K_FRAME_PUSH_WITH("0x%p, %d, %llu", block, value, size)
+    k_memory_set(block, value, size);
+    K_FRAME_POP
 }
 
 void tl_memory_copy(void *target, void *source, const u64 size) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p, %llu", target, source, size)
-    bks_memory_copy(target, source, size);
-    BKS_TRACE_POP
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, %llu", target, source, size)
+    k_memory_copy(target, source, size);
+    K_FRAME_POP
 }

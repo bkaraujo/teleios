@@ -8,13 +8,13 @@
 // #####################################################################################################################
 struct TLIterator {u64 capacity; u64 length; void* node; void* (*next)(TLIterator*); };
 void* tl_iterator_next(TLIterator* iterator) {
-    BKS_TRACE_PUSHA("0x%p", iterator)
+    K_FRAME_PUSH_WITH("0x%p", iterator)
     if (iterator == NULL || iterator->node == NULL) {
-        BKS_TRACE_POPV(NULL)
+        K_FRAME_POP_WITH(NULL)
     }
 
     void *next = iterator->next(iterator);
-    BKS_TRACE_POPV(next)
+    K_FRAME_POP_WITH(next)
 }
 // #####################################################################################################################
 //
@@ -35,67 +35,67 @@ struct TLList {
 } ;
 
 static struct TLNode* tl_list_create_node(TLMemoryArena *arena, void *value) {
-    BKS_TRACE_PUSHA("0x%p, 0X%p", arena, value)
+    K_FRAME_PUSH_WITH("0x%p, 0X%p", arena, value)
 
     struct TLNode* created = tl_memory_alloc(arena, sizeof(struct TLNode), TL_MEMORY_CONTAINER_NODE);
-    if (created == NULL) BKSFATAL("Failed to allocate struct TLNode")
+    if (created == NULL) KFATAL("Failed to allocate struct TLNode")
     created->payload = value;
 
-    BKS_TRACE_POPV(created)
+    K_FRAME_POP_WITH(created)
 }
 
 TLList* tl_list_create(TLMemoryArena *arena) {
-    BKS_TRACE_PUSHA("0x%p", arena)
+    K_FRAME_PUSH_WITH("0x%p", arena)
     TLList* list = tl_memory_alloc(arena, sizeof(TLList), TL_MEMORY_CONTAINER_LIST);
     if (list == NULL) {
-        BKSERROR("Failed to allocate TLList")
-        BKS_TRACE_POPV(NULL)
+        KERROR("Failed to allocate TLList")
+        K_FRAME_POP_WITH(NULL)
     }
 
     list->arena = arena;
     list->length = 0;
 
-    BKS_TRACE_POPV(list)
+    K_FRAME_POP_WITH(list)
 }
 
 u64 tl_list_length(TLList* list) {
-    BKS_TRACE_PUSHA("0x%p", list)
-    BKS_TRACE_POPV(list->length)
+    K_FRAME_PUSH_WITH("0x%p", list)
+    K_FRAME_POP_WITH(list->length)
 }
 
 void* tl_list_search(TLList* list, b8 (*PFN_filter)(void *value)) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", list, PFN_filter)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", list, PFN_filter)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POPV(NULL)
+        KERROR("TLList is NULL")
+        K_FRAME_POP_WITH(NULL)
     }
 
     if (PFN_filter == NULL) {
-        BKSERROR("PFN_filter is null")
-        BKS_TRACE_POPV(NULL)
+        KERROR("PFN_filter is null")
+        K_FRAME_POP_WITH(NULL)
     }
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (PFN_filter(node->payload)) {
-            BKS_TRACE_POPV(node->payload);
+            K_FRAME_POP_WITH(node->payload);
         }
 
         node = node->next;
     }
 
-    BKS_TRACE_POPV(NULL)
+    K_FRAME_POP_WITH(NULL)
 }
 
 void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", list, PFN_handler)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", list, PFN_handler)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POP
+        KERROR("TLList is NULL")
+        K_FRAME_POP
     }
     if (PFN_handler == NULL) {
-        BKSERROR("PFN_handler is NULL")
-        BKS_TRACE_POP
+        KERROR("PFN_handler is NULL")
+        K_FRAME_POP
     }
 
     const struct TLNode* node = list->head;
@@ -104,19 +104,19 @@ void tl_list_foreach(TLList* list, void (*PFN_handler)(void *value)) {
         node = node->next;
     }
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void tl_list_add(TLList* list, void *value) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", list, value)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", list, value)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POP
+        KERROR("TLList is NULL")
+        K_FRAME_POP
     }
 
     if (value == NULL) {
-        BKSERROR("value is NULL")
-        BKS_TRACE_POP
+        KERROR("value is NULL")
+        K_FRAME_POP
     }
 
     struct TLNode* created = tl_list_create_node(list->arena, value);
@@ -125,7 +125,7 @@ void tl_list_add(TLList* list, void *value) {
         list->length++;
         list->head = created;
         list->tail = created;
-        BKS_TRACE_POP
+        K_FRAME_POP
     }
 
     if (list->head == list->tail) {
@@ -133,7 +133,7 @@ void tl_list_add(TLList* list, void *value) {
         list->tail = created;
         list->tail->previous = list->head;
         list->head->next = list->tail;
-        BKS_TRACE_POP
+        K_FRAME_POP
     }
 
     list->length++;
@@ -141,24 +141,24 @@ void tl_list_add(TLList* list, void *value) {
     list->tail->next = created;
     list->tail = created;
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void tl_list_remove(TLList* list, void *value) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", list, value)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", list, value)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POP
+        KERROR("TLList is NULL")
+        K_FRAME_POP
     }
 
     if (list->head == NULL) {
-        BKSERROR("TLList is empty")
-        BKS_TRACE_POP
+        KERROR("TLList is empty")
+        K_FRAME_POP
     }
 
     if (value == NULL) {
-        BKSERROR("value is NULL")
-        BKS_TRACE_POP
+        KERROR("value is NULL")
+        K_FRAME_POP
     }
 
     if (list->length == 1) {
@@ -167,10 +167,10 @@ void tl_list_remove(TLList* list, void *value) {
             list->head = NULL;
             list->tail = NULL;
         } else {
-            BKSWARN("The TLList 0x%p does not contain 0x%p", list, value)
+            KWARN("The TLList 0x%p does not contain 0x%p", list, value)
         }
 
-        BKS_TRACE_POP
+        K_FRAME_POP
     }
 
     if (list->tail->payload == value) {
@@ -178,7 +178,7 @@ void tl_list_remove(TLList* list, void *value) {
         list->tail->previous->next = NULL;
         list->tail = list->tail->previous;
 
-        BKS_TRACE_POP
+        K_FRAME_POP
     }
 
     const struct TLNode* node = list->head;
@@ -195,29 +195,29 @@ void tl_list_remove(TLList* list, void *value) {
         node = node->next;
     }
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 b8 tl_list_after(TLList* list, void *item, void *value) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p, 0x%p", list, item, value)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("TLList is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     if (list->head == NULL) {
-        BKSERROR("TLList is empty")
-        BKS_TRACE_POPV(false)
+        KERROR("TLList is empty")
+        K_FRAME_POP_WITH(false)
     }
 
     if (item == NULL) {
-        BKSERROR("item is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("item is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     if (value == NULL) {
-        BKSERROR("value is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("value is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     struct TLNode* node = list->head;
@@ -228,35 +228,35 @@ b8 tl_list_after(TLList* list, void *item, void *value) {
             created->next = node->next;
             created->previous = node;
             node->next = created;
-            BKS_TRACE_POPV(true)
+            K_FRAME_POP_WITH(true)
         }
 
         node = node->next;
     }
 
-    BKS_TRACE_POPV(false)
+    K_FRAME_POP_WITH(false)
 }
 
 b8 tl_list_before(TLList* list, void *item, void *value) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p, 0x%p", list, item, value)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p, 0x%p", list, item, value)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("TLList is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     if (list->head == NULL) {
-        BKSERROR("TLList is empty")
-        BKS_TRACE_POPV(false)
+        KERROR("TLList is empty")
+        K_FRAME_POP_WITH(false)
     }
 
     if (item == NULL) {
-        BKSERROR("item is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("item is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     if (value == NULL) {
-        BKSERROR("value is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("value is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     struct TLNode* node = list->head;
@@ -268,53 +268,53 @@ b8 tl_list_before(TLList* list, void *item, void *value) {
             created->previous = node->previous;
             node->previous->next = created;
             node->previous = created;
-            BKS_TRACE_POPV(true)
+            K_FRAME_POP_WITH(true)
         }
 
         node = node->next;
     }
 
-    BKS_TRACE_POPV(false)
+    K_FRAME_POP_WITH(false)
 }
 
 b8 tl_list_contains(TLList* list, void *value) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", list, value)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", list, value)
     if (list == NULL) {
-        BKSERROR("TLList is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("TLList is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     if (list->head == NULL) {
-        BKSERROR("TLList is empty")
-        BKS_TRACE_POPV(false)
+        KERROR("TLList is empty")
+        K_FRAME_POP_WITH(false)
     }
 
     if (value == NULL) {
-        BKSERROR("value is NULL")
-        BKS_TRACE_POPV(false)
+        KERROR("value is NULL")
+        K_FRAME_POP_WITH(false)
     }
 
     struct TLNode* node = list->head;
     while (node != NULL) {
         if (node->payload == value) {
-            BKS_TRACE_POPV(true)
+            K_FRAME_POP_WITH(true)
         }
 
         node = node->next;
     }
 
-    BKS_TRACE_POPV(false)
+    K_FRAME_POP_WITH(false)
 
 }
 
 static void* tl_list_iterator_next(TLIterator *iterator) {
-    BKS_TRACE_PUSHA("0x%p", iterator)
+    K_FRAME_PUSH_WITH("0x%p", iterator)
     if (iterator == NULL || iterator->node == NULL) {
-        BKS_TRACE_POPV(NULL)
+        K_FRAME_POP_WITH(NULL)
     }
 
     if (iterator->length == iterator->capacity) {
-        BKS_TRACE_POPV(NULL)
+        K_FRAME_POP_WITH(NULL)
     }
 
     struct TLNode* node = iterator->node;
@@ -322,18 +322,18 @@ static void* tl_list_iterator_next(TLIterator *iterator) {
     iterator->node = node->next;
     iterator->length++;
 
-    BKS_TRACE_POPV(value)
+    K_FRAME_POP_WITH(value)
 }
 
 TLIterator* tl_list_iterator_create(TLMemoryArena *arena, TLList* list) {
-    BKS_TRACE_PUSHA("0x%p", list)
+    K_FRAME_PUSH_WITH("0x%p", list)
     TLIterator* iterator = tl_memory_alloc(arena == NULL ? list->arena : arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = 0;
     iterator->capacity = list->length;
     iterator->node = list->head;
     iterator->next = tl_list_iterator_next;
 
-    BKS_TRACE_POPV(iterator)
+    K_FRAME_POP_WITH(iterator)
 }
 // #####################################################################################################################
 //
@@ -341,47 +341,47 @@ TLIterator* tl_list_iterator_create(TLMemoryArena *arena, TLList* list) {
 //
 // #####################################################################################################################
 TLStack* tl_stack_create(TLMemoryArena *arena)  {
-    BKS_TRACE_PUSHA("0x%p", arena)
+    K_FRAME_PUSH_WITH("0x%p", arena)
     TLStack* stack = tl_memory_alloc(arena, sizeof(TLStack), TL_MEMORY_CONTAINER_STACK);
     stack = tl_list_create(arena);
-    BKS_TRACE_POPV(stack)
+    K_FRAME_POP_WITH(stack)
 }
 
 void tl_stack_push(TLStack* stack, void* value) {
-    BKS_TRACE_PUSHA("0x%p, 0x%p", stack, value)
+    K_FRAME_PUSH_WITH("0x%p, 0x%p", stack, value)
     tl_list_add(stack, value);
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void* tl_stack_peek(TLStack* stack) {
-    BKS_TRACE_PUSHA("0x%p", stack)
+    K_FRAME_PUSH_WITH("0x%p", stack)
     void* value = NULL;
     TLIterator* iterator = tl_list_iterator_create(NULL, stack);
     void* next = tl_iterator_next(iterator);
     while (next != NULL) { value = next; next = tl_iterator_next(iterator); }
-    BKS_TRACE_POPV(value)
+    K_FRAME_POP_WITH(value)
 }
 
 void* tl_stack_pop(TLStack* stack) {
-    BKS_TRACE_PUSHA("0x%p", stack)
+    K_FRAME_PUSH_WITH("0x%p", stack)
     void* value = tl_stack_peek(stack);
     tl_list_remove(stack, value);
-    BKS_TRACE_POPV(value)
+    K_FRAME_POP_WITH(value)
 }
 
 u64 tl_stack_length(TLStack* stack) {
-    BKS_TRACE_PUSHA("0x%p", stack)
-    BKS_TRACE_POPV(tl_list_length(stack))
+    K_FRAME_PUSH_WITH("0x%p", stack)
+    K_FRAME_POP_WITH(tl_list_length(stack))
 }
 
 TLIterator* tl_stack_iterator_create(TLStack* stack) {
-    BKS_TRACE_PUSHA("0x%p", stack)
+    K_FRAME_PUSH_WITH("0x%p", stack)
     TLIterator* iterator = tl_memory_alloc(stack->arena, sizeof(TLIterator), TL_MEMORY_CONTAINER_ITERATOR);
     iterator->length = 0;
     iterator->capacity = stack->length;
     iterator->node = stack->head;
     iterator->next = tl_list_iterator_next;
-    BKS_TRACE_POPV(iterator)
+    K_FRAME_POP_WITH(iterator)
 }
 // #####################################################################################################################
 //
@@ -392,31 +392,31 @@ struct TLMapEntry { TLString *key; void *payload; };
 struct TLMap { TLMemoryArena *arena; struct TLMapEntry *values; u16 size; u16 length; };
 
 TLMap* tl_map_create(TLMemoryArena *arena) {
-    BKS_TRACE_PUSHA("0x%p", arena)
-    if (arena == NULL) BKSFATAL("Arena is NULL")
+    K_FRAME_PUSH_WITH("0x%p", arena)
+    if (arena == NULL) KFATAL("Arena is NULL")
 
     TLMap *map = tl_memory_alloc(arena, sizeof(TLMap), TL_MEMORY_CONTAINER_MAP);
     map->size = 10;
     map->length = 0;
     map->arena = arena;
 
-    BKS_TRACE_POPV(map)
+    K_FRAME_POP_WITH(map)
 }
 
 void tl_map_put(TLMap* map, const char *key, void *value) {
-    BKS_TRACE_PUSHA("0x%p, %s, 0x%p", map, key, value)
-    if (map == NULL) BKSFATAL("TLMap is NULL")
-    if (key == NULL) BKSFATAL("key is NULL")
-    if (value == NULL) BKSFATAL("value is NULL")
+    K_FRAME_PUSH_WITH("0x%p, %s, 0x%p", map, key, value)
+    if (map == NULL) KFATAL("TLMap is NULL")
+    if (key == NULL) KFATAL("key is NULL")
+    if (value == NULL) KFATAL("value is NULL")
 
     if (map->values == NULL) {
-        BKSTRACE("TLMap 0x%p initialized with capacity of %d", map, map->size)
+        KTRACE("TLMap 0x%p initialized with capacity of %d", map, map->size)
         map->values = tl_memory_alloc(map->arena, map->size * sizeof(struct TLMapEntry), TL_MEMORY_CONTAINER_NODE);
     }
 
     if (map->length >= map->size) {
         u16 new_size = (u16)((f32)map->size * 1.75f) + 1;
-        BKSTRACE("TLMap 0x%p resized from %d to %d capacity", map, map->size, new_size)
+        KTRACE("TLMap 0x%p resized from %d to %d capacity", map, map->size, new_size)
         void *new_values = tl_memory_alloc(map->arena, new_size * sizeof(struct TLMapEntry), TL_MEMORY_CONTAINER_NODE);
         tl_memory_copy(new_values, map->values, map->size * sizeof(struct TLMapEntry));
         map->size = new_size;
@@ -428,46 +428,46 @@ void tl_map_put(TLMap* map, const char *key, void *value) {
         if (entry->key == NULL) continue;
         if (tl_string_equals(entry->key, key)) {
             entry->payload = value;
-            BKS_TRACE_POP
+            K_FRAME_POP
         }
     }
 
     map->values[map->length].key = tl_string_clone(map->arena, key);
     map->values[map->length].payload = value;
     map->length++;
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 void* tl_map_get(TLMap* map, const char *key) {
-    BKS_TRACE_PUSHA("0x%p, %", map, key)
-    if (map == NULL) BKSFATAL("TLMap is NULL")
-    if (key == NULL) BKSFATAL("key is NULL")
+    K_FRAME_PUSH_WITH("0x%p, %", map, key)
+    if (map == NULL) KFATAL("TLMap is NULL")
+    if (key == NULL) KFATAL("key is NULL")
 
     for (u16 i = 0; i < map->size; i++) {
         if (tl_string_equals(map->values[i].key, key)) {
-            BKS_TRACE_POPV(map->values[i].payload)
+            K_FRAME_POP_WITH(map->values[i].payload)
         }
     }
 
-    BKS_TRACE_POPV(NULL)
+    K_FRAME_POP_WITH(NULL)
 }
 
 u16 tl_map_length(TLMap* map) {
-    BKS_TRACE_PUSHA("0x%p", map)
+    K_FRAME_PUSH_WITH("0x%p", map)
     const u16 length = map->length;
-    BKS_TRACE_POPV(length)
+    K_FRAME_POP_WITH(length)
 }
 
 b8 tl_map_contains(TLMap* map, const char *key) {
-    BKS_TRACE_PUSHA("0x%p, %", map, key)
+    K_FRAME_PUSH_WITH("0x%p, %", map, key)
     b8 contains = tl_map_get(map, key) != NULL;
-    BKS_TRACE_POPV(contains)
+    K_FRAME_POP_WITH(contains)
 }
 
 void tl_map_remove(TLMap* map, const char *key) {
-    BKS_TRACE_PUSHA("0x%p, %", map, key)
-    if (map == NULL) BKSFATAL("TLMap is NULL")
-    if (key == NULL) BKSFATAL("key is NULL")
+    K_FRAME_PUSH_WITH("0x%p, %", map, key)
+    if (map == NULL) KFATAL("TLMap is NULL")
+    if (key == NULL) KFATAL("key is NULL")
 
     for (u16 i = 0; i < map->size; i++) {
         if (tl_string_equals(map->values[i].key, key)) {
@@ -486,20 +486,20 @@ void tl_map_remove(TLMap* map, const char *key) {
         }
     }
 
-    BKS_TRACE_POP
+    K_FRAME_POP
 }
 
 TLIterator* tl_map_keys(TLMemoryArena *arena, TLMap* map) {
-    BKS_TRACE_PUSHA("0x%p", map)
-    if (map == NULL) BKSFATAL("TLMap is NULL")
+    K_FRAME_PUSH_WITH("0x%p", map)
+    if (map == NULL) KFATAL("TLMap is NULL")
 
     TLList *keys = tl_list_create(map->arena);
-    if (map->length == 0) BKS_TRACE_POPV(NULL)
+    if (map->length == 0) K_FRAME_POP_WITH(NULL)
 
     for (u16 i = 0; i < map->length; ++i) {
         tl_list_add(keys, map->values[i].key);
     }
 
     TLIterator *it = tl_list_iterator_create(arena, keys);
-    BKS_TRACE_POPV(it)
+    K_FRAME_POP_WITH(it)
 }
