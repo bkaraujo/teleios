@@ -1,0 +1,43 @@
+﻿engine:
+  logging:
+    level: verbose
+  graphics:
+    vsync: false
+    wireframe: false
+  simulation:
+    step: 60
+  renderer:
+    modelMatrix: un_model
+    viewProjectionMatrix: un_viewProjection
+  window:
+    size: HD
+    title: Pong
+application:
+  scene:
+    - name: main
+      clear_color: .7, .2, .7, 1
+      depth:
+        enabled: true
+        function: LEQUAL
+      blend:
+        enabled: true
+        equation: FUNC_REVERSE_SUBTRACT
+        function:
+          source: SRC_ALPHA
+          target: ONE_MINUS_SRC_ALPHA
+      camera:
+        property:
+          - name: "depth"
+            value: "-1.0, 1.0"
+          - name: "rectangle"
+            value: "-21.0, 21.0, -21.0, 21.0"
+      actor:
+        - name: "Environment"
+          component:
+            - name: "COMPONENT_SCRIPT"
+              property:
+                - name: "path"
+                  value: "scripts/environment.lua"
+        - name: "Ball"
+        - name: "Paddle Left"
+        - name: "Paddle Right"

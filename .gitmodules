@@ -1,0 +1,12 @@
+[submodule "libs/cglm"]
+	path = libs/cglm
+	url = https://github.com/recp/cglm.git
+[submodule "libs/glfw"]
+	path = libs/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "libs/yaml"]
+	path = libs/yaml
+	url = https://github.com/yaml/libyaml
+[submodule "libs/lua"]
+	path = libs/lua
+	url = https://github.com/bkaraujo/Lua

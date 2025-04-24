@@ -1,0 +1,14 @@
+engine:
+  logging:
+    level: verbose
+  graphics:
+    vsync: false
+    wireframe: false
+  simulation:
+    step: 60
+  renderer:
+    modelMatrix: un_model
+    viewProjectionMatrix: un_viewProjection
+  window:
+    size: HD
+    title: Flappy
