@@ -1,0 +1,15 @@
+{
+    "window.zoomLevel": 0,
+    "window.zoomPerWindow": true,
+    "editor.mouseWheelZoom": false,
+    "files.associations": {
+        "defines.h": "c",
+        "ctype.h": "c",
+        "stddef.h": "c",
+        "errno.h": "c",
+        "stdio.h": "c",
+        "threads.h": "c",
+        "logger.h": "c"
+    },
+    
+}
