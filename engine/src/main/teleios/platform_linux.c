@@ -2,6 +2,11 @@
 #include "teleios/chrono.h"
 
 #if defined(K_PLATFORM_LINUX)
+
+char tl_filesystem_path_separator() {
+    return '/';
+}
+
 void tl_time_clock(TLDateTIme* clock) {
     struct timespec now = { 0 };
     if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) return;

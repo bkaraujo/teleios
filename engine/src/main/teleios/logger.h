@@ -16,7 +16,7 @@ typedef enum {
 void tl_logger_loglevel(TLLogLevel desired);
 void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const char *message, ...);
 
-#if ! defined(TL_BUILD_RELEASE)
+#if ! defined(TELEIOS_BUILD_RELEASE)
 #   define TLVERBOSE(m, ...) { tl_logger_write(TL_LOG_LEVEL_VERBOSE, __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #   define   TLTRACE(m, ...) { tl_logger_write(TL_LOG_LEVEL_TRACE  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #   define   TLDEBUG(m, ...) { tl_logger_write(TL_LOG_LEVEL_DEBUG  , __FILE__, __LINE__, m, ##__VA_ARGS__); }

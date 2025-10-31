@@ -9,7 +9,8 @@
         "errno.h": "c",
         "stdio.h": "c",
         "threads.h": "c",
-        "logger.h": "c"
+        "logger.h": "c",
+        "filesystem.h": "c"
     },
     
 }

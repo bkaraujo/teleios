@@ -1,5 +1,6 @@
 #include "teleios/logger.h"
 #include "teleios/chrono.h"
+#include "teleios/filesystem.h"
 
 static TLLogLevel m_level = TL_LOG_LEVEL_VERBOSE;
 void tl_logger_loglevel(const TLLogLevel desired){
@@ -21,11 +22,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     u16 index = 0;
     const char* character = filename;
     for (u16 i = 0; *character != '\0' ; ++character) {
-        #ifdef TL_PLATFORM_LINUX
-        if (*character == '/') { index = i + 1; }
-        #elif TL_PLATFORM_WINDOWS
-        if (*character == '\\') { index = i + 1; }
-        #endif 
+        if (*character == tl_filesystem_path_separator() ) { index = i + 1; }
         if (i++ == U16_MAX) { i = 0; }
     }
 

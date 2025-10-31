@@ -1,5 +1,7 @@
 #include "teleios/platform.h"
 #include "teleios/chrono.h"
+#include "teleios/filesystem.h"
+#ifdef TL_PLATFORM_WINDOWS
 
 static u64 qpc_freq = 0;
 static u64 qpc_to_micros_mul = 0;  // Pre-calculado
@@ -26,6 +28,10 @@ b8 tl_platform_initialize(void) {
     qpc_epoch_offset = epoch_micros - ((qpc_now.QuadPart * qpc_to_micros_mul) >> qpc_to_micros_shift);
 
     return true;
+}
+
+char tl_filesystem_path_separator() {
+    return '\\';
 }
 
 void tl_time_clock(TLDateTime* clock) {
@@ -55,3 +61,5 @@ b8 tl_platform_terminate(void) {
 
     return true;
 }
+
+#endif
