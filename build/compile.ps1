@@ -1,9 +1,17 @@
 param(
     [Parameter(Mandatory=$true)]
-    [string]$ProjectPath
+    [string]$ProjectPath,
+
+    [Parameter(Mandatory=$false)]
+    [string[]]$CompileFlags = @(),
+
+    [Parameter(Mandatory=$false)]
+    [string[]]$LinkFlags = @(),
+
+    [Parameter(Mandatory=$false)]
+    [string[]]$Defines = @()
 )
 
-$ClangCMD="C:\PROGRA~1\LLVM\bin\clang.exe"
 
 # Configurações
 $ErrorActionPreference = "Stop"
@@ -29,6 +37,7 @@ if (-not (Test-Path $SrcDir)) {
 }
 
 # Verificar se o Clang está instalível
+$ClangCMD="C:\PROGRA~1\LLVM\bin\clang.exe"
 try { $null = & $ClangCMD --version 2>&1 } 
 catch {
     Write-Error "Clang não encontrado. Certifique-se de que está instalado e no PATH."
@@ -37,18 +46,18 @@ catch {
 # ============================================================
 # Configuração do comando de compilação
 # ============================================================
-# Flags de linkagem
-$LDFLAGS = @()
+# Flags de linkagem (combinando as padrões com as passadas por parâmetro)
+$LDFLAGS = $LinkFlags
 
 # Extrair nome do executável do diretório do projeto
 $ProjectName = Split-Path $ProjectPath -Leaf
 $ExeName = Join-Path $ProjectPath "$ProjectName.exe"
 
-Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "========================================"       -ForegroundColor Cyan
 Write-Host "Compilação Incremental - Projeto: $ProjectName" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Diretório build: $BuildDir" -ForegroundColor Gray
-Write-Host "Diretório fonte: $SrcDir" -ForegroundColor Gray
+Write-Host "========================================"       -ForegroundColor Cyan
+Write-Host "Diretório build: $BuildDir"                     -ForegroundColor Gray
+Write-Host "Diretório fonte: $SrcDir"                       -ForegroundColor Gray
 Write-Host ""
 
 # Buscar todos os arquivos .c recursivamente
@@ -60,11 +69,24 @@ if ($SourceFiles.Count -eq 0) {
 }
 
 Write-Host "Encontrados $($SourceFiles.Count) arquivo(s) .c" -ForegroundColor Yellow
+
+# Detectar número de cores físicos da máquina
+$PhysicalCores = (Get-CimInstance -ClassName Win32_Processor | Measure-Object -Property NumberOfCores -Sum).Sum
+Write-Host "Cores físicos detectados: $PhysicalCores" -ForegroundColor Gray
+
+# Verificar se ThreadJob está disponível (mais rápido que Start-Job)
+$UseThreadJobs = $null -ne (Get-Command Start-ThreadJob -ErrorAction SilentlyContinue)
+if ($UseThreadJobs) {
+    Write-Host "Usando ThreadJobs para compilação paralela" -ForegroundColor Gray
+} else {
+    Write-Host "ThreadJobs não disponível, usando Jobs tradicionais" -ForegroundColor Gray
+}
 Write-Host ""
 
 # Verificar quais arquivos precisam ser recompilados
 $FilesToCompile = @()
 $ObjectFiles = @()
+$FileDependencyMap = @{}  # Mapa de dependências entre arquivos .c
 
 foreach ($srcFile in $SourceFiles) {
     # Criar caminho relativo preservando a estrutura de diretórios
@@ -114,9 +136,29 @@ foreach ($srcFile in $SourceFiles) {
             RelativePath = $relativePath
         }
     }
+
+    # Construir mapa de dependências entre arquivos .c
+    # Extrair includes de outros arquivos .c do mesmo projeto
+    $sourceContent = Get-Content $srcFile.FullName -Raw
+    $cIncludes = [regex]::Matches($sourceContent, '#include\s+"([^"]+\.c)"')
+
+    $dependencies = @()
+    foreach ($match in $cIncludes) {
+        $includedFile = $match.Groups[1].Value
+        $fullIncludePath = Join-Path (Split-Path $srcFile.FullName) $includedFile
+
+        if (Test-Path $fullIncludePath) {
+            $dependencies += $fullIncludePath
+        }
+    }
+
+    $FileDependencyMap[$srcFile.FullName] = $dependencies
 }
 
-# Compilar arquivos que precisam ser recompilados
+# ============================================================
+# Compilação Paralela com Runspace Pool
+# ============================================================
+
 $CompileSuccess = $true
 $CompiledCount = 0
 
@@ -124,53 +166,119 @@ if ($FilesToCompile.Count -eq 0) {
     Write-Host "Nenhum arquivo precisa ser recompilado." -ForegroundColor Green
 } else {
     Write-Host ""
-    Write-Host "Compilando $($FilesToCompile.Count) arquivo(s)..." -ForegroundColor Cyan
+    Write-Host "Compilando $($FilesToCompile.Count) arquivo(s) em paralelo (máx: $PhysicalCores threads)..." -ForegroundColor Cyan
     Write-Host ""
 
+    # Criar RunspacePool para paralelismo eficiente
+    $RunspacePool = [runspacefactory]::CreateRunspacePool(1, $PhysicalCores)
+    $RunspacePool.Open()
+
+    # Script block para compilação
+    $ScriptBlock = {
+        param($ClangPath, $CompileArgs, $RelativePath)
+
+        try {
+            $ErrorActionPreference = "Continue"
+            $output = & $ClangPath @CompileArgs 2>&1
+            $exitCode = $LASTEXITCODE
+            $ErrorActionPreference = "Stop"
+        } catch {
+            $output = @("Exception: $($_.Exception.Message)")
+            $exitCode = 1
+        }
+
+        return @{
+            RelativePath = $RelativePath
+            Output = $output
+            ExitCode = $exitCode
+        }
+    }
+
+    # Criar e iniciar todas as tarefas
+    $Tasks = @()
     foreach ($file in $FilesToCompile) {
-        Write-Host "Compilando: $($file.RelativePath)" -ForegroundColor White
+        Write-Host "Iniciando: $($file.RelativePath)" -ForegroundColor White
 
         # Construir comando de compilação
         $compileArgs = @(
-            "-std=c11",
-            "-Wall",
-            "-Wextra",
-            # "-Wpedantic",
-            "-fno-ms-compatibility",  # Desabilitar compatibilidade MS
-            "-Xclang", "-fcxx-exceptions",  # Permitir exceções para complex
-            "-D_CRT_USE_BUILTIN_OFFSETOF",
-            "-I$SrcDir",
-            "-MMD",
-            "-MP",
-            "-MF", $file.DepFile,
-            "-c", $file.Source,
-            "-o", $file.Object
+            "-std=c11",                          # Padrão C11
+            "-Wall",                             # Ativar todos os warnings comuns
+            "-Wextra",                           # Ativar warnings extras
+            # "-Wpedantic",                      # Warnings de conformidade estrita com o padrão
+            # "-fno-ms-compatibility",           # Desabilitar compatibilidade MS
+            "-Xclang", "-fcxx-exceptions",       # Permitir exceções C++ para _complex
+            "-D_CRT_USE_BUILTIN_OFFSETOF",       # Usar offsetof builtin do compilador
+            "-I$SrcDir"                          # Diretório de includes
         )
 
-        # Executar clang diretamente (não via Invoke-Expression)
-        try {
-            $ErrorActionPreference = "Continue"
-            $output = & $ClangCMD $compileArgs 2>&1
-            $ErrorActionPreference = "Stop"
-
-            if ($output) {
-                $output | ForEach-Object {
-                    Write-Host $_ -ForegroundColor Gray
-                }
-            }
-        } catch {
-            # Ignorar exceções do stderr
+        # Adicionar defines customizados (passados via parâmetro)
+        foreach ($define in $Defines) {
+            $compileArgs += "-D$define"
         }
 
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host ""
-            Write-Host "ERRO: Compilação falhou para $($file.RelativePath)" -ForegroundColor Red
-            $CompileSuccess = $false
-            break
-        } else {
-            $CompiledCount++
+        # Adicionar flags de compilação customizadas (passadas via parâmetro)
+        $compileArgs += $CompileFlags
+
+        # Adicionar flags de dependência e output
+        $compileArgs += @(
+            "-MMD",                              # Gerar arquivo de dependências
+            "-MP",                               # Adicionar targets phony para cada dependência
+            "-MF", $file.DepFile,                # Especificar arquivo de saída de dependências
+            "-c", $file.Source,                  # Compilar sem linkar
+            "-o", $file.Object                   # Especificar arquivo objeto de saída
+        )
+
+        # Criar PowerShell instance e configurar runspace
+        $PowerShell = [powershell]::Create()
+        $PowerShell.RunspacePool = $RunspacePool
+        $PowerShell.AddScript($ScriptBlock).AddArgument($ClangCMD).AddArgument($compileArgs).AddArgument($file.RelativePath) | Out-Null
+
+        # Adicionar à lista de tarefas
+        $Tasks += @{
+            PowerShell = $PowerShell
+            Handle = $PowerShell.BeginInvoke()
+            File = $file
         }
     }
+
+    Write-Host ""
+    Write-Host "Aguardando conclusão das compilações..." -ForegroundColor Cyan
+
+    # Aguardar conclusão de todas as tarefas
+    foreach ($task in $Tasks) {
+        try {
+            $result = $task.PowerShell.EndInvoke($task.Handle)
+            $file = $task.File
+
+            # Processar output
+            if ($null -ne $result.Output -and $result.Output.Count -gt 0) {
+                $result.Output | ForEach-Object {
+                    if ($null -ne $_) {
+                        Write-Host "  [$($result.RelativePath)] $_" -ForegroundColor Gray
+                    }
+                }
+            }
+
+            # Verificar resultado
+            if ($result.ExitCode -ne 0) {
+                Write-Host ""
+                Write-Host "ERRO: Compilação falhou para $($result.RelativePath) (Exit Code: $($result.ExitCode))" -ForegroundColor Red
+                $CompileSuccess = $false
+            } else {
+                $CompiledCount++
+            }
+        } catch {
+            Write-Host ""
+            Write-Host "ERRO: Exceção ao compilar $($task.File.RelativePath): $_" -ForegroundColor Red
+            $CompileSuccess = $false
+        } finally {
+            $task.PowerShell.Dispose()
+        }
+    }
+
+    # Fechar RunspacePool
+    $RunspacePool.Close()
+    $RunspacePool.Dispose()
 }
 
 if (-not $CompileSuccess) {
@@ -222,13 +330,13 @@ if ($needsLink) {
 
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Green
-    Write-Host "Build concluído com sucesso!" -ForegroundColor Green
+    Write-Host "Build concluído com sucesso!"             -ForegroundColor Green
     Write-Host "========================================" -ForegroundColor Green
-    Write-Host "Executável: $ExeName" -ForegroundColor Green
+    Write-Host "Executável: $ExeName"                     -ForegroundColor Green
 } else {
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Green
-    Write-Host "Build está atualizado!" -ForegroundColor Green
+    Write-Host "Build está atualizado!"                   -ForegroundColor Green
     Write-Host "========================================" -ForegroundColor Green
 }
 

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -File \".\\engine\\build.ps1\" -Clean)",
+      "Bash(powershell -File \".\\sandbox\\build.ps1\" -Clean)",
+      "Bash(Select-Object -Last 100)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

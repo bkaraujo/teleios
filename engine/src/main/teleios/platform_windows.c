@@ -1,3 +1,4 @@
+#include "teleios/logger.h"
 #include "teleios/platform.h"
 #include "teleios/chrono.h"
 #include "teleios/filesystem.h"
@@ -9,6 +10,7 @@ static u64 qpc_to_micros_shift = 0;
 static u64 qpc_epoch_offset = 0;
 
 b8 tl_platform_initialize(void) {
+    TLTRACE("tl_platform_initialize()")
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
     qpc_freq = freq.QuadPart;
     
@@ -58,7 +60,7 @@ u64 tl_time_epoch_micros(void) {
 }
 
 b8 tl_platform_terminate(void) {
-
+    TLTRACE("tl_platform_terminate()")
     return true;
 }
 
