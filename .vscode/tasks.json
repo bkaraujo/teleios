@@ -5,7 +5,7 @@
             "type": "shell",
             "label": "Build",
             "windows": {
-                "command": "${workspaceFolder}/engine/build.ps1",
+                "command": "${workspaceFolder}/build.ps1 -Clean",
             },
             // "linux": {
             //     "command": "${workspaceFolder}/build-all.sh",

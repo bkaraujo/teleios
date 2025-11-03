@@ -1,12 +1,23 @@
 #include "teleios/platform_linux.inc"
 #include "teleios/platform_windows.inc"
+#include <GLFW/glfw3.h>
 
 b8 tl_platform_initialize(void) {
 #if defined(TL_PLATFORM_LINUX)
     return tl_lnx_platform_initialize();
 #else
-    return tl_winapi_platform_initialize();
+    if (!tl_winapi_platform_initialize()) {
+        TLERROR("Platform failed to initialize")
+        return false;
+    }
 #endif
+
+    if (!glfwInit()) {
+        TLERROR("GLFW failed to initialize")
+        return false;
+    }
+
+    return true;
 }
 
 char tl_filesystem_path_separator() {
@@ -19,9 +30,9 @@ char tl_filesystem_path_separator() {
 
 void tl_time_clock(TLDateTime* clock) {
 #if defined(TL_PLATFORM_LINUX)
-    return tl_lnx_time_clock(clock);
+    tl_lnx_time_clock(clock);
 #else
-    return tl_winapi_time_clock(clock);
+    tl_winapi_time_clock(clock);
 #endif
 }
 

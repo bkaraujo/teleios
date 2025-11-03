@@ -10,60 +10,114 @@ TELEIOS is a cross-platform game engine written in C11. The project consists of 
 
 ## Build System
 
-The project uses a modular PowerShell-based build system with incremental compilation support.
+The project uses **CMake** (version 3.20+) as its build system with automatic dependency management.
+
+### Prerequisites
+
+- CMake 3.20 or higher
+- C11-compatible compiler (Clang, GCC, or MSVC)
+- Git (for downloading dependencies)
+
+See [CMAKE_BUILD.md](CMAKE_BUILD.md) for detailed setup instructions.
 
 ### Building the Project
 
 ```powershell
-# Build everything (engine + sandbox)
-.\build_all.ps1
+# Build everything (engine + sandbox) - Debug mode
+.\build.ps1
 
 # Clean build
-.\build_all.ps1 -Clean
+.\build.ps1 -Clean
+
+# Release build
+.\build.ps1 -Release
 
 # Build only engine
-.\build_all.ps1 -EngineOnly
-# or
-.\engine\build.ps1
+.\build.ps1 -EngineOnly
 
 # Build only sandbox
-.\build_all.ps1 -SandboxOnly
+.\build.ps1 -SandboxOnly
+```
+
+#### Manual CMake Build
+
+```bash
+# Configure
+mkdir build && cd build
+cmake -G "MinGW Makefiles" ..  # Windows with MinGW
 # or
-.\sandbox\build.ps1
+cmake -G "Unix Makefiles" ..    # Linux/macOS
+
+# Build
+cmake --build . --config Debug
+
+# Build specific target
+cmake --build . --target engine
+cmake --build . --target sandbox
 ```
 
 ### Build System Architecture
 
-The build system is layered:
-1. **build/compile.ps1** - Core compilation script (accepts flags as parameters)
-2. **engine/build.ps1** - Configures engine-specific flags and calls compile.ps1
-3. **sandbox/build.ps1** - Configures sandbox-specific flags and calls compile.ps1
-4. **build_all.ps1** - Orchestrates building both projects
+The build system uses CMake with three configuration files:
+1. **CMakeLists.txt** (root) - Main project configuration
+2. **engine/CMakeLists.txt** - Engine library with GLFW integration
+3. **sandbox/CMakeLists.txt** - Sandbox application configuration
 
-Key build parameters:
-- `-CompileFlags`: Array of compilation flags (e.g., `-O0`, `-g`)
-- `-LinkFlags`: Array of linker flags (e.g., `-luser32`)
-- `-Defines`: Array of preprocessor defines (e.g., `TELEIOS_DEBUG`)
+### Automatic Dependency Management
 
-### Parallel Compilation
+All external libraries are automatically downloaded and built by CMake using FetchContent:
 
-The build system automatically detects the number of physical CPU cores and compiles files in parallel using PowerShell RunspacePool for maximum performance. Dependencies between C files (via `#include "file.c"`) are tracked to ensure correct build order.
+**GLFW 3.4** - Windowing and input handling
+- Automatically downloaded from https://github.com/glfw/glfw.git
+- Linked statically with both engine and sandbox
+
+**libyaml 0.2.5** - YAML parser/emitter
+- Automatically downloaded from https://github.com/yaml/libyaml.git
+- Built manually as static library (bypasses CMake version issues)
+- Linked statically with engine only
+
+**Lua 5.4.7** - Embeddable scripting language
+- Automatically downloaded from https://github.com/lua/lua.git
+- Built as static library (excludes lua.c, luac.c, onelua.c)
+- Linked statically with engine only
+
+No manual dependency installation required - just run `.\build.ps1`
 
 ### Engine Build Configuration
 
-The engine is built with:
-- **Defines**: `TELEIOS_EXPORT` (for DLL exports), `TELEIOS_BUILD_DEBUG`
-- **Link flags**: `-luser32`, `-lgdi32`, `-lkernel32`, `-lopengl32`
-- **Compile flags**: `-O0` (no optimization), `-g` (debug symbols), `-gcodeview` (Windows debug format)
-- Debug symbols enabled for debugging with Visual Studio or other debuggers
+The engine is built as a standalone executable with:
+- **Defines**:
+  - Debug: `TELEIOS_BUILD_DEBUG`
+  - Release: `TELEIOS_BUILD_RELEASE`
+- **Link libraries**:
+  - Cross-platform: GLFW, libyaml (`yaml`), Lua (`lua_static`)
+  - Windows: `user32`, `gdi32`, `kernel32`, `opengl32`
+  - Linux: `m`, `pthread`, `dl`, OpenGL
+  - macOS: Cocoa, IOKit, CoreVideo, OpenGL
+- **Compile flags**:
+  - MSVC: `/W4`, `/std:c11`, `/experimental:c11atomics`
+  - GCC/Clang: `-Wall`, `-Wextra`, `-std=c11`
+  - Debug: `-O0`/`/Od`, `-g`/`/Zi`
+  - Release: `-O3`/`/O2`
+- **Output**: `engine.exe` (Windows), `engine` (Linux/macOS)
 
 ### Sandbox Build Configuration
 
-The sandbox is built with:
-- **Defines**: `TELEIOS_BUILD_DEBUG`
-- **Link flags**: `-luser32`, `-lgdi32`, `-lkernel32`
-- **Compile flags**: `-O0`, `-g`, `-gcodeview`, `-I<engine>/src/main` (auto-includes engine headers)
-- The sandbox automatically includes engine headers for seamless integration
+The sandbox is built as a standalone executable with:
+- **Defines**:
+  - Debug: `TELEIOS_BUILD_DEBUG`
+  - Release: `TELEIOS_BUILD_RELEASE`
+- **Link libraries**:
+  - Cross-platform: GLFW (linked directly)
+  - Windows: `user32`, `gdi32`, `kernel32`
+  - Linux: `m`, `pthread`
+- **Compile flags**:
+  - MSVC: `/W4`, `/std:c11`, `/experimental:c11atomics`
+  - GCC/Clang: `-Wall`, `-Wextra`, `-std=c11`
+  - Debug: `-O0`/`/Od`, `-g`/`/Zi`
+  - Release: `-O3`/`/O2`
+- **Include paths**: Includes `engine/src/main` for header access
+- **Output**: `sandbox.exe` (Windows), `sandbox` (Linux/macOS)
 
 ## Code Architecture
 
@@ -146,19 +200,29 @@ When adding platform-specific implementations:
 
 ## Compiler Configuration
 
-The project uses Clang with:
-- C11 standard (`-std=c11`)
-- Warnings enabled (`-Wall`, `-Wextra`)
-- Windows-specific: CodeView debug format (`-gcodeview`)
+The project supports multiple compilers:
+- **C Standard**: C11 (`-std=c11`)
+- **Warnings**: `-Wall`, `-Wextra`
+- **Supported Compilers**: Clang, GCC, MSVC
+- **Windows-specific**: CodeView debug format (`-gcodeview`) for Clang/GCC
+
+CMake automatically detects and configures the compiler.
 
 ## Build Artifacts
 
-Each project creates:
-- `<project>/build/obj/` - Object files (.o)
-- `<project>/build/deps/` - Dependency files (.d) for incremental builds
-- `<project>/<project>.exe` - Final executable
+Build outputs are organized in the `build/` directory:
+- `build/bin/` - Executables
+  - `engine.exe` / `engine` - Engine application
+  - `sandbox.exe` / `sandbox` - Sandbox application
+  - `*.pdb` - Debug symbols (Windows only)
+- `build/lib/` - Static libraries
+  - `glfw3.lib` / `libglfw3.a` - GLFW library (1.5 MB)
+  - `yaml.lib` / `libyaml.a` - libyaml library (529 KB)
+  - `lua.lib` / `liblua.a` - Lua library (1.3 MB)
+- `build/_deps/` - Downloaded dependencies (GLFW, libyaml, Lua source and build)
+- `build/CMakeFiles/` - CMake internal files and dependency tracking
 
-The build system tracks dependencies automatically and only recompiles files when source or headers change.
+CMake automatically tracks dependencies and performs incremental builds.
 
 ## Development Workflow
 
@@ -173,10 +237,58 @@ When creating new engine modules:
 
 ### Modifying Build Configuration
 
-To add custom compiler or linker flags:
-1. Edit `engine/build.ps1` or `sandbox/build.ps1` depending on the project
-2. Modify the appropriate array: `$CompileFlags`, `$LinkFlags`, or `$Defines`
-3. The main `build/compile.ps1` script automatically uses these flags
+To modify the build configuration:
+
+**Adding source files:**
+1. Add `.c` files to the appropriate `CMakeLists.txt`
+2. Update the `ENGINE_SOURCES` or `SANDBOX_SOURCES` list
+3. CMake will automatically detect and compile them
+
+**Adding compiler flags:**
+1. Edit `engine/CMakeLists.txt` or `sandbox/CMakeLists.txt`
+2. Modify `target_compile_options()` section
+3. Use generator expressions for configuration-specific flags: `$<$<CONFIG:Debug>:-g>`
+
+**Adding linker flags:**
+1. Edit the appropriate `CMakeLists.txt`
+2. Modify `target_link_libraries()` or add `target_link_options()`
+
+**Adding preprocessor defines:**
+1. Edit the appropriate `CMakeLists.txt`
+2. Modify `target_compile_definitions()` section
+3. Use generator expressions for configuration-specific defines
+
+**Adding dependencies:**
+1. Use CMake's `FetchContent` module:
+   - For libraries with proper CMake support: `FetchContent_MakeAvailable()`
+   - For libraries needing manual build: `FetchContent_Populate()` + manual library creation
+   - See libyaml and Lua examples in `engine/CMakeLists.txt` (lines 25-102)
+2. Or use `find_package()` for system-installed libraries
+3. Link with `target_link_libraries()`
+4. Update `.vscode/c_cpp_properties.json` with include paths for IntelliSense
+
+### Using External Libraries
+
+All external libraries are statically linked with the engine. To use them in code:
+
+**GLFW (windowing and input):**
+```c
+#include <GLFW/glfw3.h>
+```
+
+**libyaml (YAML parsing):**
+```c
+#include <yaml.h>
+```
+
+**Lua (scripting):**
+```c
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+```
+
+Include paths are automatically configured by CMake. No additional setup needed.
 
 ### Working with Platform-Specific Code
 
@@ -184,3 +296,23 @@ To add custom compiler or linker flags:
 - Use `#ifdef TL_PLATFORM_*` guards for platform-specific sections
 - Implement platform-specific functions in separate files (`platform_windows.c`, `platform_linux.c`)
 - Test builds on all target platforms when modifying platform code
+
+## Running Executables
+
+**Engine:**
+```bash
+# Windows
+.\build\bin\Debug\engine.exe
+
+# Linux/macOS
+./build/bin/engine
+```
+
+**Sandbox:**
+```bash
+# Windows
+.\build\bin\Debug\sandbox.exe
+
+# Linux/macOS
+./build/bin/sandbox
+```

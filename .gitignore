@@ -1,3 +1,4 @@
 engine/build
 engine/*.exe
 sandbox/build
+build/

@@ -2,6 +2,8 @@
 #include "teleios/application.h"
 
 int main(const int argc, const char* argv[]) {
+    (void)argc;  // Unused parameter
+    (void)argv;  // Unused parameter
 
     // ####################################################################
     // 1 - Iniciar OS

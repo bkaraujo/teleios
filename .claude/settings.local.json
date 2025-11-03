@@ -3,7 +3,9 @@
     "allow": [
       "Bash(powershell -File \".\\engine\\build.ps1\" -Clean)",
       "Bash(powershell -File \".\\sandbox\\build.ps1\" -Clean)",
-      "Bash(Select-Object -Last 100)"
+      "Bash(Select-Object -Last 100)",
+      "Bash(cmake --version:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
