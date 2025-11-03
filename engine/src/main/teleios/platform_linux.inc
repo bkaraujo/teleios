@@ -1,13 +1,13 @@
+#include "teleios/defines.h"
+#if defined(K_PLATFORM_LINUX)
 #include "teleios/platform.h"
 #include "teleios/chrono.h"
 
-#if defined(K_PLATFORM_LINUX)
-
-char tl_filesystem_path_separator() {
+char tl_lnx_filesystem_path_separator() {
     return '/';
 }
 
-void tl_time_clock(TLDateTIme* clock) {
+void tl_lnx_time_clock(TLDateTIme* clock) {
     struct timespec now = { 0 };
     if (clock_gettime(CLOCK_REALTIME_COARSE, &now) != 0) return;
 
@@ -23,13 +23,13 @@ void tl_time_clock(TLDateTIme* clock) {
     clock->millis = now.tv_nsec / 1000;
 }
 
-u64 tl_time_epoch_millis(void) {
+u64 tl_lnx_time_epoch_millis(void) {
     struct timespec now = { 0 };
     clock_gettime(CLOCK_REALTIME_COARSE, &now);                     // ~20-30 ns
     return (uint64_t) now.tv_sec * 1000 + now.tv_nsec / 1000000;
 }
 
-u64 tl_time_epoch_micros(void) {
+u64 tl_lnx_time_epoch_micros(void) {
     struct timespec now = { 0 };
     clock_gettime(CLOCK_REALTIME, &now);                            // ~25-50 ns
     return (uint64_t) now.tv_sec * 1000000 + now.tv_nsec / 1000;

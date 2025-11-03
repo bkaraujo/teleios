@@ -1,15 +1,16 @@
+#include "teleios/defines.h"
+#ifdef TL_PLATFORM_WINDOWS
 #include "teleios/logger.h"
 #include "teleios/platform.h"
 #include "teleios/chrono.h"
 #include "teleios/filesystem.h"
-#ifdef TL_PLATFORM_WINDOWS
 
 static u64 qpc_freq = 0;
 static u64 qpc_to_micros_mul = 0;  // Pre-calculado
 static u64 qpc_to_micros_shift = 0;
 static u64 qpc_epoch_offset = 0;
 
-b8 tl_platform_initialize(void) {
+b8 tl_winapi_platform_initialize(void) {
     TLTRACE("tl_platform_initialize()")
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
     qpc_freq = freq.QuadPart;
@@ -32,11 +33,11 @@ b8 tl_platform_initialize(void) {
     return true;
 }
 
-char tl_filesystem_path_separator() {
+char tl_winapi_filesystem_path_separator() {
     return '\\';
 }
 
-void tl_time_clock(TLDateTime* clock) {
+void tl_winapi_time_clock(TLDateTime* clock) {
     SYSTEMTIME st; GetLocalTime(&st);
     
     clock->year = st.wYear;
@@ -48,18 +49,18 @@ void tl_time_clock(TLDateTime* clock) {
     clock->millis = st.wMilliseconds;
 }
 
-u64 tl_time_epoch_millis(void) {
+u64 tl_winapi_time_epoch_millis(void) {
     LARGE_INTEGER qpc; QueryPerformanceCounter(&qpc);
     // Shift de 30 para millis (20 + 10, onde 1024 ≈ 1000)
     return (qpc_epoch_offset >> 10) + ((qpc.QuadPart * qpc_to_micros_mul) >> 30);
 }
 
-u64 tl_time_epoch_micros(void) {
+u64 tl_winapi_time_epoch_micros(void) {
     LARGE_INTEGER qpc; QueryPerformanceCounter(&qpc);
     return qpc_epoch_offset + ((qpc.QuadPart * qpc_to_micros_mul) >> qpc_to_micros_shift);
 }
 
-b8 tl_platform_terminate(void) {
+b8 tl_winapi_platform_terminate(void) {
     TLTRACE("tl_platform_terminate()")
     return true;
 }

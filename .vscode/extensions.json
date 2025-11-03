@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "ms-vscode.cpptools",
-        "slevesque.shader"
+        "slevesque.shader",
+        "wayou.vscode-todo-highlight"
     ]
 }
