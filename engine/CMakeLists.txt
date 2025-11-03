@@ -101,6 +101,48 @@ if(NOT lua_POPULATED)
     endif()
 endif()
 
+# Download and configure cglm (OpenGL Mathematics library) using modern file() approach
+set(CGLM_URL "https://github.com/recp/cglm/archive/refs/tags/v0.9.4.tar.gz")
+set(CGLM_DOWNLOAD_DIR "${CMAKE_BINARY_DIR}/_deps/cglm-download")
+set(CGLM_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/cglm-src")
+
+# Download and extract if not already done
+if(NOT EXISTS "${CGLM_SOURCE_DIR}/include")
+    message(STATUS "Downloading cglm...")
+    file(DOWNLOAD "${CGLM_URL}" "${CGLM_DOWNLOAD_DIR}/cglm.tar.gz"
+         SHOW_PROGRESS
+         STATUS CGLM_DOWNLOAD_STATUS)
+
+    list(GET CGLM_DOWNLOAD_STATUS 0 CGLM_DOWNLOAD_CODE)
+    if(NOT CGLM_DOWNLOAD_CODE EQUAL 0)
+        message(FATAL_ERROR "Failed to download cglm")
+    endif()
+
+    message(STATUS "Extracting cglm...")
+    file(ARCHIVE_EXTRACT
+         INPUT "${CGLM_DOWNLOAD_DIR}/cglm.tar.gz"
+         DESTINATION "${CMAKE_BINARY_DIR}/_deps")
+
+    # Rename extracted directory
+    file(RENAME "${CMAKE_BINARY_DIR}/_deps/cglm-0.9.4" "${CGLM_SOURCE_DIR}")
+endif()
+
+# Build cglm as a static library
+file(GLOB CGLM_SOURCES "${CGLM_SOURCE_DIR}/src/*.c")
+
+add_library(cglm STATIC ${CGLM_SOURCES})
+target_include_directories(cglm PUBLIC
+    "${CGLM_SOURCE_DIR}/include"
+)
+set_target_properties(cglm PROPERTIES
+    OUTPUT_NAME "cglm"
+    C_STANDARD 99
+    C_STANDARD_REQUIRED ON
+)
+
+# Define CGLM_STATIC for static linking
+target_compile_definitions(cglm PUBLIC CGLM_STATIC)
+
 # Collect engine source files
 set(ENGINE_SOURCES
     src/main/teleios/logger.c
@@ -141,12 +183,13 @@ target_include_directories(engine
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main/teleios
 )
 
-# Link libraries (GLFW, libyaml, Lua)
+# Link libraries (GLFW, libyaml, Lua, cglm)
 target_link_libraries(engine
     PUBLIC
         glfw
         yaml
         lua_static
+        cglm
 )
 
 # Preprocessor definitions

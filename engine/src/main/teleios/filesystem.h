@@ -3,6 +3,6 @@
 
 #include "teleios/defines.h"
 
-char tl_filesystem_path_separator();
+i8 tl_filesystem_path_separator(void);
 
 #endif

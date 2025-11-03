@@ -8,14 +8,15 @@
                 "${workspaceFolder}/sandbox/src/main",
                 "${workspaceFolder}/build/_deps/glfw-src/include",
                 "${workspaceFolder}/build/_deps/libyaml-src/include",
-                "${workspaceFolder}/build/_deps/lua-src"
+                "${workspaceFolder}/build/_deps/lua-src",
+                "${workspaceFolder}/build/_deps/cglm-src/include"
             ],
             "defines": [
             ],
-            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe",
             "cStandard": "c11",
             "cppStandard": "c++11",
-            "intelliSenseMode": "windows-clang-x64",
+            "intelliSenseMode": "windows-msvc-x64",
             "configurationProvider": "ms-vscode.makefile-tools"
         }
     ]

@@ -3,7 +3,7 @@
 #include "teleios/platform.h"
 #include "teleios/chrono.h"
 
-char tl_lnx_filesystem_path_separator() {
+i8 tl_lnx_filesystem_path_separator(void) {
     return '/';
 }
 

@@ -158,10 +158,10 @@ typedef int64_t     i64;
 #define I32_MAX     2147483647
 #define I64_MAX     9223372036854775807
 
-#define  I8_MIN     (-127i8 - 1)
-#define I16_MIN     (-32767i16 - 1)
-#define I32_MIN     (-2147483647i32 - 1)
-#define I64_MIN     (-9223372036854775807i64 - 1)
+#define  I8_MIN     (-127 - 1)
+#define I16_MIN     (-32767 - 1)
+#define I32_MIN     (-2147483647 - 1)
+#define I64_MIN     (-9223372036854775807 - 1)
 // ---------------------------------
 // Floating point types
 // ---------------------------------

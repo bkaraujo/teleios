@@ -33,7 +33,7 @@ b8 tl_winapi_platform_initialize(void) {
     return true;
 }
 
-char tl_winapi_filesystem_path_separator() {
+i8 tl_winapi_filesystem_path_separator(void) {
     return '\\';
 }
 
