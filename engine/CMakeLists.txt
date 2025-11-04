@@ -148,6 +148,7 @@ set(ENGINE_SOURCES
     src/main/teleios/logger.c
     src/main/teleios/application.c
     src/main/teleios/platform.c
+    src/main/teleios/profiler.c
     src/main/main.c
 )
 
@@ -157,6 +158,7 @@ set(ENGINE_HEADERS
     src/main/teleios/logger.h
     src/main/teleios/application.h
     src/main/teleios/platform.h
+    src/main/teleios/profiler.h
     src/main/teleios/teleios.h
 )
 

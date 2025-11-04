@@ -200,10 +200,10 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #   define TL_INLINE __attribute__((always_inline)) inline
 #   define TL_NOINLINE __attribute__((noinline))
 #   define TL_DEPRECATED(message) __attribute__((deprecated(message)))
+#   define TL_LIKELY(x)   __builtin_expect(!!(x), 1)
+#   define TL_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #   if defined(TL_EXPORT)
 #       define TL_API __attribute__((visibility("default")))
-#   else
-#       define TL_API
 #   endif
 #elif defined(_MSC_VER)
 #   define TL_INLINE __forceinline
@@ -213,13 +213,30 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #       define TL_API __declspec(dllexport)
 #   elif defined(TL_IMPORT)
 #       define TL_API __declspec(dllimport)
-#   else
-#       define TL_API
 #   endif
-#else
+#endif
+
+#if ! defined(TL_LIKELY)
+#   define TL_LIKELY(x)   (x)
+#endif
+
+#if ! defined(TL_UNLIKELY)
+#   define TL_UNLIKELY(x) (x)
+#endif
+
+#if ! defined(TL_API)
 #   define TL_API
+#endif
+
+#if ! defined(TL_INLINE)
 #   define TL_INLINE static inline
+#endif
+
+#if ! defined(TL_NOINLINE)
 #   define TL_NOINLINE
+#endif
+
+#if ! defined(TL_DEPRECATED)
 #   define TL_DEPRECATED(message)
 #endif
 // ---------------------------------

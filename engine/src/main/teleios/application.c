@@ -2,16 +2,19 @@
 #include "teleios/application.h"
 
 b8 tl_application_initialize(void) {
+    TL_PROFILER_PUSH
     TLTRACE("tl_application_initialize()")
-    return true;
+    TL_PROFILER_POP_WITH(true)
 }
 
 b8 tl_application_run(void) {
+    TL_PROFILER_PUSH
     TLTRACE("tl_application_run()")
-    return true;
+    TL_PROFILER_POP_WITH(true)
 }
 
 b8 tl_application_terminate(void) {
+    TL_PROFILER_PUSH
     TLTRACE("tl_application_terminate()")
-    return true;
+    TL_PROFILER_POP_WITH(true)
 }

@@ -2,6 +2,7 @@
 #define __TELEIOS__
 
 #include "teleios/defines.h"
+#include "teleios/profiler.h"
 
 #include "teleios/chrono.h"
 #include "teleios/logger.h"

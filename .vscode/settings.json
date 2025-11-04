@@ -2,7 +2,7 @@
     "window.zoomLevel": 0,
     "window.zoomPerWindow": true,
      
-    "editor.cursorStyle": "block",
+    "editor.cursorStyle": "line",
     "editor.mouseWheelZoom": false,
     "editor.minimap.enabled": true,
     "editor.fontFamily": "Liberation Mono",
@@ -11,9 +11,10 @@
     "editor.tabCompletion": "on",
 
     "workbench.editor.showTabs": "multiple",
+    "workbench.editor.pinnedTabsOnSeparateRow": true,
     "workbench.colorCustomizations": {
-        "editorCursor.foreground": "#00ff33",
-        "editor.lineHighlightBackground": "#111144"
+        "editorCursor.foreground": "#c7389a",
+        "editor.lineHighlightBackground": "#e5f1c5"
     },
     
     "terminal.integrated.fontWeight": "1",
@@ -55,7 +56,8 @@
         "filesystem.h": "c",
         "stdlib.h": "c",
         "time.h": "c",
-        "*.inc": "c"
+        "*.inc": "c",
+        "teleios.h": "c"
     },
     
 }
