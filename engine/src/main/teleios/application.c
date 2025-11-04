@@ -13,7 +13,6 @@ b8 tl_application_run(void) {
 
     const f64 STEP = 1000000.0 / 60.0;  // ~16666.67 µs
     const f64 FRAME_CAP = 250000.0;  // Cap at 250ms to prevent spiral of death
-    const f64 ONE_SECOND_MICROS = 1000000.0;     // 1 second in microseconds
 
     f64 accumulator = 0.0;
     u64 last_time = tl_time_epoch_micros();
