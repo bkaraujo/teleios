@@ -1,6 +1,7 @@
 #include "teleios/teleios.h"
 #include "teleios/platform_linux.inc"
 #include "teleios/platform_windows.inc"
+#include "teleios/platform_glfw.inc"
 #include <GLFW/glfw3.h>
 
 typedef struct {
@@ -42,7 +43,12 @@ b8 tl_platform_initialize(void) {
 
     if (!glfwInit()) {
         TLERROR("GLFW failed to initialize")
-        return false;
+        TL_PROFILER_POP_WITH(false)
+    }
+    
+    if (!tl_window_create()) {
+        TLERROR("GLFW failed to create Window")
+        TL_PROFILER_POP_WITH(false)
     }
 
     TL_PROFILER_POP_WITH(true)

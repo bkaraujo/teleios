@@ -8,5 +8,6 @@
 #include "teleios/logger.h"
 #include "teleios/platform.h"
 #include "teleios/filesystem.h"
+#include "teleios/window.h"
 
 #endif

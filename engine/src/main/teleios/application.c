@@ -1,5 +1,6 @@
 #include "teleios/teleios.h"
 #include "teleios/application.h"
+#include <GLFW/glfw3.h>
 
 b8 tl_application_initialize(void) {
     TL_PROFILER_PUSH
@@ -22,7 +23,7 @@ b8 tl_application_run(void) {
     u64 update_count = 0;
     f64 fps_timer = 0.0;
 
-    while (true) {
+    while (!glfwWindowShouldClose(tl_window_handler())) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
