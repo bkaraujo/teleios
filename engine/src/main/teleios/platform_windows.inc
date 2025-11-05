@@ -11,7 +11,7 @@ static u64 qpc_to_micros_shift = 0;
 static u64 qpc_epoch_offset = 0;
 
 b8 tl_winapi_platform_initialize(void) {
-    TLTRACE("tl_platform_initialize()")
+    TL_PROFILER_PUSH
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
     qpc_freq = freq.QuadPart;
     
@@ -29,8 +29,7 @@ b8 tl_winapi_platform_initialize(void) {
     
     LARGE_INTEGER qpc_now; QueryPerformanceCounter(&qpc_now);
     qpc_epoch_offset = epoch_micros - ((qpc_now.QuadPart * qpc_to_micros_mul) >> qpc_to_micros_shift);
-
-    return true;
+    TL_PROFILER_POP_WITH(true)
 }
 
 i8 tl_winapi_filesystem_path_separator(void) {
@@ -61,8 +60,9 @@ u64 tl_winapi_time_epoch_micros(void) {
 }
 
 b8 tl_winapi_platform_terminate(void) {
-    TLTRACE("tl_platform_terminate()")
-    return true;
+    TL_PROFILER_PUSH
+    
+    TL_PROFILER_POP_WITH(true)
 }
 
 #endif

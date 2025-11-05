@@ -49,5 +49,5 @@ static b8 tl_window_create(void) {
     }
 
     glfwSetWindowPos(m_window, position_x, position_y);
-       TL_PROFILER_POP_WITH(true)
+    TL_PROFILER_POP_WITH(true)
 }

@@ -4,13 +4,12 @@
 
 b8 tl_application_initialize(void) {
     TL_PROFILER_PUSH
-    TLTRACE("tl_application_initialize()")
+    
     TL_PROFILER_POP_WITH(true)
 }
 
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
-    TLTRACE("tl_application_run()")
 
     const f64 STEP = 1000000.0 / 60.0;  // ~16666.67 µs
     const f64 FRAME_CAP = 250000.0;  // Cap at 250ms to prevent spiral of death
@@ -60,6 +59,6 @@ b8 tl_application_run(void) {
 
 b8 tl_application_terminate(void) {
     TL_PROFILER_PUSH
-    TLTRACE("tl_application_terminate()")
+    
     TL_PROFILER_POP_WITH(true)
 }
