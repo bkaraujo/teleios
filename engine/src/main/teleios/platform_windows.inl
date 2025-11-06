@@ -7,7 +7,7 @@ static u64 qpc_to_micros_mul = 0;  // Pre-calculado
 static u64 qpc_to_micros_shift = 0;
 static u64 qpc_epoch_offset = 0;
 
-b8 tl_winapi_platform_initialize(void) {
+b8 tl_winapi_initialize(void) {
     TL_PROFILER_PUSH
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
     qpc_freq = freq.QuadPart;
@@ -56,7 +56,7 @@ u64 tl_winapi_time_epoch_micros(void) {
     return qpc_epoch_offset + ((qpc.QuadPart * qpc_to_micros_mul) >> qpc_to_micros_shift);
 }
 
-b8 tl_winapi_platform_terminate(void) {
+b8 tl_winapi_terminate(void) {
     TL_PROFILER_PUSH
     
     TL_PROFILER_POP_WITH(true)

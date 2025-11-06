@@ -22,9 +22,8 @@ b8 tl_application_run(void) {
     u64 update_count = 0;
     f64 fps_timer = 0.0;
 
-    const void* window = tl_window_handler();
-    glfwShowWindow(window);
-    while (!glfwWindowShouldClose(window)) {
+    glfwShowWindow(tl_window_handler());
+    while (!glfwWindowShouldClose(tl_window_handler())) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
@@ -48,7 +47,7 @@ b8 tl_application_run(void) {
         (void)alpha;  // Suppress unused variable warning until render is implemented
 
         glfwPollEvents();
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(tl_window_handler());
         
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {

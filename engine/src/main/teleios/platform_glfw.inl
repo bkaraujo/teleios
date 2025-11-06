@@ -68,3 +68,9 @@ static b8 tl_window_create(void) {
 
     TL_PROFILER_POP_WITH(true)
 }
+
+static void tl_window_terminate(void) {
+    TL_PROFILER_PUSH
+    glfwDestroyWindow(m_window);
+    TL_PROFILER_POP
+}

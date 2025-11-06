@@ -14,7 +14,7 @@
     "workbench.editor.pinnedTabsOnSeparateRow": true,
     "workbench.colorCustomizations": {
         "editorCursor.foreground": "#c7389a",
-        "editor.lineHighlightBackground": "#2e302a"
+        "editor.lineHighlightBackground": "#292c22"
     },
     
     "terminal.integrated.fontWeight": "1",
@@ -61,7 +61,16 @@
         "application.h": "c",
         "glfw3.h": "c",
         "profiler.h": "c",
-        "window.h": "c"
+        "window.h": "c",
+        "types.h": "c",
+        "chrono.h": "c",
+        "system_error": "c",
+        "iterator": "c",
+        "initializer_list": "c",
+        "utility": "c",
+        "xstring": "c",
+        "xutility": "c",
+        "xmemory": "c"
     },
     
 }

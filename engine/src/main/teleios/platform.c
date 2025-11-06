@@ -17,21 +17,21 @@ static TLPlatform platform = { 0 };
 
 b8 tl_platform_initialize(void) {
 #if defined(TL_PLATFORM_LINUX)
-    platform.initialize         = tl_lnx_platform_initialize;
+    platform.initialize         = tl_lnx_initialize;
     platform.path_separator     = tl_lnx_filesystem_path_separator;
     platform.path_separator     = tl_lnx_platform_initialize;
     platform.time_clock         = tl_lnx_time_clock;
     platform.time_epoch_millis  = tl_lnx_time_epoch_millis;
     platform.time_epoch_micros  = tl_lnx_time_epoch_micros;
-    platform.terminate          = tl_lnx_platform_terminate;
+    platform.terminate          = tl_lnx_terminate;
 #else
 
-    platform.initialize         = tl_winapi_platform_initialize;
+    platform.initialize         = tl_winapi_initialize;
     platform.path_separator     = tl_winapi_filesystem_path_separator;
     platform.time_clock         = tl_winapi_time_clock;
     platform.time_epoch_millis  = tl_winapi_time_epoch_millis;
     platform.time_epoch_micros  = tl_winapi_time_epoch_micros;
-    platform.terminate          = tl_winapi_platform_terminate;
+    platform.terminate          = tl_winapi_terminate;
 #endif
 
     if (!tl_memory_initialize()) {
@@ -77,6 +77,8 @@ u64 tl_time_epoch_micros(void) {
 
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
+
+    tl_window_terminate();
 
     glfwTerminate();
     if (!platform.terminate()) {
