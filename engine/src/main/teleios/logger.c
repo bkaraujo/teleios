@@ -6,7 +6,7 @@ void tl_logger_loglevel(const TLLogLevel desired){
     m_level = desired;
 }
 
-static const char *strings[] = {"VERBOSE", "TRACE  ", "DEBUG  ", "INFO   ", "WARN   ", "ERROR  ", "FATAL  "};
+static const char *strings[] = {"VERBOSE", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 static const char *colors[] = { "\033[1;37m" , "\033[1;36m", "\033[1;34m", "\033[1;32m", "\033[1;33m", "\033[1;31m", "\033[1;31m" };
 
 void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lineno, const char *message, ...) {
@@ -34,7 +34,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     
     char buffer[256];
     // snprintf() ~150-300 ns	✅ Bom
-    int len = snprintf(buffer, sizeof(buffer), "%s%d-%02d-%02d %02d:%02d:%02d,%06u %s:%04d %s %s\n\033[1;30m",
+    int len = snprintf(buffer, sizeof(buffer), "%s%d-%02d-%02d %02d:%02d:%02d,%06u %-20s:%04d %-7s %s\n\033[1;30m",
         colors[level], 
         clock.year, clock.month, clock.day,
         clock.hour, clock.minute, clock.second, clock.millis,

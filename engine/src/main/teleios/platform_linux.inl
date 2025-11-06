@@ -1,7 +1,6 @@
 #include "teleios/defines.h"
 #if defined(K_PLATFORM_LINUX)
-#include "teleios/platform.h"
-#include "teleios/chrono.h"
+#include "teleios/teleios.h"
 
 i8 tl_lnx_filesystem_path_separator(void) {
     return '/';

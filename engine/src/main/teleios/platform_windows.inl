@@ -1,9 +1,6 @@
 #include "teleios/defines.h"
 #ifdef TL_PLATFORM_WINDOWS
-#include "teleios/logger.h"
-#include "teleios/platform.h"
-#include "teleios/chrono.h"
-#include "teleios/filesystem.h"
+#include "teleios/teleios.h"
 
 static u64 qpc_freq = 0;
 static u64 qpc_to_micros_mul = 0;  // Pre-calculado

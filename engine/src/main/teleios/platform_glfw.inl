@@ -1,10 +1,20 @@
 #include "teleios/teleios.h"
 #include <GLFW/glfw3.h>
 
-void* m_window;
+static GLFWwindow* m_window;
+static ivec2s m_window_size;
+static ivec2s m_window_position;
 
 void* tl_window_handler() {
     return m_window;
+}
+
+ivec2s tl_window_size() {
+    return m_window_size;
+}
+
+ivec2s tl_window_position() {
+    return m_window_position;
 }
 
 static b8 tl_window_create(void) {
@@ -28,10 +38,11 @@ static b8 tl_window_create(void) {
     glfwWindowHint(GLFW_STENCIL_BITS, 0);
     glfwWindowHint(GLFW_ALPHA_BITS, 0);
 
-    u32 size_x = 1024, size_y = 768;
+    m_window_size.x = 1024;
+    m_window_size.y = 768;
     m_window = glfwCreateWindow(
-        size_x,
-        size_y,
+        m_window_size.x,
+        m_window_size.y,
         "FOSGE",
         NULL, NULL
     );
@@ -41,13 +52,19 @@ static b8 tl_window_create(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    u32 position_x = 0, position_y = 0;
+    m_window_position.x = 0;
+    m_window_position.y = 0;
+    
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     if (TL_LIKELY(mode)) {
-        position_x = (mode->width - size_x) / 2;
-        position_y = (mode->height - size_y) / 2;
+        m_window_position.x = (mode->width - m_window_size.x) / 2;
+        m_window_position.y = (mode->height - m_window_size.y) / 2;
     }
 
-    glfwSetWindowPos(m_window, position_x, position_y);
+    glfwSetWindowPos(m_window, m_window_position.x, m_window_position.y);
+    
+    glfwMakeContextCurrent(m_window);
+    glfwSwapInterval(0); 
+
     TL_PROFILER_POP_WITH(true)
 }

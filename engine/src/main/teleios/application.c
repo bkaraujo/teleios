@@ -22,7 +22,9 @@ b8 tl_application_run(void) {
     u64 update_count = 0;
     f64 fps_timer = 0.0;
 
-    while (!glfwWindowShouldClose(tl_window_handler())) {
+    const void* window = tl_window_handler();
+    glfwShowWindow(window);
+    while (!glfwWindowShouldClose(window)) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
@@ -45,6 +47,9 @@ b8 tl_application_run(void) {
         // render(alpha);
         (void)alpha;  // Suppress unused variable warning until render is implemented
 
+        glfwPollEvents();
+        glfwSwapBuffers(window);
+        
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {
             TLINFO("FPS: %llu | UPS: %llu", frame_count, update_count);
@@ -54,6 +59,7 @@ b8 tl_application_run(void) {
         }
     }
 
+    glfwHideWindow(tl_window_handler());
     TL_PROFILER_POP_WITH(true)
 }
 
