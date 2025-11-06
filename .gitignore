@@ -1,4 +1,2 @@
-engine/build
-engine/*.exe
-sandbox/build
+.idea/
 build/
