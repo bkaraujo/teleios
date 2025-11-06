@@ -33,7 +33,8 @@ b8 tl_platform_initialize(void) {
     platform.time_epoch_micros  = tl_winapi_time_epoch_micros;
     platform.terminate          = tl_winapi_terminate;
 #endif
-
+    tl_profiler_frame_push("main.c", 5, "main", NULL);
+    
     if (!tl_memory_initialize()) {
         TLERROR("Memory system failed to initialize")
         return false;

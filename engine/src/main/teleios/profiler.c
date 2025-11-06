@@ -40,11 +40,12 @@ void tl_profiler_frame_push(const char* filename, const u64 lineno, const char* 
         vsnprintf(frame[frame_index].arguments, TL_PROFILER_FRAME_ARGUMENTS_SIZE, arguments, arg_ptr);
         va_end(arg_ptr);
     }
+
+    TLVERBOSE("[in ] %s(%s)", frame[frame_index].function, frame[frame_index].arguments)
 }
 
 void tl_profiler_frame_pop() {
-#if defined(TELEIOS_BUILD_DEBUG)
+    TLVERBOSE("[out] %s(%s)", frame[frame_index].function, frame[frame_index].arguments)
     memset(&frame[frame_index], 0 , sizeof(TLFrame));
-#endif
     frame_index--;
 }

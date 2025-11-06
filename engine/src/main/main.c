@@ -9,9 +9,6 @@ int main(const int argc, const char* argv[]) {
     // 1 - Iniciar OS
     // ####################################################################
     if (!tl_platform_initialize()) TLFATAL("Platform failed to initialize")
-
-    tl_profiler_frame_push("main.c", 5, "main", NULL);
-
     // ####################################################################
     // 2 - Carregar DLL Cliente
     // ####################################################################
@@ -36,5 +33,5 @@ int main(const int argc, const char* argv[]) {
     
     if (!tl_platform_terminate()) TLERROR("Platform failed to terminate")
 
-    return 0;
+    TL_PROFILER_POP_WITH(0)
 }
