@@ -70,7 +70,8 @@
         "utility": "c",
         "xstring": "c",
         "xutility": "c",
-        "xmemory": "c"
+        "xmemory": "c",
+        "platform_glfw.inl": "c"
     },
     
 }

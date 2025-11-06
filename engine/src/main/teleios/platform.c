@@ -25,7 +25,6 @@ b8 tl_platform_initialize(void) {
     platform.time_epoch_micros  = tl_lnx_time_epoch_micros;
     platform.terminate          = tl_lnx_terminate;
 #else
-
     platform.initialize         = tl_winapi_initialize;
     platform.path_separator     = tl_winapi_filesystem_path_separator;
     platform.time_clock         = tl_winapi_time_clock;
@@ -45,7 +44,7 @@ b8 tl_platform_initialize(void) {
         return false;
     }
 
-    tl_profiler_frame_push("platform.c", 16, "tl_platform_initialize", NULL);
+    tl_profiler_frame_push("platform.c", 19, "tl_platform_initialize", NULL);
 
     if (!glfwInit()) {
         TLERROR("GLFW failed to initialize")

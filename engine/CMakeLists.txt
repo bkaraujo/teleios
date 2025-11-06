@@ -145,24 +145,25 @@ target_compile_definitions(cglm PUBLIC CGLM_STATIC)
 
 # Collect engine source files
 set(ENGINE_SOURCES
+    src/main/main.c
     src/main/teleios/logger.c
-    src/main/teleios/application.c
+    src/main/teleios/memory.c
     src/main/teleios/platform.c
     src/main/teleios/profiler.c
-    src/main/teleios/memory.c
-    src/main/main.c
+    src/main/teleios/application.c
 )
 
 # Collect engine header files
 set(ENGINE_HEADERS
-    src/main/teleios/defines.h
+    src/main/teleios/event.h
     src/main/teleios/logger.h
-    src/main/teleios/application.h
-    src/main/teleios/platform.h
-    src/main/teleios/profiler.h
     src/main/teleios/memory.h
     src/main/teleios/window.h
+    src/main/teleios/defines.h
     src/main/teleios/teleios.h
+    src/main/teleios/platform.h
+    src/main/teleios/profiler.h
+    src/main/teleios/application.h
 )
 
 # Create engine executable
