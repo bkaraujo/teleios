@@ -1,7 +1,7 @@
 #include "teleios/teleios.h"
-#include "teleios/platform_linux.inc"
-#include "teleios/platform_windows.inc"
-#include "teleios/platform_glfw.inc"
+#include "teleios/platform_linux.inl"
+#include "teleios/platform_windows.inl"
+#include "teleios/platform_glfw.inl"
 #include <GLFW/glfw3.h>
 
 typedef struct {
@@ -33,6 +33,11 @@ b8 tl_platform_initialize(void) {
     platform.time_epoch_micros  = tl_winapi_time_epoch_micros;
     platform.terminate          = tl_winapi_platform_terminate;
 #endif
+
+    if (!tl_memory_initialize()) {
+        TLERROR("Memory system failed to initialize")
+        return false;
+    }
 
     if (!platform.initialize()) {
         TLERROR("Platform failed to initialize")
@@ -76,6 +81,11 @@ b8 tl_platform_terminate(void) {
     glfwTerminate();
     if (!platform.terminate()) {
         TLERROR("Platform failed to terminate")
+        return false;
+    }
+
+    if (!tl_memory_terminate()) {
+        TLERROR("Memory system failed to terminate")
         return false;
     }
 

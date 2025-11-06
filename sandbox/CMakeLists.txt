@@ -26,10 +26,11 @@ target_include_directories(sandbox
         ${CMAKE_SOURCE_DIR}/engine/src/main
 )
 
-# Link GLFW directly
+# Link GLFW and cglm directly
 target_link_libraries(sandbox
     PRIVATE
         glfw
+        cglm
 )
 
 # Preprocessor definitions

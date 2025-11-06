@@ -81,6 +81,12 @@ All external libraries are automatically downloaded and built by CMake using Fet
 - Built as static library (excludes lua.c, luac.c, onelua.c)
 - Linked statically with engine only
 
+**cglm 0.9.4** - OpenGL Mathematics library
+- Automatically downloaded from tar.gz
+- Built as static library (header-only style with compiled objects)
+- Provides vector/matrix operations (vec2/3/4, mat2/3/4, quaternions)
+- Linked statically with both engine and sandbox
+
 No manual dependency installation required - just run `.\build.ps1`
 
 ### Engine Build Configuration
@@ -90,7 +96,7 @@ The engine is built as a standalone executable with:
   - Debug: `TELEIOS_BUILD_DEBUG`
   - Release: `TELEIOS_BUILD_RELEASE`
 - **Link libraries**:
-  - Cross-platform: GLFW, libyaml (`yaml`), Lua (`lua_static`)
+  - Cross-platform: GLFW, libyaml (`yaml`), Lua (`lua_static`), cglm
   - Windows: `user32`, `gdi32`, `kernel32`, `opengl32`
   - Linux: `m`, `pthread`, `dl`, OpenGL
   - macOS: Cocoa, IOKit, CoreVideo, OpenGL
@@ -108,7 +114,7 @@ The sandbox is built as a standalone executable with:
   - Debug: `TELEIOS_BUILD_DEBUG`
   - Release: `TELEIOS_BUILD_RELEASE`
 - **Link libraries**:
-  - Cross-platform: GLFW (linked directly)
+  - Cross-platform: GLFW, cglm
   - Windows: `user32`, `gdi32`, `kernel32`
   - Linux: `m`, `pthread`
 - **Compile flags**:
@@ -132,10 +138,15 @@ TELEIOS uses a multi-layer platform detection and abstraction system:
 
 **Platform Implementation** ([engine/src/main/teleios/platform.h](engine/src/main/teleios/platform.h)):
 - `tl_platform_initialize()` / `tl_platform_terminate()` - Platform setup/cleanup
-- Implementations:
-  - [platform_windows.c](engine/src/main/teleios/platform_windows.c)
-  - [platform_linux.c](engine/src/main/teleios/platform_linux.c)
-  - [platform_agnostic.c](engine/src/main/teleios/platform_agnostic.c) - Cross-platform code
+- Platform-specific code uses `.inc` files included directly into `platform.c`:
+  - [platform_windows.inc](engine/src/main/teleios/platform_windows.inc) - Windows (QueryPerformanceCounter timing)
+  - [platform_linux.inc](engine/src/main/teleios/platform_linux.inc) - Linux (clock_gettime timing)
+  - [platform_glfw.inc](engine/src/main/teleios/platform_glfw.inc) - GLFW window management (cross-platform)
+
+**Platform Implementation Pattern:**
+- `.inc` files are **included** (not compiled separately) to allow static functions without header pollution
+- Windows timing uses QueryPerformanceCounter with pre-calculated multiplier/shift to avoid division in hot path
+- Linux timing uses `CLOCK_REALTIME_COARSE` for milliseconds and `CLOCK_REALTIME` for microseconds
 
 ### Type System
 
@@ -153,22 +164,59 @@ Uses compiler-specific attributes for DLL export/import:
 - `TL_API` - Marks functions for export when `TELEIOS_EXPORT` is defined
 - `TL_INLINE` / `TL_NOINLINE` - Force inlining control
 - `TL_DEPRECATED(message)` - Mark deprecated functions
+- `TL_THREADLOCAL` - Thread-local storage (critical for multithreading safety)
+- `TL_LIKELY(x)` / `TL_UNLIKELY(x)` - Branch prediction hints for optimization
 
 ### Core Modules
 
 **Application** ([teleios/application.h](engine/src/main/teleios/application.h)):
 - `tl_application_initialize()` - Setup application
-- `tl_application_run()` - Main game loop
+- `tl_application_run()` - Main game loop with fixed timestep
 - `tl_application_terminate()` - Cleanup
+
+**Game Loop Architecture:**
+- **Fixed timestep**: 60 Hz (16.667ms per update)
+- **Accumulator-based**: Decouples simulation from rendering for consistent physics
+- **Spiral of death protection**: Caps max frame time at 250ms
+- **Interpolation support**: Alpha value computed for smooth rendering between updates
+- **Performance tracking**: FPS (Frames Per Second) and UPS (Updates Per Second) logged every second
 
 **Logger** ([teleios/logger.h](engine/src/main/teleios/logger.h)):
 - Levels: VERBOSE, TRACE, DEBUG, INFO, WARN, ERROR, FATAL
 - Macros: `TLVERBOSE()`, `TLTRACE()`, `TLDEBUG()`, `TLINFO()`, `TLWARN()`, `TLERROR()`, `TLFATAL()`
 - Debug-only logs (VERBOSE/TRACE/DEBUG) are compiled out in release builds
+- **Highly optimized**: ~820-1,930 ns per log with thread-local timestamp caching
+- **Color-coded output**: ANSI color codes for each log level
+- **Thread-safe**: Uses `TL_THREADLOCAL` for safe concurrent logging
+
+**Profiler** ([teleios/profiler.h](engine/src/main/teleios/profiler.h)):
+- Stack-based call tracking (max 10 nested frames, configurable via `TELEIOS_FRAME_MAXIMUM`)
+- Macros: `TL_PROFILER_PUSH`, `TL_PROFILER_PUSH_WITH(args)`, `TL_PROFILER_POP`, `TL_PROFILER_POP_WITH(value)`
+- Stores filename, function name, line number, and optional formatted arguments
+- Integrates with logger for "[in]" / "[out]" trace messages
+- Uses `TL_LIKELY`/`TL_UNLIKELY` branch hints for optimization
+
+**Window** ([teleios/window.h](engine/src/main/teleios/window.h)):
+- `tl_window_handler()` - Get GLFW window pointer
+- `tl_window_size()` - Query window dimensions
+- `tl_window_position()` - Query window position
+- Window created during `tl_platform_initialize()` with OpenGL 4.6 Core Profile
+- Default: 1024x768, centered on primary monitor, initially invisible
+
+**Chrono** ([teleios/chrono.h](engine/src/main/teleios/chrono.h)):
+- `tl_time_clock()` - Get current date and time (fills TLDateTime struct)
+- `tl_time_epoch_millis()` - Get milliseconds since Unix epoch
+- `tl_time_epoch_micros()` - Get microseconds since Unix epoch
+- `TLDateTime` struct: Contains year, month, day, hour, minute, second, and milliseconds
+- Used internally by the logger for timestamps
+
+**Filesystem** ([teleios/filesystem.h](engine/src/main/teleios/filesystem.h)):
+- `tl_filesystem_path_separator()` - Returns platform-specific path separator ('\\' on Windows, '/' on Unix)
+- Provides cross-platform file path utilities
 
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, chrono, logger, platform, filesystem
+- Includes: defines, profiler, chrono, logger, platform, filesystem, window
 
 ### Module Organization
 
@@ -219,6 +267,7 @@ Build outputs are organized in the `build/` directory:
   - `glfw3.lib` / `libglfw3.a` - GLFW library (1.5 MB)
   - `yaml.lib` / `libyaml.a` - libyaml library (529 KB)
   - `lua.lib` / `liblua.a` - Lua library (1.3 MB)
+  - `cglm.lib` / `libcglm.a` - cglm mathematics library
 - `build/_deps/` - Downloaded dependencies (GLFW, libyaml, Lua source and build)
 - `build/CMakeFiles/` - CMake internal files and dependency tracking
 
@@ -288,6 +337,11 @@ All external libraries are statically linked with the engine. To use them in cod
 #include <lauxlib.h>
 ```
 
+**cglm (mathematics):**
+```c
+#include <cglm/cglm.h>
+```
+
 Include paths are automatically configured by CMake. No additional setup needed.
 
 ### Working with Platform-Specific Code
@@ -296,6 +350,49 @@ Include paths are automatically configured by CMake. No additional setup needed.
 - Use `#ifdef TL_PLATFORM_*` guards for platform-specific sections
 - Implement platform-specific functions in separate files (`platform_windows.c`, `platform_linux.c`)
 - Test builds on all target platforms when modifying platform code
+
+## Performance Considerations
+
+### Logger Performance
+
+The logger is highly optimized with measured timings per log call:
+- Early return check: ~1 ns
+- Message formatting (`vsnprintf`): ~100-500 ns (variable)
+- Basename extraction (`strrchr` x2): ~15-30 ns (SIMD-optimized)
+- **Timestamp syscall**: ~500-1,000 ns (**50-60% of total time - main bottleneck**)
+- Buffer formatting (`snprintf`): ~150-300 ns
+- Direct write (`fwrite`): ~50-100 ns
+- **Total**: ~820-1,930 ns per log
+
+**Key optimizations implemented**:
+- `fflush()` removed - OS manages buffer flushing for better performance
+- Thread-local storage (`TL_THREADLOCAL`) for timestamp cache
+- `strrchr()` uses hardware SIMD instructions on modern CPUs
+- `fwrite()` instead of `fprintf()` for faster output
+- Debug-only logs compiled out in Release builds (no runtime overhead)
+
+**Known limitation**: Timestamp syscall dominates logging time. For extremely high-frequency logging (>1M logs/second), consider caching timestamps at reduced precision.
+
+### Profiler Performance
+
+- Stack depth limited to 10 frames (configurable via `TELEIOS_FRAME_MAXIMUM`)
+- Static allocation avoids malloc/free overhead (~10.3KB total memory)
+- Branch prediction hints (`TL_LIKELY`/`TL_UNLIKELY`) optimize common paths
+- Suitable for frame-by-frame profiling, not deep call stack analysis
+
+### Game Loop Performance
+
+- Fixed 60 Hz update rate ensures consistent simulation
+- Accumulator pattern allows rendering faster than 60 FPS without physics jitter
+- Spiral of death protection prevents accumulator overflow in extreme lag scenarios
+- Windows timing: QueryPerformanceCounter optimized with pre-calculated multiplier
+- Linux timing: Direct `clock_gettime()` syscalls
+
+### Thread Safety
+
+- Logger uses `TL_THREADLOCAL` for thread-safe timestamp caching
+- Profiler stack is thread-local by default
+- Platform timing functions are thread-safe (read-only after initialization)
 
 ## Running Executables
 

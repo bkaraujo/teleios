@@ -149,6 +149,7 @@ set(ENGINE_SOURCES
     src/main/teleios/application.c
     src/main/teleios/platform.c
     src/main/teleios/profiler.c
+    src/main/teleios/memory.c
     src/main/main.c
 )
 
@@ -159,6 +160,8 @@ set(ENGINE_HEADERS
     src/main/teleios/application.h
     src/main/teleios/platform.h
     src/main/teleios/profiler.h
+    src/main/teleios/memory.h
+    src/main/teleios/window.h
     src/main/teleios/teleios.h
 )
 
