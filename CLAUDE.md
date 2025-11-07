@@ -263,10 +263,20 @@ Uses compiler-specific attributes for DLL export/import:
 - **OpenGL context management**: Makes window's OpenGL context current
 - **GLAD integration**: Loads OpenGL function pointers via `glfwGetProcAddress`
 - **Version logging**: Reports OpenGL version and CGLM version at initialization
+- **IMPORTANT**: GLAD must be included before GLFW in any file using OpenGL functions
+
+**Event System** ([teleios/event.h](engine/src/main/teleios/event.h)):
+- `tl_event_subscribe()` - Register handler for event type (max 255 handlers per event)
+- `tl_event_submit()` - Dispatch event to all registered handlers
+- **Event types**: Window events (close, resize, move, focus, minimize, maximize), input events (keyboard, mouse)
+- **Event data**: Union type `TLEvent` can hold various data types (i8/u8/i16/u16/i32/u32/i64/u64/f32/f64)
+- **Handler return**: `TL_EVENT_CONSUMED` stops propagation, `TL_EVENT_AVAILABLE` continues to next handler
+- **GLFW integration**: Window callbacks in `platform_glfw.inl` automatically submit events
+- **Subscriber pattern**: Decouples input/window handling from game logic
 
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics
+- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event
 
 ### Module Organization
 
@@ -296,6 +306,41 @@ When adding platform-specific implementations:
 2. Create or update `platform_<os>.c` with implementation
 3. Ensure fallback in `platform_agnostic.c` if applicable
 4. Use `#ifdef TL_PLATFORM_*` guards
+
+### `.inl` File Pattern and Linkage Rules
+
+**What are `.inl` files?**
+- Platform-specific implementations included directly into `.c` files (not compiled separately)
+- Allows `static` functions without polluting the global namespace
+- Examples: `platform_windows.inl`, `platform_linux.inl`, `platform_glfw.inl`, `thread_windows.inl`, `thread_unix.inl`
+
+**Important linkage rules:**
+- **Functions in `.inl` files callable from other compilation units MUST NOT be `static` or `TL_INLINE`**
+- **Functions in `.inl` files used only locally SHOULD be `static`**
+- Incorrect linkage causes "unresolved external symbol" linker errors
+
+**Example from `platform_glfw.inl`:**
+```c
+// ✅ CORRECT - External linkage for cross-file calls
+void* tl_window_handler() {
+    return m_window;
+}
+
+// ✅ CORRECT - Static for internal use only
+static b8 tl_window_create(void) {
+    // ...
+}
+
+// ❌ WRONG - Inline prevents cross-file linking
+TL_INLINE void* tl_window_handler() {
+    return m_window;  // Linker error!
+}
+```
+
+**When to use each linkage:**
+- **No modifier** (external): Functions called from other `.c` files (e.g., `tl_window_handler()` called from `application.c`, `graphics.c`)
+- **`static`**: Helper functions used only within the `.inl` file (e.g., `tl_window_create()`, GLFW callbacks)
+- **`TL_INLINE`**: Never use in `.inl` files for functions with external callers
 
 ## Compiler Configuration
 

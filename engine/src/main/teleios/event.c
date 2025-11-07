@@ -11,12 +11,6 @@ static const char* tl_event_name(const TLEventCodes code) {
     }
 
     switch (code) {
-        default                             : {
-                const u8 digits = tl_number_i32_digits(code);
-                const char* buffer = tl_memory_alloc(m_allocator, TL_MEMORY_STRING, digits + 1);
-                tl_number_i32_to_char(buffer, code, 10);
-                TL_PROFILER_POP_WITH(buffer);
-        }
         case TL_EVENT_WINDOW_CREATED        : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_CREATED")
         case TL_EVENT_WINDOW_RESIZED        : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_RESIZED")
         case TL_EVENT_WINDOW_CLOSED         : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_CLOSED")
@@ -27,10 +21,16 @@ static const char* tl_event_name(const TLEventCodes code) {
         case TL_EVENT_WINDOW_FOCUS_GAINED   : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_GAINED")
         case TL_EVENT_WINDOW_FOCUS_LOST     : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_LOST")
         case TL_EVENT_MAXIMUM               : TL_PROFILER_POP_WITH("TL_EVENT_MAXIMUM")
+        default                             : {
+                const u8 digits = tl_number_i32_digits(code);
+                const char* buffer = tl_memory_alloc(m_allocator, TL_MEMORY_STRING, digits + 1);
+                tl_number_i32_to_char(buffer, code, 10);
+                TL_PROFILER_POP_WITH(buffer);
+        }
     }
 }
 
-b8 tl_event_subscribe(u16 event, TLEventHandler handler) {
+b8 tl_event_subscribe(const u16 event, const TLEventHandler handler) {
     TL_PROFILER_PUSH_WITH("%d, %p", event, handler)
 
     if (event >= TL_EVENT_MAXIMUM) {
@@ -55,7 +55,7 @@ b8 tl_event_subscribe(u16 event, TLEventHandler handler) {
     TL_PROFILER_POP_WITH(true)
 }
 
-void tl_event_submit(u16 event, const TLEvent* data) {
+void tl_event_submit(const u16 event, const TLEvent* data) {
     TL_PROFILER_PUSH_WITH("%d, %p", event, data)
 
     if (event >= TL_EVENT_MAXIMUM) {

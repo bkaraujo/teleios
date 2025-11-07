@@ -2,8 +2,47 @@
 #include "teleios/application.h"
 #include <GLFW/glfw3.h>
 
+
+static u64 frame_count = 0;
+static u64 update_count = 0;
+static b8 m_running = false;
+static b8 m_paused = false;
+
+static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
+    TL_PROFILER_PUSH_WITH("0x%p", event)
+
+    m_paused = true;
+
+    frame_count = 0;
+    update_count = 0;
+    TLINFO("Simulation paused")
+
+    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+}
+
+static TLEventStatus tl_process_window_closed(const TLEvent *event) {
+    TL_PROFILER_PUSH_WITH("0x%p", event)
+
+    m_running = false;
+
+    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+}
+
+static TLEventStatus tl_process_window_restored(const TLEvent *event) {
+    TL_PROFILER_PUSH_WITH("0x%p", event)
+
+    m_paused = false;
+    TLINFO("Simulation resumed")
+
+    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+}
+
 b8 tl_application_initialize(void) {
     TL_PROFILER_PUSH
+
+    tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
+    tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
+    tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
     
     TL_PROFILER_POP_WITH(true)
 }
@@ -18,12 +57,11 @@ b8 tl_application_run(void) {
     u64 last_time = tl_time_epoch_micros();
 
     // FPS/UPS counters
-    u64 frame_count = 0;
-    u64 update_count = 0;
     f64 fps_timer = 0.0;
 
+    m_running = true;
     glfwShowWindow(tl_window_handler());
-    while (!glfwWindowShouldClose(tl_window_handler())) {
+    while (m_running) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
