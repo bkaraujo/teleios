@@ -8,6 +8,8 @@
 #include "teleios/window.h"
 #include "teleios/thread.h"
 
+#include "teleios/number.h"
+#include "teleios/event.h"
 #include "teleios/chrono.h"
 #include "teleios/logger.h"
 #include "teleios/filesystem.h"

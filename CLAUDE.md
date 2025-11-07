@@ -87,6 +87,16 @@ All external libraries are automatically downloaded and built by CMake using Fet
 - Provides vector/matrix operations (vec2/3/4, mat2/3/4, quaternions)
 - Linked statically with both engine and sandbox
 
+**GLAD** - OpenGL loader
+- Vendored in `engine/src/main/glad/` (glad.c, glad.h, khrplatform.h)
+- Loads OpenGL function pointers at runtime
+- Compiled directly with engine
+
+**STB Image** - Image loading library
+- Vendored as single-header library in `engine/src/main/stb/stb_image.h`
+- Supports PNG, JPG, BMP, TGA, PSD, GIF, HDR, PIC formats
+- Header-only, no compilation needed
+
 No manual dependency installation required - just run `.\build.ps1`
 
 ### Engine Build Configuration
@@ -247,15 +257,23 @@ Uses compiler-specific attributes for DLL export/import:
 - **Cross-platform**: Abstracts Windows threads/mutexes and POSIX pthread API
 - **Platform implementation**: Uses `.inl` files (thread_windows.inl, thread_unix.inl) included in thread.c
 
+**Graphics** ([teleios/graphics.h](engine/src/main/teleios/graphics.h)):
+- `tl_graphics_initialize()` - Initialize graphics system (GLAD OpenGL loader)
+- `tl_graphics_terminate()` - Cleanup graphics resources
+- **OpenGL context management**: Makes window's OpenGL context current
+- **GLAD integration**: Loads OpenGL function pointers via `glfwGetProcAddress`
+- **Version logging**: Reports OpenGL version and CGLM version at initialization
+
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem
+- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics
 
 ### Module Organization
 
 All engine code lives under `engine/src/main/`:
 - `teleios/*.{h,c}` - Core engine modules
-- `glfw/*.h` - GLFW windowing library headers (vendored)
+- `glad/*.{h,c}` - GLAD OpenGL loader (vendored)
+- `stb/*.h` - STB single-header libraries (stb_image.h)
 - `main.c` - Engine entry point
 
 ## Important Conventions
@@ -373,6 +391,20 @@ All external libraries are statically linked with the engine. To use them in cod
 **cglm (mathematics):**
 ```c
 #include <cglm/cglm.h>
+```
+
+**GLAD (OpenGL loader):**
+```c
+#include <glad/glad.h>
+// Must be included before GLFW/glfw3.h
+// Initialize with: gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)
+```
+
+**STB Image (image loading):**
+```c
+#define STB_IMAGE_IMPLEMENTATION  // Define once in exactly one .c file
+#include <stb/stb_image.h>
+// Usage: stbi_load(), stbi_image_free()
 ```
 
 Include paths are automatically configured by CMake. No additional setup needed.

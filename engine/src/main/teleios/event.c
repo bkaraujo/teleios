@@ -1,0 +1,76 @@
+#include "teleios/teleios.h"
+
+static TLAllocator* m_allocator;
+static TLEventHandler m_handlers[TL_EVENT_MAXIMUM][U8_MAX] = { 0 };
+
+static const char* tl_event_name(const TLEventCodes code) {
+    TL_PROFILER_PUSH_WITH("%d", code)
+
+    if (m_allocator == NULL) {
+        m_allocator = tl_memory_allocator_create(TL_MEBI_BYTES(1));
+    }
+
+    switch (code) {
+        default                             : {
+                const u8 digits = tl_number_i32_digits(code);
+                const char* buffer = tl_memory_alloc(m_allocator, TL_MEMORY_STRING, digits + 1);
+                tl_number_i32_to_char(buffer, code, 10);
+                TL_PROFILER_POP_WITH(buffer);
+        }
+        case TL_EVENT_WINDOW_CREATED        : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_CREATED")
+        case TL_EVENT_WINDOW_RESIZED        : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_RESIZED")
+        case TL_EVENT_WINDOW_CLOSED         : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_CLOSED")
+        case TL_EVENT_WINDOW_MOVED          : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_MOVED")
+        case TL_EVENT_WINDOW_MINIMIZED      : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_MINIMIZED")
+        case TL_EVENT_WINDOW_MAXIMIZED      : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_MAXIMIZED")
+        case TL_EVENT_WINDOW_RESTORED       : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_RESTORED")
+        case TL_EVENT_WINDOW_FOCUS_GAINED   : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_GAINED")
+        case TL_EVENT_WINDOW_FOCUS_LOST     : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_LOST")
+        case TL_EVENT_MAXIMUM               : TL_PROFILER_POP_WITH("TL_EVENT_MAXIMUM")
+    }
+}
+
+b8 tl_event_subscribe(u16 event, TLEventHandler handler) {
+    TL_PROFILER_PUSH_WITH("%d, %p", event, handler)
+
+    if (event >= TL_EVENT_MAXIMUM) {
+        TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
+        TL_PROFILER_POP_WITH(false)
+    }
+
+    if (m_handlers[event][U8_MAX - 1] != NULL) {
+        TLWARN("Event %u reached maximum of %d handlers", event, U8_MAX - 1);
+        TL_PROFILER_POP_WITH(false)
+    }
+
+    for (u8 i = 0; i < U8_MAX; ++i) {
+        if (m_handlers[event][i] == NULL) {
+            TLTRACE("Subscribing to %s handler function 0x%p", tl_event_name(event), handler)
+            TLTRACE("Subscribing to %s has %d handlers", tl_event_name(event), i + 1)
+            m_handlers[event][i] = handler;
+            break;
+        }
+    }
+
+    TL_PROFILER_POP_WITH(true)
+}
+
+void tl_event_submit(u16 event, const TLEvent* data) {
+    TL_PROFILER_PUSH_WITH("%d, %p", event, data)
+
+    if (event >= TL_EVENT_MAXIMUM) {
+        TLWARN("Event type beyond %d", TL_EVENT_MAXIMUM);
+        TL_PROFILER_POP
+    }
+
+    for (u8 i = 0; i < U8_MAX; ++i) {
+        if (m_handlers[event][i] != NULL) {
+            const TLEventStatus status = (*m_handlers[event][i])(data);
+            if (status == TL_EVENT_CONSUMED) {
+                break;
+            }
+        }
+    }
+
+    TL_PROFILER_POP
+}

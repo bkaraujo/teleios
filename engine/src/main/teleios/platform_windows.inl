@@ -1,3 +1,5 @@
+#ifndef __TELEIOS_PLATFORM_WINDOWS__
+#define __TELEIOS_PLATFORM_WINDOWS__
 #include "teleios/defines.h"
 #ifdef TL_PLATFORM_WINDOWS
 #include "teleios/teleios.h"
@@ -8,6 +10,8 @@ static u64 qpc_to_micros_shift = 0;
 static u64 qpc_epoch_offset = 0;
 
 b8 tl_winapi_initialize(void) {
+    tl_profiler_frame_push("platform.c", 19, "tl_platform_initialize", NULL);
+
     TL_PROFILER_PUSH
     LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
     qpc_freq = freq.QuadPart;
@@ -62,4 +66,5 @@ b8 tl_winapi_terminate(void) {
     TL_PROFILER_POP_WITH(true)
 }
 
+#endif
 #endif

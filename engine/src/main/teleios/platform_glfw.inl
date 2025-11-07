@@ -1,3 +1,6 @@
+#ifndef __TELEIOS_PLATFORM_GLFW__
+#define __TELEIOS_PLATFORM_GLFW__
+
 #include "teleios/teleios.h"
 #include <GLFW/glfw3.h>
 
@@ -74,3 +77,4 @@ static void tl_window_terminate(void) {
     glfwDestroyWindow(m_window);
     TL_PROFILER_POP
 }
+#endif

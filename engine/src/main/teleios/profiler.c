@@ -16,7 +16,7 @@ typedef struct {
     u64 lineno;
 } TLFrame;
 
-static u8 frame_index = U8_MAX;
+static u16 frame_index = U16_MAX;
 static TLFrame frame[TELEIOS_FRAME_MAXIMUM];
 
 void tl_profiler_frame_push(const char* filename, const u64 lineno, const char* function, const char* arguments, ...) {

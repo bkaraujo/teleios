@@ -33,18 +33,16 @@ b8 tl_platform_initialize(void) {
     platform.terminate          = tl_winapi_terminate;
 #endif
     tl_profiler_frame_push("main.c", 5, "main", NULL);
-    
-    if (!tl_memory_initialize()) {
-        TLERROR("Memory system failed to initialize")
-        return false;
-    }
 
     if (!platform.initialize()) {
         TLERROR("Platform failed to initialize")
         return false;
     }
 
-    tl_profiler_frame_push("platform.c", 19, "tl_platform_initialize", NULL);
+    if (!tl_memory_initialize()) {
+        TLERROR("Memory system failed to initialize")
+        return false;
+    }
 
     if (!glfwInit()) {
         TLERROR("GLFW failed to initialize")

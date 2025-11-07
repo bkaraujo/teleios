@@ -130,6 +130,8 @@ set(ENGINE_SOURCES
     src/main/teleios/application.c
     src/main/teleios/thread.c
     src/main/teleios/graphics.c
+        src/main/teleios/event.c
+        src/main/teleios/number.c
 )
 
 # Collect engine header files
@@ -149,6 +151,7 @@ set(ENGINE_HEADERS
     src/main/teleios/application.h
     src/main/teleios/thread.h
     src/main/teleios/graphics.h
+        src/main/teleios/number.h
 )
 
 # Create engine executable

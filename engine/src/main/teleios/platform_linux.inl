@@ -1,3 +1,5 @@
+#ifndef __TELEIOS_PLATFORM_LINUX__
+#define __TELEIOS_PLATFORM_LINUX__
 #include "teleios/defines.h"
 #if defined(K_PLATFORM_LINUX)
 #include "teleios/teleios.h"
@@ -33,4 +35,5 @@ u64 tl_lnx_time_epoch_micros(void) {
     clock_gettime(CLOCK_REALTIME, &now);                            // ~25-50 ns
     return (uint64_t) now.tv_sec * 1000000 + now.tv_nsec / 1000;
 }
+#endif
 #endif
