@@ -2,7 +2,7 @@
 #include "string.h"
 
 #if ! defined(TELEIOS_FRAME_MAXIMUM)
-#   define TELEIOS_FRAME_MAXIMUM 10
+#   define TELEIOS_FRAME_MAXIMUM 1000
 #endif
 
 #if ! defined(TL_PROFILER_FRAME_ARGUMENTS_SIZE)

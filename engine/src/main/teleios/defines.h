@@ -108,11 +108,13 @@
 #            undef TL_CSTD
 #        endif
 #        define TL_CSTD 2011
-#        include <stdnoreturn.h>  // (deprecated in C23)	noreturn convenience macro
-#        include <stdalign.h>     // (deprecated in C23)	alignas and alignof convenience macros
-#        include <stdatomic.h>    // Atomic operations
-#        include <threads.h>      // Thread library
-#        include <uchar.h>        // UTF-16 and UTF-32 character utilities
+#        include <stdnoreturn.h>                    // (deprecated in C23)	noreturn convenience macro
+#        include <stdalign.h>                       // (deprecated in C23)	alignas and alignof convenience macros
+#        include <stdatomic.h>                      // Atomic operations
+#        if !defined(TL_PLATFORM_WINDOWS)
+#            include <threads.h>                    // Thread library (não suportado nativamente no MinGW/Windows)
+#        endif
+#        include <uchar.h>                          // UTF-16 and UTF-32 character utilities
 #    endif
 #    if (__STDC_VERSION__ >= 201710L)
 #        if defined(TL_CSTD)

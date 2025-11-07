@@ -61,9 +61,14 @@ else()
         -std=c11
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:Debug>:-g>
-        $<$<CONFIG:Debug>:-gcodeview>
         $<$<CONFIG:Release>:-O3>
     )
+    # Add -gcodeview only for Clang (not supported by GCC)
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(sandbox PRIVATE
+            $<$<CONFIG:Debug>:-gcodeview>
+        )
+    endif()
 endif()
 
 # Platform-specific libraries

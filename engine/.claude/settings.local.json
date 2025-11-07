@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/bkrau/OneDrive/Trabalho/bkraujo/TELEIOS/sandbox/**)",
+      "Read(//c/Users/bkrau/OneDrive/Trabalho/bkraujo/TELEIOS/**)",
+      "Bash(\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -property installationPath)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

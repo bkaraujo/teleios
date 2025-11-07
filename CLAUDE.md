@@ -138,15 +138,21 @@ TELEIOS uses a multi-layer platform detection and abstraction system:
 
 **Platform Implementation** ([engine/src/main/teleios/platform.h](engine/src/main/teleios/platform.h)):
 - `tl_platform_initialize()` / `tl_platform_terminate()` - Platform setup/cleanup
-- Platform-specific code uses `.inc` files included directly into `platform.c`:
-  - [platform_windows.inc](engine/src/main/teleios/platform_windows.inc) - Windows (QueryPerformanceCounter timing)
-  - [platform_linux.inc](engine/src/main/teleios/platform_linux.inc) - Linux (clock_gettime timing)
-  - [platform_glfw.inc](engine/src/main/teleios/platform_glfw.inc) - GLFW window management (cross-platform)
+- Platform-specific code uses `.inl` files included directly into `platform.c`:
+  - [platform_windows.inl](engine/src/main/teleios/platform_windows.inl) - Windows (QueryPerformanceCounter timing)
+  - [platform_linux.inl](engine/src/main/teleios/platform_linux.inl) - Linux (clock_gettime timing)
+  - [platform_glfw.inl](engine/src/main/teleios/platform_glfw.inl) - GLFW window management (cross-platform)
+
+**Threading Implementation** ([engine/src/main/teleios/thread.h](engine/src/main/teleios/thread.h)):
+- Platform-specific code uses `.inl` files included directly into `thread.c`:
+  - [thread_windows.inl](engine/src/main/teleios/thread_windows.inl) - Windows threads and synchronization primitives
+  - [thread_unix.inl](engine/src/main/teleios/thread_unix.inl) - POSIX pthread implementation
 
 **Platform Implementation Pattern:**
-- `.inc` files are **included** (not compiled separately) to allow static functions without header pollution
+- `.inl` files are **included** (not compiled separately) to allow static functions without header pollution
 - Windows timing uses QueryPerformanceCounter with pre-calculated multiplier/shift to avoid division in hot path
 - Linux timing uses `CLOCK_REALTIME_COARSE` for milliseconds and `CLOCK_REALTIME` for microseconds
+- Thread implementations abstract Windows native threads/mutexes and POSIX pthreads under unified API
 
 ### Type System
 
@@ -190,11 +196,12 @@ Uses compiler-specific attributes for DLL export/import:
 - **Thread-safe**: Uses `TL_THREADLOCAL` for safe concurrent logging
 
 **Profiler** ([teleios/profiler.h](engine/src/main/teleios/profiler.h)):
-- Stack-based call tracking (max 10 nested frames, configurable via `TELEIOS_FRAME_MAXIMUM`)
+- Stack-based call tracking (max 1000 nested frames, configurable via `TELEIOS_FRAME_MAXIMUM`)
 - Macros: `TL_PROFILER_PUSH`, `TL_PROFILER_PUSH_WITH(args)`, `TL_PROFILER_POP`, `TL_PROFILER_POP_WITH(value)`
 - Stores filename, function name, line number, and optional formatted arguments
 - Integrates with logger for "[in]" / "[out]" trace messages
 - Uses `TL_LIKELY`/`TL_UNLIKELY` branch hints for optimization
+- Arguments buffer: 1024 bytes per frame (configurable via `TL_PROFILER_FRAME_ARGUMENTS_SIZE`)
 
 **Window** ([teleios/window.h](engine/src/main/teleios/window.h)):
 - `tl_window_handler()` - Get GLFW window pointer
@@ -214,9 +221,35 @@ Uses compiler-specific attributes for DLL export/import:
 - `tl_filesystem_path_separator()` - Returns platform-specific path separator ('\\' on Windows, '/' on Unix)
 - Provides cross-platform file path utilities
 
+**Memory** ([teleios/memory.h](engine/src/main/teleios/memory.h)):
+- `tl_memory_initialize()` / `tl_memory_terminate()` - Initialize/cleanup memory system
+- `tl_memory_allocator_create()` / `tl_memory_allocator_destroy()` - Create/destroy custom allocators
+- `tl_memory_alloc()` - Allocate memory with tag for tracking
+- `tl_memory_set()` / `tl_memory_copy()` - Memory manipulation utilities
+- **Tagged allocations**: Memory tags (e.g., `TL_MEMORY_THREAD`, `TL_MEMORY_SCENE`) for debugging and profiling
+- **Custom allocators**: Per-subsystem memory pools for cache efficiency
+
+**Thread** ([teleios/thread.h](engine/src/main/teleios/thread.h)):
+- Thread management:
+  - `tl_thread_create()` - Create and start a new thread
+  - `tl_thread_join()` - Wait for thread completion and retrieve result
+  - `tl_thread_detach()` - Detach thread for automatic cleanup
+  - `tl_thread_id()` - Get current thread ID
+  - `tl_thread_sleep()` - Sleep for specified milliseconds
+- Mutex (mutual exclusion):
+  - `tl_mutex_create()` / `tl_mutex_destroy()` - Create/destroy mutex
+  - `tl_mutex_lock()` / `tl_mutex_unlock()` - Lock/unlock mutex
+  - `tl_mutex_trylock()` - Non-blocking lock attempt
+- Condition variables:
+  - `tl_condition_create()` / `tl_condition_destroy()` - Create/destroy condition variable
+  - `tl_condition_wait()` / `tl_condition_wait_timeout()` - Wait on condition
+  - `tl_condition_signal()` / `tl_condition_broadcast()` - Signal waiting threads
+- **Cross-platform**: Abstracts Windows threads/mutexes and POSIX pthread API
+- **Platform implementation**: Uses `.inl` files (thread_windows.inl, thread_unix.inl) included in thread.c
+
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, profiler, chrono, logger, platform, filesystem, window
+- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem
 
 ### Module Organization
 
@@ -373,12 +406,31 @@ The logger is highly optimized with measured timings per log call:
 
 **Known limitation**: Timestamp syscall dominates logging time. For extremely high-frequency logging (>1M logs/second), consider caching timestamps at reduced precision.
 
-### Profiler Performance
+### Profiler Performance and Limitations
 
-- Stack depth limited to 10 frames (configurable via `TELEIOS_FRAME_MAXIMUM`)
-- Static allocation avoids malloc/free overhead (~10.3KB total memory)
+**Performance optimizations:**
+- Static allocation avoids malloc/free overhead (~1.03MB total memory for 1000 frames)
 - Branch prediction hints (`TL_LIKELY`/`TL_UNLIKELY`) optimize common paths
-- Suitable for frame-by-frame profiling, not deep call stack analysis
+- Direct pointer assignment for filename/function (no string copy)
+- Arguments buffer: 1024 bytes per frame (configurable via `TL_PROFILER_FRAME_ARGUMENTS_SIZE`)
+
+**Configuration:**
+- **Stack depth: 1000 frames** (configurable via `TELEIOS_FRAME_MAXIMUM`, default changed from 10 to 1000)
+- **Memory usage**: ~1KB per frame (1024 bytes arguments + metadata)
+- **Fatal error on overflow**: Application terminates with `TLFATAL` if limit exceeded
+- **No graceful degradation**: Cannot handle call stacks deeper than configured limit
+
+**Suitable for:**
+- Deep call stack analysis (up to 1000 levels)
+- Recursive algorithms with moderate depth
+- Complex call chains in large codebases
+- Development-time performance profiling
+- Entry/exit logging for debugging
+
+**Not suitable for:**
+- Extremely deep recursion (>1000 levels, e.g., pathological cases)
+- Production builds (overhead of logging and memory usage)
+- Real-time profiling with minimal overhead (consider external tools like Tracy, Optick)
 
 ### Game Loop Performance
 

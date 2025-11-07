@@ -56,6 +56,11 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
+    if (!tl_graphics_initialize()) {
+        TLERROR("OpenGL failed to initialize")
+        TL_PROFILER_POP_WITH(false)
+    }
+
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -78,17 +83,22 @@ u64 tl_time_epoch_micros(void) {
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
 
+    if (!tl_graphics_terminate()) {
+        TLERROR("Graphics failed to terminate")
+        TL_PROFILER_POP_WITH(false)
+    }
+
     tl_window_terminate();
 
     glfwTerminate();
     if (!platform.terminate()) {
         TLERROR("Platform failed to terminate")
-        return false;
+        TL_PROFILER_POP_WITH(false)
     }
 
     if (!tl_memory_terminate()) {
         TLERROR("Memory system failed to terminate")
-        return false;
+        TL_PROFILER_POP_WITH(false)
     }
 
     TL_PROFILER_POP_WITH(true)

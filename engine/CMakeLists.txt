@@ -101,60 +101,43 @@ if(NOT lua_POPULATED)
     endif()
 endif()
 
-# Download and configure cglm (OpenGL Mathematics library) using modern file() approach
-set(CGLM_URL "https://github.com/recp/cglm/archive/refs/tags/v0.9.4.tar.gz")
-set(CGLM_DOWNLOAD_DIR "${CMAKE_BINARY_DIR}/_deps/cglm-download")
-set(CGLM_SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/cglm-src")
-
-# Download and extract if not already done
-if(NOT EXISTS "${CGLM_SOURCE_DIR}/include")
-    message(STATUS "Downloading cglm...")
-    file(DOWNLOAD "${CGLM_URL}" "${CGLM_DOWNLOAD_DIR}/cglm.tar.gz"
-         SHOW_PROGRESS
-         STATUS CGLM_DOWNLOAD_STATUS)
-
-    list(GET CGLM_DOWNLOAD_STATUS 0 CGLM_DOWNLOAD_CODE)
-    if(NOT CGLM_DOWNLOAD_CODE EQUAL 0)
-        message(FATAL_ERROR "Failed to download cglm")
-    endif()
-
-    message(STATUS "Extracting cglm...")
-    file(ARCHIVE_EXTRACT
-         INPUT "${CGLM_DOWNLOAD_DIR}/cglm.tar.gz"
-         DESTINATION "${CMAKE_BINARY_DIR}/_deps")
-
-    # Rename extracted directory
-    file(RENAME "${CMAKE_BINARY_DIR}/_deps/cglm-0.9.4" "${CGLM_SOURCE_DIR}")
-endif()
-
-# Build cglm as a static library
-file(GLOB CGLM_SOURCES "${CGLM_SOURCE_DIR}/src/*.c")
-
-add_library(cglm STATIC ${CGLM_SOURCES})
-target_include_directories(cglm PUBLIC
-    "${CGLM_SOURCE_DIR}/include"
-)
-set_target_properties(cglm PROPERTIES
-    OUTPUT_NAME "cglm"
-    C_STANDARD 99
-    C_STANDARD_REQUIRED ON
+# Download and configure cglm (OpenGL Mathematics library)
+FetchContent_Declare(
+    cglm
+    GIT_REPOSITORY https://github.com/recp/cglm.git
+    GIT_TAG        v0.9.4  # Latest stable version
+    GIT_SHALLOW    TRUE
 )
 
-# Define CGLM_STATIC for static linking
-target_compile_definitions(cglm PUBLIC CGLM_STATIC)
+# cglm configuration options
+set(CGLM_SHARED     OFF CACHE BOOL "" FORCE)
+set(CGLM_STATIC     ON  CACHE BOOL "" FORCE)
+set(CGLM_USE_C99    OFF CACHE BOOL "" FORCE)
+set(CGLM_USE_TEST   OFF CACHE BOOL "" FORCE)
+
+# Make cglm available
+FetchContent_MakeAvailable(cglm)
 
 # Collect engine source files
 set(ENGINE_SOURCES
+    src/main/glad/glad.c
+
     src/main/main.c
     src/main/teleios/logger.c
     src/main/teleios/memory.c
     src/main/teleios/platform.c
     src/main/teleios/profiler.c
     src/main/teleios/application.c
+    src/main/teleios/thread.c
+    src/main/teleios/graphics.c
 )
 
 # Collect engine header files
 set(ENGINE_HEADERS
+    src/main/glad/glad.h
+    src/main/glad/khrplatform.h
+    src/main/stb/stb_image.h
+
     src/main/teleios/event.h
     src/main/teleios/logger.h
     src/main/teleios/memory.h
@@ -164,6 +147,8 @@ set(ENGINE_HEADERS
     src/main/teleios/platform.h
     src/main/teleios/profiler.h
     src/main/teleios/application.h
+    src/main/teleios/thread.h
+    src/main/teleios/graphics.h
 )
 
 # Create engine executable
@@ -226,9 +211,14 @@ else()
         -std=c11
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:Debug>:-g>
-        $<$<CONFIG:Debug>:-gcodeview>
         $<$<CONFIG:Release>:-O3>
     )
+    # Add -gcodeview only for Clang (not supported by GCC)
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(engine PRIVATE
+            $<$<CONFIG:Debug>:-gcodeview>
+        )
+    endif()
 endif()
 
 # Platform-specific libraries
