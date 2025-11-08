@@ -61,6 +61,9 @@ b8 tl_application_run(void) {
 
     m_running = true;
     glfwShowWindow(tl_window_handler());
+
+    glClearColor(0.126f, 0.48f, 1.0, 1.0);
+
     while (m_running) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
@@ -85,6 +88,7 @@ b8 tl_application_run(void) {
         (void)alpha;  // Suppress unused variable warning until render is implemented
 
         glfwPollEvents();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glfwSwapBuffers(tl_window_handler());
         
         frame_count++;

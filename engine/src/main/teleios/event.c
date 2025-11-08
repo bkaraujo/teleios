@@ -31,33 +31,30 @@ static const char* tl_event_name(const TLEventCodes code) {
 }
 
 b8 tl_event_subscribe(const u16 event, const TLEventHandler handler) {
-    TL_PROFILER_PUSH_WITH("%d, %p", event, handler)
 
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
-        TL_PROFILER_POP_WITH(false)
+        return false;
     }
 
     if (m_handlers[event][U8_MAX - 1] != NULL) {
         TLWARN("Event %u reached maximum of %d handlers", event, U8_MAX - 1);
-        TL_PROFILER_POP_WITH(false)
+        return false;
     }
 
     for (u8 i = 0; i < U8_MAX; ++i) {
         if (m_handlers[event][i] == NULL) {
-            TLTRACE("Subscribing to %s handler function 0x%p", tl_event_name(event), handler)
+            TLDEBUG("Subscribing to %s handler function 0x%p", tl_event_name(event), handler)
             TLTRACE("Subscribing to %s has %d handlers", tl_event_name(event), i + 1)
             m_handlers[event][i] = handler;
             break;
         }
     }
 
-    TL_PROFILER_POP_WITH(true)
+    return true;
 }
 
 void tl_event_submit(const u16 event, const TLEvent* data) {
-    TL_PROFILER_PUSH_WITH("%d, %p", event, data)
-
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Event type beyond %d", TL_EVENT_MAXIMUM);
         TL_PROFILER_POP
@@ -71,6 +68,4 @@ void tl_event_submit(const u16 event, const TLEvent* data) {
             }
         }
     }
-
-    TL_PROFILER_POP
 }

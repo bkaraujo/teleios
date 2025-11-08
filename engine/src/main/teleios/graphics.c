@@ -15,7 +15,6 @@ b8 tl_graphics_initialize(void) {
     }
 
     TLDEBUG("OPENGL %s", glGetString(GL_VERSION))
-
     TL_PROFILER_POP_WITH(true)
 }
 
