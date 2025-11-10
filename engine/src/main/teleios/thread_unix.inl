@@ -158,10 +158,8 @@ void tl_thread_sleep(u32 milliseconds) {
 // Mutex (Mutual Exclusion)
 // ---------------------------------
 
-TLMutex* tl_mutex_create(void) {
-    tl_thread_ensure_allocator();
-
-    TLMutex* mutex = (TLMutex*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLMutex));
+TLMutex* tl_mutex_create(TLAllocator* allocator) {
+    TLMutex* mutex = (TLMutex*)tl_memory_alloc(allocator, TL_MEMORY_THREAD, sizeof(TLMutex));
     if (!mutex) {
         TLERROR("tl_mutex_create: Failed to allocate mutex structure");
         return NULL;
@@ -245,10 +243,8 @@ b8 tl_mutex_unlock(TLMutex* mutex) {
 // Condition Variables
 // ---------------------------------
 
-TLCondition* tl_condition_create(void) {
-    tl_thread_ensure_allocator();
-
-    TLCondition* condition = (TLCondition*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLCondition));
+TLCondition* tl_condition_create(TLAllocator* allocator) {
+    TLCondition* condition = (TLCondition*)tl_memory_alloc(allocator, TL_MEMORY_THREAD, sizeof(TLCondition));
     if (!condition) {
         TLERROR("tl_condition_create: Failed to allocate condition structure");
         return NULL;

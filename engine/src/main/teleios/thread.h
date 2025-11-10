@@ -73,7 +73,7 @@ TL_API void tl_thread_sleep(u32 milliseconds);
  * Creates a new mutex
  * @return Pointer to TLMutex on success, NULL on failure
  */
-TL_API TLMutex* tl_mutex_create(void);
+TL_API TLMutex* tl_mutex_create(TLAllocator* allocator);
 
 /**
  * Destroys a mutex and frees its resources
@@ -110,7 +110,7 @@ TL_API b8 tl_mutex_unlock(TLMutex* mutex);
  * Creates a new condition variable
  * @return Pointer to TLCondition on success, NULL on failure
  */
-TL_API TLCondition* tl_condition_create(void);
+TL_API TLCondition* tl_condition_create(TLAllocator* allocator);
 
 /**
  * Destroys a condition variable and frees its resources
