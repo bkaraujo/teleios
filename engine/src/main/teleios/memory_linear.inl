@@ -15,6 +15,7 @@ static void* tl_memory_linear_allocate(TLAllocator* allocator, TLMemoryTag tag, 
         u32 available = page->size - page->index;
         if (available < size + sizeof(TLMemoryTag)) continue;
 
+        TLDEBUG("LINEAR alloc: size %d, tag %u", size, tag);
         TLMemory* block = (TLMemory*) (page->payload + page->index);
         block->tag = tag;
 
@@ -22,6 +23,7 @@ static void* tl_memory_linear_allocate(TLAllocator* allocator, TLMemoryTag tag, 
         void* result = page->payload + page->index;
         page->index += size;
 
+        TLTRACE("LINEAR alloc: %p available %d", allocator, page->size - page->index)
         return result;
     }
 
