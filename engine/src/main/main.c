@@ -4,7 +4,7 @@
 int main(const int argc, const char* argv[]) {
     (void)argc;  // Unused parameter
     (void)argv;  // Unused parameter
-
+    tl_logger_loglevel(TL_LOG_LEVEL_VERBOSE);
     // ####################################################################
     // 1 - Iniciar OS
     // ####################################################################
@@ -29,9 +29,9 @@ int main(const int argc, const char* argv[]) {
         TLFATAL("Application failed to run")
     }
     
-    if (!tl_application_terminate()) TLERROR("Platform failed to terminate")
-    
+    if (!tl_application_terminate()) TLERROR("Application failed to terminate")
+
     if (!tl_platform_terminate()) TLERROR("Platform failed to terminate")
 
-    TL_PROFILER_POP_WITH(0)
+    return 0;
 }

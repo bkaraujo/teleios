@@ -7,7 +7,7 @@ static const char* tl_event_name(const TLEventCodes code) {
     TL_PROFILER_PUSH_WITH("%d", code)
 
     if (m_allocator == NULL) {
-        m_allocator = tl_memory_allocator_create(TL_MEBI_BYTES(1));
+        m_allocator = tl_memory_allocator_create(TL_MEBI_BYTES(1), TL_ALLOCATOR_LINEAR);
     }
 
     switch (code) {

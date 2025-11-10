@@ -1,12 +1,33 @@
 #include "teleios/teleios.h"
 #include "teleios/application.h"
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// ---------------------------------
+// Module State
+// ---------------------------------
 
 static u64 frame_count = 0;
 static u64 update_count = 0;
 static b8 m_running = false;
 static b8 m_paused = false;
+
+// ---------------------------------
+// OpenGL Commands (executed on graphics thread)
+// ---------------------------------
+
+static void tl_setup_clear_color(void) {
+    glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
+}
+
+static void tl_render_frame(void) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glfwSwapBuffers(tl_window_handler());
+}
+
+// ---------------------------------
+// Event Handlers
+// ---------------------------------
 
 static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
@@ -62,7 +83,8 @@ b8 tl_application_run(void) {
     m_running = true;
     glfwShowWindow(tl_window_handler());
 
-    glClearColor(0.126f, 0.48f, 1.0, 1.0);
+    // Setup clear color on graphics thread (synchronous - wait for completion)
+    tl_graphics_submit_sync(tl_setup_clear_color);
 
     while (m_running) {
         const u64 new_time = tl_time_epoch_micros();
@@ -87,10 +109,12 @@ b8 tl_application_run(void) {
         // render(alpha);
         (void)alpha;  // Suppress unused variable warning until render is implemented
 
+        // Poll events on main thread (GLFW requirement)
         glfwPollEvents();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glfwSwapBuffers(tl_window_handler());
-        
+
+        // Submit rendering work to graphics thread (asynchronous - returns immediately)
+        tl_graphics_submit_async(tl_render_frame);
+
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {
             TLINFO("FPS: %llu | UPS: %llu", frame_count, update_count);

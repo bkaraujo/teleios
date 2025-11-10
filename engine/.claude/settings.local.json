@@ -3,7 +3,15 @@
     "allow": [
       "Read(//c/Users/bkrau/OneDrive/Trabalho/bkraujo/TELEIOS/sandbox/**)",
       "Read(//c/Users/bkrau/OneDrive/Trabalho/bkraujo/TELEIOS/**)",
-      "Bash(\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -property installationPath)"
+      "Bash(\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" -latest -property installationPath)",
+      "Bash(powershell:*)",
+      "Bash(C:\\Users\\bkrau\\OneDrive\\Trabalho\\bkraujo\\TELEIOS\\engine\\build\\Debug\\engine.exe)",
+      "Bash(timeout:*)",
+      "Bash(cmd /c \"cd /d C:\\Users\\bkrau\\OneDrive\\Trabalho\\bkraujo\\TELEIOS\\engine\\build\\Debug && engine.exe\")",
+      "Bash(cmd /c \"timeout /t 3 /nobreak >nul\")",
+      "Bash(C:UsersbkrauOneDriveTrabalhobkraujoTELEIOSenginecmake-build-debugengine.exe)",
+      "Bash(cmd /c \"C:\\Users\\bkrau\\OneDrive\\Trabalho\\bkraujo\\TELEIOS\\engine\\cmake-build-debug\\engine.exe\")",
+      "Bash(cmd /c \"cd /d C:\\Users\\bkrau\\OneDrive\\Trabalho\\bkraujo\\TELEIOS\\engine\\cmake-build-debug && engine.exe\")"
     ],
     "deny": [],
     "ask": []

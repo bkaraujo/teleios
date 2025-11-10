@@ -4,12 +4,31 @@
  *
  * Uses Windows API: CreateThread, CRITICAL_SECTION, CONDITION_VARIABLE
  * This file is included directly into thread.c
+ *
+ * Memory management: Uses DYNAMIC allocator for thread resources to allow
+ * individual deallocation and memory leak tracking.
  */
 
 #ifdef TL_PLATFORM_WINDOWS
 
 #include <windows.h>
 #include <process.h>
+
+// ---------------------------------
+// Memory allocator for thread resources
+// ---------------------------------
+
+static TLAllocator* m_thread_allocator = NULL;
+
+static void tl_thread_ensure_allocator(void) {
+    if (m_thread_allocator == NULL) {
+        m_thread_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
+        if (!m_thread_allocator) {
+            TLFATAL("Failed to create DYNAMIC allocator for thread system");
+        }
+        TLINFO("Thread system DYNAMIC allocator initialized");
+    }
+}
 
 // ---------------------------------
 // Internal structures
@@ -51,7 +70,9 @@ TLThread* tl_thread_create(TLThreadFunc func, void* arg) {
         return NULL;
     }
 
-    TLThread* thread = (TLThread*)malloc(sizeof(TLThread));
+    tl_thread_ensure_allocator();
+
+    TLThread* thread = (TLThread*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLThread));
     if (!thread) {
         TLERROR("tl_thread_create: Failed to allocate thread structure");
         return NULL;
@@ -73,7 +94,7 @@ TLThread* tl_thread_create(TLThreadFunc func, void* arg) {
 
     if (!thread->handle) {
         TLERROR("tl_thread_create: CreateThread failed with error %lu", GetLastError());
-        free(thread);
+        tl_memory_free(m_thread_allocator, thread);
         return NULL;
     }
 
@@ -100,7 +121,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
 
     CloseHandle(thread->handle);
     TLDEBUG("Thread joined: ID=%u", thread->thread_id);
-    free(thread);
+    tl_memory_free(m_thread_allocator, thread);
     return true;
 }
 
@@ -112,7 +133,7 @@ b8 tl_thread_detach(TLThread* thread) {
 
     TLDEBUG("Thread detached: ID=%u", thread->thread_id);
     CloseHandle(thread->handle);
-    free(thread);
+    tl_memory_free(m_thread_allocator, thread);
     return true;
 }
 
@@ -129,7 +150,9 @@ void tl_thread_sleep(u32 milliseconds) {
 // ---------------------------------
 
 TLMutex* tl_mutex_create(void) {
-    TLMutex* mutex = (TLMutex*)malloc(sizeof(TLMutex));
+    tl_thread_ensure_allocator();
+
+    TLMutex* mutex = (TLMutex*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLMutex));
     if (!mutex) {
         TLERROR("tl_mutex_create: Failed to allocate mutex structure");
         return NULL;
@@ -148,7 +171,7 @@ void tl_mutex_destroy(TLMutex* mutex) {
 
     DeleteCriticalSection(&mutex->cs);
     TLDEBUG("Mutex destroyed: %p", mutex);
-    free(mutex);
+    tl_memory_free(m_thread_allocator, mutex);
 }
 
 b8 tl_mutex_lock(TLMutex* mutex) {
@@ -185,7 +208,9 @@ b8 tl_mutex_unlock(TLMutex* mutex) {
 // ---------------------------------
 
 TLCondition* tl_condition_create(void) {
-    TLCondition* condition = (TLCondition*)malloc(sizeof(TLCondition));
+    tl_thread_ensure_allocator();
+
+    TLCondition* condition = (TLCondition*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLCondition));
     if (!condition) {
         TLERROR("tl_condition_create: Failed to allocate condition structure");
         return NULL;
@@ -204,7 +229,7 @@ void tl_condition_destroy(TLCondition* condition) {
 
     // Windows condition variables don't need explicit cleanup
     TLDEBUG("Condition variable destroyed: %p", condition);
-    free(condition);
+    tl_memory_free(m_thread_allocator, condition);
 }
 
 b8 tl_condition_wait(TLCondition* condition, TLMutex* mutex) {
@@ -267,6 +292,23 @@ b8 tl_condition_broadcast(TLCondition* condition) {
 
     WakeAllConditionVariable(&condition->cv);
     return true;
+}
+
+// ---------------------------------
+// Thread system cleanup (optional)
+// ---------------------------------
+
+/**
+ * @brief Cleanup thread system and report memory leaks
+ * @note Optional - called during application shutdown to report thread resource leaks
+ * @note Not exposed in public API, can be called from platform.c shutdown
+ */
+static void tl_thread_system_terminate(void) {
+    if (m_thread_allocator != NULL) {
+        TLINFO("Destroying thread system allocator and checking for leaks...");
+        tl_memory_allocator_destroy(m_thread_allocator);
+        m_thread_allocator = NULL;
+    }
 }
 
 #endif // TL_PLATFORM_WINDOWS

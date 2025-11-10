@@ -258,12 +258,21 @@ Uses compiler-specific attributes for DLL export/import:
 - **Platform implementation**: Uses `.inl` files (thread_windows.inl, thread_unix.inl) included in thread.c
 
 **Graphics** ([teleios/graphics.h](engine/src/main/teleios/graphics.h)):
-- `tl_graphics_initialize()` - Initialize graphics system (GLAD OpenGL loader)
-- `tl_graphics_terminate()` - Cleanup graphics resources
-- **OpenGL context management**: Makes window's OpenGL context current
-- **GLAD integration**: Loads OpenGL function pointers via `glfwGetProcAddress`
+- `tl_graphics_initialize()` - Initialize graphics system and dedicated rendering thread
+- `tl_graphics_terminate()` - Cleanup graphics resources and join worker thread
+- **Dedicated rendering thread**: All OpenGL commands execute on separate worker thread
+- **GLAD initialization**: Performed on graphics thread (thread with active OpenGL context)
 - **Version logging**: Reports OpenGL version and CGLM version at initialization
-- **IMPORTANT**: GLAD must be included before GLFW in any file using OpenGL functions
+- **Thread-safe work queue**: Producer-consumer pattern with mutex + condition variables (capacity: 256 jobs)
+- **4 submission functions**:
+  - `tl_graphics_submit_sync(func)` - Synchronous work without parameters (blocks until complete)
+  - `tl_graphics_submit_sync_args(func, args)` - Synchronous work with parameters (blocks until complete)
+  - `tl_graphics_submit_async(func)` - Asynchronous work without parameters (returns immediately)
+  - `tl_graphics_submit_async_args(func, args)` - Asynchronous work with parameters (returns immediately)
+- **Lifecycle**: Worker thread runs until `TL_EVENT_WINDOW_CLOSED` event received
+- **Graceful shutdown**: Processes all pending jobs before termination
+- **Context ownership**: OpenGL context acquired by worker thread at startup
+- **IMPORTANT**: All OpenGL calls MUST go through graphics thread submission functions
 
 **Event System** ([teleios/event.h](engine/src/main/teleios/event.h)):
 - `tl_event_subscribe()` - Register handler for event type (max 255 handlers per event)
@@ -286,6 +295,54 @@ All engine code lives under `engine/src/main/`:
 - `stb/*.h` - STB single-header libraries (stb_image.h)
 - `main.c` - Engine entry point
 
+### Graphics Thread Architecture
+
+**Threading Model:**
+```
+Main Thread                     Graphics Thread (Worker)
+-----------                     ------------------------
+• Game logic                    • OpenGL context ownership
+• Physics simulation            • GLAD initialization
+• glfwPollEvents()             • OpenGL command execution
+• Submit render commands ──────► Process from queue
+  via async/sync API              (blocks when empty)
+                                • Exit on TL_EVENT_WINDOW_CLOSED
+```
+
+**Key Implementation Details:**
+- **Context Transfer**: Main thread never acquires OpenGL context; worker thread takes ownership at startup
+- **GLAD Initialization**: Must occur on graphics thread after `glfwMakeContextCurrent()` call
+- **Queue Behavior**:
+  - Worker thread blocks on condition variable when queue empty (no CPU spinning)
+  - Wakes on new work submission or shutdown signal
+  - Exit condition: `shutdown == true AND queue empty` (ensures pending work completes)
+- **Synchronous Jobs**: Use per-job mutex/condition for completion signaling (avoids contention on queue mutex)
+- **Memory Management**:
+  - Graphics thread has dedicated allocator (1MB, tag: `TL_MEMORY_GRAPHICS`)
+  - Sync jobs: Safe to use stack-allocated args (function blocks until complete)
+  - Async jobs: Args must have appropriate lifetime (heap-allocated or static)
+
+**Example Usage:**
+```c
+// Setup (synchronous - wait for completion)
+static void setup_shaders(void) {
+    glCreateProgram();
+    // ...
+}
+tl_graphics_submit_sync(setup_shaders);
+
+// Render loop (asynchronous - returns immediately)
+static void render_frame(void) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glfwSwapBuffers(tl_window_handler());
+}
+
+while (running) {
+    glfwPollEvents();  // Main thread only
+    tl_graphics_submit_async(render_frame);  // Non-blocking
+}
+```
+
 ## Important Conventions
 
 ### Naming Convention
@@ -299,6 +356,172 @@ All engine code lives under `engine/src/main/`:
 - `TELEIOS_BUILD_DEBUG` - Debug mode (enables VERBOSE/TRACE/DEBUG logging macros)
 - `TELEIOS_BUILD_RELEASE` - Release mode (compiles out debug-only logs for performance)
 - `TELEIOS_EXPORT` - Marks functions for DLL export (engine only)
+
+### Modular Architecture Pattern (Public API / Dispatcher / Specialized .inl)
+
+**TELEIOS Standard**: All complex subsystems should follow the modular architecture pattern for maintainability, extensibility, and separation of concerns.
+
+**Architecture Layers:**
+```
+<module>.h              # Public API (exported interface)
+<module>.c              # Dispatcher (type routing and coordination)
+<module>_types.inl      # Shared type definitions
+<module>_<variant>.inl  # Specialized implementations
+```
+
+**Reference Implementation: Memory System**
+
+The memory system (`teleios/memory.h`) serves as the canonical example of this pattern:
+
+```
+memory.h                    # Public API
+  - TLAllocatorType enum
+  - tl_memory_allocator_create(size, type)
+  - tl_memory_alloc(allocator, tag, size)
+  - tl_memory_free(allocator, pointer)
+  - tl_memory_allocator_destroy(allocator)
+
+memory.c                    # Dispatcher (165 lines)
+  - Includes: memory_types.inl, memory_linear.inl, memory_dynamic.inl
+  - Dispatcher functions use switch/case for type routing
+  - Minimal logic - delegates to specialized implementations
+
+memory_types.inl            # Shared structures
+  - TLMemoryPage (LINEAR)
+  - TLDynamicBlock (DYNAMIC)
+  - TLAllocator (union of both types)
+
+memory_linear.inl           # LINEAR allocator (102 lines)
+  - tl_memory_linear_allocate()
+  - tl_memory_linear_resize()
+  - tl_memory_linear_alloc()
+  - tl_memory_linear_destroy()
+
+memory_dynamic.inl          # DYNAMIC allocator (118 lines)
+  - tl_memory_dynamic_alloc()
+  - tl_memory_dynamic_free()
+  - tl_memory_dynamic_destroy()
+```
+
+**Dispatcher Pattern (switch/case):**
+
+All public functions in the dispatcher should route to specialized implementations using switch/case:
+
+```c
+// ✅ CORRECT - Clean dispatch with switch/case
+void* tl_memory_alloc(TLAllocator* allocator, TLMemoryTag tag, u32 size) {
+    TL_PROFILER_PUSH_WITH("%p, %d, %u", allocator, tag, size)
+
+    if (allocator == NULL) TLFATAL("allocator is NULL")
+    if (size == 0) TLFATAL("size is 0")
+
+    void* memory = NULL;
+
+    switch (allocator->type) {
+        case TL_ALLOCATOR_LINEAR:
+            memory = tl_memory_linear_alloc(allocator, tag, size);
+            break;
+        case TL_ALLOCATOR_DYNAMIC:
+            memory = tl_memory_dynamic_alloc(allocator, tag, size);
+            break;
+        default:
+            TLFATAL("Unsupported Allocator type %d", allocator->type);
+    }
+
+    TL_PROFILER_POP_WITH(memory)
+}
+
+// ❌ WRONG - Inline implementation in dispatcher
+void* tl_memory_alloc(TLAllocator* allocator, TLMemoryTag tag, u32 size) {
+    if (allocator->type == TL_ALLOCATOR_LINEAR) {
+        // 50 lines of implementation code...
+        for (u16 i = 0; i < allocator->linear.page_count; ++i) {
+            // ...
+        }
+    }
+}
+```
+
+**When to Use This Pattern:**
+
+Use the modular .inl architecture when:
+1. **Multiple implementations** exist for the same interface (e.g., LINEAR vs DYNAMIC allocators)
+2. **Platform-specific code** requires different implementations (e.g., Windows vs POSIX threads)
+3. **Type-based dispatch** is needed at runtime (e.g., allocator type, renderer backend)
+4. **Code size** of a single implementation exceeds ~100 lines
+5. **Future extensibility** is likely (easy to add new variants without touching existing code)
+
+**Benefits:**
+- **Separation of Concerns**: Each .inl file is self-contained and focused
+- **Extensibility**: Adding new types requires only adding .inl file and switch cases
+- **Maintainability**: Changes to one implementation don't affect others
+- **Readability**: Dispatcher file stays clean and focused on routing
+- **Testability**: Each implementation can be tested in isolation
+
+**Implementation Guidelines:**
+
+1. **`.inl` files are `static` by default**: Functions should be `static` unless called from the dispatcher
+2. **Helper functions in dispatcher**: Use non-static linkage (e.g., `tl_malloc()` in memory.c)
+3. **Forward declarations**: Use `extern` declarations in .inl files for dispatcher helpers
+4. **Include order**: types.inl → specialized.inl → dispatcher includes all
+5. **Error handling**: Validate inputs in dispatcher before routing to implementations
+6. **Default case**: Always include `default:` with `TLFATAL` for unsupported types
+
+**Example: Adding a New Pool Allocator**
+
+```c
+// 1. Add type to memory.h
+typedef enum {
+    TL_ALLOCATOR_LINEAR,
+    TL_ALLOCATOR_DYNAMIC,
+    TL_ALLOCATOR_POOL      // New type
+} TLAllocatorType;
+
+// 2. Create memory_pool.inl
+#ifndef __TELEIOS_MEMORY_POOL__
+#define __TELEIOS_MEMORY_POOL__
+#include "teleios/memory_types.inl"
+
+static void* tl_memory_pool_alloc(TLAllocator* allocator, TLMemoryTag tag, u32 size) {
+    // Pool implementation
+}
+
+static void tl_memory_pool_free(TLAllocator* allocator, void* pointer) {
+    // Pool free implementation
+}
+
+static void tl_memory_pool_destroy(TLAllocator* allocator) {
+    // Pool cleanup
+}
+#endif
+
+// 3. Update memory.c dispatcher
+#include "teleios/memory_pool.inl"  // Add include
+
+void* tl_memory_alloc(...) {
+    switch (allocator->type) {
+        case TL_ALLOCATOR_LINEAR:  ...
+        case TL_ALLOCATOR_DYNAMIC: ...
+        case TL_ALLOCATOR_POOL:            // Add case
+            memory = tl_memory_pool_alloc(allocator, tag, size);
+            break;
+        default: ...
+    }
+}
+
+// 4. Repeat for other dispatchers (free, destroy)
+```
+
+**Other Subsystems Using This Pattern:**
+- **Platform**: `platform_windows.inl`, `platform_linux.inl`, `platform_glfw.inl`
+- **Threading**: `thread_windows.inl`, `thread_unix.inl`
+- **Memory**: `memory_linear.inl`, `memory_dynamic.inl` (reference implementation)
+
+**When NOT to Use:**
+- Simple modules with single implementation
+- Modules under 100 lines total
+- No foreseeable variants or platform differences
+- Performance-critical code where dispatch overhead matters (rare, profile first)
 
 ### Platform-Specific Code
 When adding platform-specific implementations:
@@ -341,6 +564,23 @@ TL_INLINE void* tl_window_handler() {
 - **No modifier** (external): Functions called from other `.c` files (e.g., `tl_window_handler()` called from `application.c`, `graphics.c`)
 - **`static`**: Helper functions used only within the `.inl` file (e.g., `tl_window_create()`, GLFW callbacks)
 - **`TL_INLINE`**: Never use in `.inl` files for functions with external callers
+
+### OpenGL Context and Threading Rules
+
+**CRITICAL**: OpenGL is single-threaded and context-bound. Violating these rules causes undefined behavior.
+
+**Rules:**
+1. **Context Ownership**: Only ONE thread can own the OpenGL context at a time
+2. **Context Transfer**: Use `glfwMakeContextCurrent(window)` to transfer ownership between threads
+3. **GLAD Initialization**: Must occur AFTER `glfwMakeContextCurrent()` on the thread that will use OpenGL
+4. **No Sharing**: Never call OpenGL functions from thread that doesn't own the context
+5. **GLFW Events**: `glfwPollEvents()` should be called from main thread (GLFW recommendation)
+
+**In TELEIOS:**
+- Main thread: NEVER acquires OpenGL context (no direct OpenGL calls)
+- Graphics thread: Acquires context at startup, initializes GLAD, processes all OpenGL commands
+- All OpenGL work submitted via `tl_graphics_submit_*()` functions
+- `glfwPollEvents()` called on main thread, rendering submitted asynchronously to graphics thread
 
 ## Compiler Configuration
 
