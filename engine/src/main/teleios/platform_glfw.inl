@@ -140,10 +140,6 @@ static b8 tl_window_create(void) {
     }
 
     glfwSetWindowPos(m_window, m_window_position.x, m_window_position.y);
-    
-    glfwMakeContextCurrent(m_window);
-    glfwSwapInterval(0); 
-
     // --------------------------------------------------------------------------------------
     // Window callbacks
     // --------------------------------------------------------------------------------------
@@ -161,7 +157,8 @@ static b8 tl_window_create(void) {
     glfwSetCursorPosCallback        (m_window, tl_window_callback_input_cursor_position);
     glfwSetScrollCallback           (m_window, tl_window_callback_input_cursor_scroll);
     glfwSetCursorEnterCallback      (m_window, tl_window_callback_input_cursor_entered);
-    
+
+    glfwMakeContextCurrent(NULL);
     TL_PROFILER_POP_WITH(true)
 }
 

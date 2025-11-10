@@ -22,7 +22,7 @@ static void tl_setup_clear_color(void) {
 
 static void tl_render_frame(void) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    glfwSwapBuffers(tl_window_handler());
+    //glfwSwapBuffers(tl_window_handler());
 }
 
 // ---------------------------------
@@ -109,11 +109,13 @@ b8 tl_application_run(void) {
         // render(alpha);
         (void)alpha;  // Suppress unused variable warning until render is implemented
 
+        // Submit rendering work to graphics thread (asynchronous - returns immediately)
+        tl_graphics_submit_async(tl_render_frame);
+
         // Poll events on main thread (GLFW requirement)
         glfwPollEvents();
 
-        // Submit rendering work to graphics thread (asynchronous - returns immediately)
-        tl_graphics_submit_async(tl_render_frame);
+        glfwSwapBuffers(tl_window_handler());
 
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {

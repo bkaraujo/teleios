@@ -1,5 +1,5 @@
 #include "teleios/teleios.h"
-#include <glad/glad.h>
+#include "teleios/graphics_types.inl"
 #include <GLFW/glfw3.h>
 #include <cglm/version.h>
 
@@ -10,50 +10,6 @@
 #define TL_GRAPHICS_QUEUE_CAPACITY 256
 
 // ---------------------------------
-// Job Type Definitions
-// ---------------------------------
-
-typedef enum {
-    TL_GRAPHICS_JOB_NO_ARGS,
-    TL_GRAPHICS_JOB_WITH_ARGS
-} TLGraphicsJobType;
-
-typedef struct {
-    TLGraphicsJobType type;
-
-    union {
-        void (*func_no_args)(void);
-        void (*func_with_args)(void*);
-    };
-
-    void* args;  // NULL if NO_ARGS
-
-    // Synchronization for sync jobs
-    b8 is_sync;
-    b8 completed;
-    TLMutex* completion_mutex;
-    TLCondition* completion_condition;
-} TLGraphicTask;
-
-// ---------------------------------
-// Graphics Queue
-// ---------------------------------
-
-typedef struct {
-    TLGraphicTask* tasks;
-    u32 capacity;
-    u32 head;               // Next slot for insertion
-    u32 tail;               // Next slot for removal
-    u32 count;
-
-    TLMutex* mutex;
-    TLCondition* not_empty;  // Signals worker when work is available
-    TLCondition* not_full;   // Signals producer when space is available
-
-    b8 shutdown;  // Flag to terminate worker thread
-} TLGraphicsQueue;
-
-// ---------------------------------
 // Module State
 // ---------------------------------
 
@@ -62,27 +18,6 @@ static TLThread* m_worker_thread = NULL;
 static TLAllocator* m_allocator = NULL;
 
 static void* tl_graphics_worker(void*);
-
-// ---------------------------------
-// Event Handlers
-// ---------------------------------
-
-static TLEventStatus tl_graphics_on_window_closed(const TLEvent* event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-
-    if (!m_queue) TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
-
-
-    TLINFO("Window closed event received, shutting down graphics thread...")
-
-    tl_mutex_lock(m_queue->mutex);
-    m_queue->shutdown = true;
-    tl_condition_broadcast(m_queue->not_empty);  // Wake up worker
-    tl_condition_broadcast(m_queue->not_full);   // Wake up any waiting producers
-    tl_mutex_unlock(m_queue->mutex);
-
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
-}
 
 // ---------------------------------
 // Public API
@@ -129,7 +64,7 @@ void tl_graphics_submit_sync(void (*func)(void)) {
     TLMutex* completion_mutex = tl_mutex_create();
     TLCondition* completion_condition = tl_condition_create();
 
-    TLGraphicTask job = {
+    const TLGraphicTask job = {
         .type = TL_GRAPHICS_JOB_NO_ARGS,
         .func_no_args = func,
         .args = NULL,
@@ -150,6 +85,7 @@ void tl_graphics_submit_sync(void (*func)(void)) {
     // Wait for completion
     tl_mutex_lock(completion_mutex);
     while (!job.completed) {
+        TLVERBOSE("Waiting")
         tl_condition_wait(completion_condition, completion_mutex);
     }
     tl_mutex_unlock(completion_mutex);
@@ -259,23 +195,21 @@ void tl_graphics_submit_async_args(void (*func)(void*), void* args) {
 // Worker Thread
 // ---------------------------------
 
-static void* tl_graphics_worker(void* ignored) {
+static void* tl_graphics_worker(void* _) {
     TL_PROFILER_PUSH
-    TLINFO("Graphics worker thread started (Thread ID: %llu)", tl_thread_id())
 
+    TLDEBUG("Initializing Graphics Context")
     glfwMakeContextCurrent(tl_window_handler());
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         TLFATAL("GLAD failed to initialize on graphics thread")
-        glfwMakeContextCurrent(NULL);
-        TL_PROFILER_POP_WITH(NULL)
     }
 
     TLINFO("OpenGL %s", glGetString(GL_VERSION))
     TLDEBUG("CGLM %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
-    for ( ; ; ){
-        TLGraphicTask job;
+    glfwSwapInterval(0);
 
+    for ( ; ; ){
         tl_mutex_lock(m_queue->mutex);
 
         // Wait for work or shutdown signal
@@ -293,7 +227,7 @@ static void* tl_graphics_worker(void* ignored) {
         }
 
         // Pop job from queue
-        job = m_queue->tasks[m_queue->tail];
+        TLGraphicTask job = m_queue->tasks[m_queue->tail];
         m_queue->tail = (m_queue->tail + 1) % m_queue->capacity;
         m_queue->count--;
 
@@ -303,8 +237,10 @@ static void* tl_graphics_worker(void* ignored) {
 
         // Execute job outside of lock to minimize contention
         if (job.type == TL_GRAPHICS_JOB_NO_ARGS) {
+            TLVERBOSE("job.func_no_args()")
             job.func_no_args();
         } else {
+            TLVERBOSE("job.func_with_args(job.args)")
             job.func_with_args(job.args);
         }
 
@@ -325,6 +261,27 @@ static void* tl_graphics_worker(void* ignored) {
 }
 
 // ---------------------------------
+// Event Handlers
+// ---------------------------------
+
+static TLEventStatus tl_graphics_on_window_closed(const TLEvent* event) {
+    TL_PROFILER_PUSH_WITH("0x%p", event)
+
+    if (!m_queue) TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+
+
+    TLINFO("Window closed event received, shutting down graphics thread...")
+
+    tl_mutex_lock(m_queue->mutex);
+    m_queue->shutdown = true;
+    tl_condition_broadcast(m_queue->not_empty);  // Wake up worker
+    tl_condition_broadcast(m_queue->not_full);   // Wake up any waiting producers
+    tl_mutex_unlock(m_queue->mutex);
+
+    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+}
+
+// ---------------------------------
 // Lifecycle API
 // ---------------------------------
 
@@ -337,7 +294,7 @@ b8 tl_graphics_initialize(void) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    m_allocator = tl_memory_allocator_create(TL_MEBI_BYTES(1), TL_ALLOCATOR_LINEAR);
+    m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4096), TL_ALLOCATOR_LINEAR);
 
     m_queue = tl_memory_alloc(m_allocator, TL_MEMORY_GRAPHICS, sizeof(TLGraphicsQueue));
     m_queue->tasks = tl_memory_alloc(m_allocator, TL_MEMORY_GRAPHICS, sizeof(TLGraphicTask) * TL_GRAPHICS_QUEUE_CAPACITY);
