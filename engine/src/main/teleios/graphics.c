@@ -261,12 +261,9 @@ void tl_graphics_submit_async_args(void (*func)(void*), void* args) {
 
 static void* tl_graphics_worker(void* ignored) {
     TL_PROFILER_PUSH
-
-    // Take ownership of OpenGL context
-    glfwMakeContextCurrent(tl_window_handler());
     TLINFO("Graphics worker thread started (Thread ID: %llu)", tl_thread_id())
 
-    // Initialize GLAD (must be done on the thread with active OpenGL context)
+    glfwMakeContextCurrent(tl_window_handler());
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         TLFATAL("GLAD failed to initialize on graphics thread")
         glfwMakeContextCurrent(NULL);

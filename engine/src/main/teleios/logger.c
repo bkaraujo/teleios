@@ -34,7 +34,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     
     char buffer[256];
     // snprintf() ~150-300 ns	✅ Bom
-    int len = snprintf(buffer, sizeof(buffer), "%s%d-%02d-%02d %02d:%02d:%02d,%06u %0llu %-20s:%04d %-7s %s\n\033[1;30m",
+    int len = snprintf(buffer, sizeof(buffer), "%s%d-%02d-%02d %02d:%02d:%02d,%06u %10llu %-20s:%04d %-7s %s\n\033[1;30m",
         colors[level],
         clock.year, clock.month, clock.day,
         clock.hour, clock.minute, clock.second, clock.millis,
