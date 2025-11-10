@@ -9,36 +9,19 @@
 static void* tl_memory_dynamic_alloc(TLAllocator* allocator, TLMemoryTag tag, u32 size) {
     TL_PROFILER_PUSH_WITH("%p, %d, %u", allocator, tag, size)
 
-    // Allocate the actual memory
-    void* memory = malloc(size);
-    if (!memory) {
-        TLERROR("Failed to allocate %u bytes", size);
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
-    // Allocate tracking block
-    TLDynamicBlock* block = (TLDynamicBlock*)malloc(sizeof(TLDynamicBlock));
-    if (!block) {
-        free(memory);
-        TLERROR("Failed to allocate tracking block");
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
-    // Initialize block
-    memset(memory, 0, size);
+    TLDynamicBlock* block = (TLDynamicBlock*)tl_malloc(sizeof(TLDynamicBlock), "Failed to allocate TLDynamicBlock");
     block->tag = tag;
-    block->pointer = memory;
     block->size = size;
+    block->next = allocator->dynamic.head;
+    block->pointer = tl_malloc(size, "Failed to allocate");
 
     // Insert at head of linked list
-    block->next = allocator->dynamic.head;
     allocator->dynamic.head = block;
     allocator->dynamic.allocation_count++;
 
-    TLVERBOSE("DYNAMIC alloc: %u bytes (tag=%d, ptr=%p, total=%u)",
-        size, tag, memory, allocator->dynamic.allocation_count);
+    TLVERBOSE("DYNAMIC alloc: %u bytes (tag=%d, ptr=%p, total=%u)", size, tag, block->pointer, allocator->dynamic.allocation_count);
 
-    TL_PROFILER_POP_WITH(memory)
+    TL_PROFILER_POP_WITH(block->pointer)
 }
 
 // ---------------------------------
@@ -62,8 +45,7 @@ static void tl_memory_dynamic_free(TLAllocator* allocator, void* pointer) {
 
             allocator->dynamic.allocation_count--;
 
-            TLVERBOSE("DYNAMIC free: %u bytes (tag=%d, ptr=%p, remaining=%u)",
-                current->size, current->tag, pointer, allocator->dynamic.allocation_count);
+            TLVERBOSE("DYNAMIC free: %u bytes (tag=%d, ptr=%p, remaining=%u)", current->size, current->tag, pointer, allocator->dynamic.allocation_count);
 
             free(current->pointer);
             free(current);

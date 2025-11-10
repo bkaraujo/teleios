@@ -9,7 +9,7 @@ static TLAllocator* m_allocators;
 // Helper function for memory allocation (used by .inl files)
 // Not static to allow access from included .inl files
 void* tl_malloc(const u32 size, const char* message) {
-    TL_PROFILER_PUSH
+    TL_PROFILER_PUSH_WITH("%d, %s", size, message)
     void * memory = malloc(size);
     if (memory == NULL) TLFATAL(message)
     memset(memory, 0, size);
@@ -25,7 +25,7 @@ b8 tl_memory_initialize(void){
 }
 
 TLAllocator* tl_memory_allocator_create(u32 size, TLAllocatorType type){
-    TL_PROFILER_PUSH
+    TL_PROFILER_PUSH_WITH("%d, %d", size, type)
 
     TLAllocator* allocator = NULL;
 
@@ -75,7 +75,7 @@ initialize_allocator:
 }
 
 void tl_memory_allocator_destroy(TLAllocator* allocator){
-    TL_PROFILER_PUSH
+    TL_PROFILER_PUSH_WITH("%p", allocator)
 
     if (allocator == NULL) TLFATAL("allocator is NULL")
 
