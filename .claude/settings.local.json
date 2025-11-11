@@ -7,7 +7,15 @@
       "Bash(cmake --version:*)",
       "Bash(powershell:*)",
       "Bash(dir:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(Select-Object -First 50)",
+      "Bash(if not exist build mkdir build)",
+      "Bash(cmake:*)",
+      "Bash(timeout /t 10)",
+      "Bash(engine.exe:*)",
+      "Bash(build/bin/Debug/engine.exe:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

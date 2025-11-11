@@ -21,13 +21,9 @@
 static TLAllocator* m_thread_allocator = NULL;
 
 static void tl_thread_ensure_allocator(void) {
-    if (m_thread_allocator == NULL) {
-        m_thread_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
-        if (!m_thread_allocator) {
-            TLFATAL("Failed to create DYNAMIC allocator for thread system");
-        }
-        TLINFO("Thread system DYNAMIC allocator initialized");
-    }
+    if (m_thread_allocator != NULL) return;
+    m_thread_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
+    TLINFO("Thread system DYNAMIC allocator initialized");
 }
 
 // ---------------------------------
@@ -101,7 +97,7 @@ TLThread* tl_thread_create(TLThreadFunc func, void* arg) {
     }
 
     thread->thread_id = (u32)tid;
-    TLDEBUG("Thread created: ID=%u, Handle=%p", thread->thread_id, thread->handle);
+    TLTRACE("Thread created: ID=%u, Handle=%p", thread->thread_id, thread->handle);
     return thread;
 }
 
@@ -122,7 +118,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
     }
 
     CloseHandle(thread->handle);
-    TLDEBUG("Thread joined: ID=%u", thread->thread_id);
+    TLTRACE("Thread joined: ID=%u", thread->thread_id);
     tl_memory_free(m_thread_allocator, thread);
     return true;
 }
@@ -133,7 +129,7 @@ b8 tl_thread_detach(TLThread* thread) {
         return false;
     }
 
-    TLDEBUG("Thread detached: ID=%u", thread->thread_id);
+    TLTRACE("Thread detached: ID=%u", thread->thread_id);
     CloseHandle(thread->handle);
     tl_memory_free(m_thread_allocator, thread);
     return true;
@@ -155,7 +151,7 @@ TLMutex* tl_mutex_create(TLAllocator* allocator) {
     TLMutex* mutex = (TLMutex*)tl_memory_alloc(allocator, TL_MEMORY_THREAD, sizeof(TLMutex));
     mutex->allocator = allocator;
     InitializeCriticalSection(&mutex->cs);
-    TLDEBUG("Mutex created: %p", mutex);
+    TLTRACE("Mutex created:0x%p", mutex);
     return mutex;
 }
 
@@ -166,8 +162,8 @@ void tl_mutex_destroy(TLMutex* mutex) {
     }
 
     DeleteCriticalSection(&mutex->cs);
-    TLDEBUG("Mutex destroyed: %p", mutex);
-    tl_memory_free(m_thread_allocator, mutex);
+    TLTRACE("Mutex destroyed:0x%p", mutex);
+    tl_memory_free(mutex->allocator, mutex);
 }
 
 b8 tl_mutex_lock(TLMutex* mutex) {
@@ -207,7 +203,7 @@ TLCondition* tl_condition_create(TLAllocator* allocator) {
     TLCondition* condition = (TLCondition*)tl_memory_alloc(allocator, TL_MEMORY_THREAD, sizeof(TLCondition));
     condition->allocator = allocator;
     InitializeConditionVariable(&condition->cv);
-    TLDEBUG("Condition variable created: %p", condition);
+    TLTRACE("Condition variable created:0x%p", condition);
     return condition;
 }
 
@@ -218,8 +214,8 @@ void tl_condition_destroy(TLCondition* condition) {
     }
 
     // Windows condition variables don't need explicit cleanup
-    TLDEBUG("Condition variable destroyed: %p", condition);
-    tl_memory_free(m_thread_allocator, condition);
+    TLTRACE("Condition variable destroyed:0x%p", condition);
+    tl_memory_free(condition->allocator, condition);
 }
 
 b8 tl_condition_wait(TLCondition* condition, TLMutex* mutex) {

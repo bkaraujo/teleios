@@ -16,7 +16,7 @@ static const char *colors[] = { "\033[1;37m" , "\033[1;36m", "\033[1;34m", "\033
 void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lineno, const char *message, ...) {
     if (level < m_level) { return; }
 
-    char output[TELEIOS_LOG_LENGTH];
+    static TL_THREADLOCAL char output[TELEIOS_LOG_LENGTH];
     va_list arg_ptr; va_start(arg_ptr, message);
     vsnprintf(output, TELEIOS_LOG_LENGTH, message, arg_ptr);
     va_end(arg_ptr);
@@ -28,7 +28,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     static TL_THREADLOCAL TLDateTime clock;
     tl_time_clock(&clock);
     
-    char buffer[TELEIOS_LOG_LENGTH];
+    static TL_THREADLOCAL char buffer[TELEIOS_LOG_LENGTH];
     const int len = snprintf(buffer, TELEIOS_LOG_LENGTH, "%s%d-%02d-%02d %02d:%02d:%02d,%06u %6llu %-20s:%04d %-7s %s\n\033[1;30m",
         colors[level],
         clock.year, clock.month, clock.day,

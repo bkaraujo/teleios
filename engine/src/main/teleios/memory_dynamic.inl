@@ -6,8 +6,8 @@
 // ---------------------------------
 // DYNAMIC allocator - allocate from heap and track
 // ---------------------------------
-static void* tl_memory_dynamic_alloc(TLAllocator* allocator, TLMemoryTag tag, u32 size) {
-    TL_PROFILER_PUSH_WITH("%p, %d, %u", allocator, tag, size)
+static void* tl_memory_dynamic_alloc(TLAllocator* allocator, const TLMemoryTag tag, const u32 size) {
+    TL_PROFILER_PUSH_WITH("0x%p, %s, %u", allocator, tl_memory_type_name(tag), size)
 
     TLDynamicBlock* block = (TLDynamicBlock*)tl_malloc(sizeof(TLDynamicBlock), "Failed to allocate TLDynamicBlock");
     block->tag = tag;
@@ -19,7 +19,9 @@ static void* tl_memory_dynamic_alloc(TLAllocator* allocator, TLMemoryTag tag, u3
     allocator->dynamic.head = block;
     allocator->dynamic.allocation_count++;
 
-    TLVERBOSE("DYNAMIC alloc: %u bytes (tag=%d, ptr=%p, total=%u)", size, tag, block->pointer, allocator->dynamic.allocation_count);
+    TLVERBOSE("DYNAMIC alloc: %u bytes (ptr=0x%p, total=%u, tag=%s)",
+        size, block->pointer, allocator->dynamic.allocation_count,
+        tl_memory_type_name(tag));
 
     TL_PROFILER_POP_WITH(block->pointer)
 }
@@ -28,7 +30,7 @@ static void* tl_memory_dynamic_alloc(TLAllocator* allocator, TLMemoryTag tag, u3
 // DYNAMIC allocator - free individual allocation
 // ---------------------------------
 static void tl_memory_dynamic_free(TLAllocator* allocator, void* pointer) {
-    TL_PROFILER_PUSH_WITH("%p, %p", allocator, pointer)
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", allocator, pointer)
 
     // Search for block in linked list
     TLDynamicBlock* prev = NULL;
@@ -45,7 +47,8 @@ static void tl_memory_dynamic_free(TLAllocator* allocator, void* pointer) {
 
             allocator->dynamic.allocation_count--;
 
-            TLVERBOSE("DYNAMIC free: %u bytes (tag=%d, ptr=%p, remaining=%u)", current->size, current->tag, pointer, allocator->dynamic.allocation_count);
+            TLVERBOSE("DYNAMIC free: %u bytes (ptr=0x%p, remaining=%u, tag=%s)",
+                current->size, pointer, allocator->dynamic.allocation_count, tl_memory_type_name(current->tag));
 
             free(current->pointer);
             free(current);
@@ -56,7 +59,7 @@ static void tl_memory_dynamic_free(TLAllocator* allocator, void* pointer) {
         current = current->next;
     }
 
-    TLERROR("Pointer %p not found in DYNAMIC allocator %p", pointer, allocator);
+    TLERROR("Pointer0x%p not found in DYNAMIC allocator0x%p", pointer, allocator);
     TL_PROFILER_POP
 }
 
@@ -64,7 +67,7 @@ static void tl_memory_dynamic_free(TLAllocator* allocator, void* pointer) {
 // DYNAMIC allocator - destroy and report leaks
 // ---------------------------------
 static void tl_memory_dynamic_destroy(TLAllocator* allocator) {
-    TL_PROFILER_PUSH
+    TL_PROFILER_PUSH_WITH("0x%p", allocator)
     if (allocator == NULL) TLFATAL("TLAllocator is NULL")
 
     // Check for memory leaks in DYNAMIC allocator
@@ -72,14 +75,15 @@ static void tl_memory_dynamic_destroy(TLAllocator* allocator) {
         u32 leak_count = 0;
         u32 leaked_bytes = 0;
 
-        TLWARN("Memory leaks detected in DYNAMIC allocator %p:", allocator);
+        TLWARN("Memory leaks detected in DYNAMIC allocator0x%p:", allocator);
 
         TLDynamicBlock* block = allocator->dynamic.head;
         while (block != NULL) {
             leak_count++;
             leaked_bytes += block->size;
-            TLWARN("  Leak #%u: %u bytes (tag=%d, ptr=%p)",
-                leak_count, block->size, block->tag, block->pointer);
+            TLWARN("  Leak #%u: %u bytes (ptr=0x%p, tag=%s)",
+                leak_count, block->size, block->pointer,
+                tl_memory_type_name(block->tag));
 
             TLDynamicBlock* next = block->next;
             free(block->pointer);
@@ -89,7 +93,7 @@ static void tl_memory_dynamic_destroy(TLAllocator* allocator) {
 
         TLERROR("Total memory leaks: %u allocations, %u bytes", leak_count, leaked_bytes);
     } else {
-        TLDEBUG("DYNAMIC allocator destroyed: %p (no leaks)", allocator);
+        TLDEBUG("DYNAMIC allocator destroyed:0x%p (no leaks)", allocator);
     }
 
     allocator->dynamic.head = NULL;

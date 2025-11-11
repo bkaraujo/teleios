@@ -283,9 +283,14 @@ Uses compiler-specific attributes for DLL export/import:
 - **GLFW integration**: Window callbacks in `platform_glfw.inl` automatically submit events
 - **Subscriber pattern**: Decouples input/window handling from game logic
 
+**Number Utilities** ([teleios/number.h](engine/src/main/teleios/number.h)):
+- `tl_number_i32_digits()` - Count number of digits in an i32 value
+- `tl_number_i32_to_char()` - Convert i32 to character array with specified base
+- Utility functions for numeric operations and conversions
+
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event
+- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event, number
 
 ### Module Organization
 

@@ -1,3 +1,68 @@
+/**
+ * @file defines.h
+ * @brief Platform detection, type definitions, and compiler-specific macros
+ *
+ * This header provides:
+ * - Platform detection macros (Windows, Linux, macOS, etc.)
+ * - POSIX compliance level detection
+ * - Standard library includes based on C standard version
+ * - Custom type aliases (u8, i32, f32, b8, etc.)
+ * - Compiler-specific attribute macros
+ * - Memory size helper macros
+ *
+ * @section platforms Supported Platforms
+ * - **Windows**: TL_PLATFORM_WINDOWS (64-bit only)
+ * - **Linux**: TL_PLATFORM_LINUX
+ * - **macOS**: TL_PLATFORM_APPLE
+ * - **Android**: TL_PLATFORM_ANDROID (Linux-based)
+ * - **POSIX**: TL_PLATFORM_POSIX
+ *
+ * @section types Type Aliases
+ * The engine uses custom type aliases for consistency:
+ * - Unsigned integers: u8, u16, u32, u64
+ * - Signed integers: i8, i16, i32, i64
+ * - Floating point: f32 (float), f64 (double)
+ * - Boolean: b8 (_Bool)
+ *
+ * @section macros Compiler Macros
+ * - TL_API: Export/import DLL symbols
+ * - TL_INLINE: Force function inlining
+ * - TL_NOINLINE: Prevent function inlining
+ * - TL_THREADLOCAL: Thread-local storage
+ * - TL_LIKELY(x): Branch prediction hint (true expected)
+ * - TL_UNLIKELY(x): Branch prediction hint (false expected)
+ * - TL_DEPRECATED(msg): Mark function as deprecated
+ *
+ * @section memory Memory Size Helpers
+ * - TL_KIBI_BYTES(n): n * 1024 bytes
+ * - TL_MEBI_BYTES(n): n * 1024 * 1024 bytes
+ * - TL_GIBI_BYTES(n): n * 1024 * 1024 * 1024 bytes
+ * - TL_KILO_BYTES(n): n * 1000 bytes (decimal)
+ * - TL_MEGA_BYTES(n): n * 1000 * 1000 bytes
+ * - TL_GIGA_BYTES(n): n * 1000 * 1000 * 1000 bytes
+ *
+ * @section example Usage Example
+ * @code
+ * #include "teleios/defines.h"
+ *
+ * // Use type aliases
+ * u32 count = 0;
+ * f32 delta = 0.016f;
+ * b8 running = true;
+ *
+ * // Memory allocation
+ * void* buffer = malloc(TL_MEBI_BYTES(4)); // 4 MiB
+ *
+ * // Branch prediction
+ * if (TL_LIKELY(ptr != NULL)) {
+ *     // Hot path
+ * }
+ * @endcode
+ *
+ * @author TELEIOS Team
+ * @version 0.1.0
+ */
+
 #ifndef __TL_DEFINES__
 #define __TL_DEFINES__
 
@@ -134,9 +199,13 @@
 // ---------------------------------
 // Unsigned int types.
 // ---------------------------------
+/** @brief Unsigned 8-bit integer (0 to 255) */
 typedef uint8_t     u8;
+/** @brief Unsigned 16-bit integer (0 to 65,535) */
 typedef uint16_t    u16;
+/** @brief Unsigned 32-bit integer (0 to 4,294,967,295) */
 typedef uint32_t    u32;
+/** @brief Unsigned 64-bit integer (0 to 18,446,744,073,709,551,615) */
 typedef uint64_t    u64;
 
 #define U64_MAX     18446744073709551615
@@ -150,9 +219,13 @@ typedef uint64_t    u64;
 // ---------------------------------
 // Signed int types.
 // ---------------------------------
+/** @brief Signed 8-bit integer (-128 to 127) */
 typedef int8_t      i8;
+/** @brief Signed 16-bit integer (-32,768 to 32,767) */
 typedef int16_t     i16;
+/** @brief Signed 32-bit integer (-2,147,483,648 to 2,147,483,647) */
 typedef int32_t     i32;
+/** @brief Signed 64-bit integer (-9,223,372,036,854,775,808 to 9,223,372,036,854,775,807) */
 typedef int64_t     i64;
 
 #define  I8_MAX     127
@@ -167,11 +240,14 @@ typedef int64_t     i64;
 // ---------------------------------
 // Floating point types
 // ---------------------------------
+/** @brief 32-bit floating point (IEEE 754 single precision) */
 typedef float       f32;
+/** @brief 64-bit floating point (IEEE 754 double precision) */
 typedef double      f64;
 // ---------------------------------
 // Boolean types
 // ---------------------------------
+/** @brief Boolean type (true/false) */
 typedef _Bool       b8;
 // ---------------------------------
 // Static assertions.
@@ -199,23 +275,36 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // Compiler specifics
 // ---------------------------------
 #if defined(__clang__) || defined(__GNUC__)
+/** @brief Force function to be inlined (GCC/Clang) */
 #   define TL_INLINE __attribute__((always_inline)) inline
+/** @brief Prevent function from being inlined (GCC/Clang) */
 #   define TL_NOINLINE __attribute__((noinline))
+/** @brief Mark function as deprecated with custom message (GCC/Clang) */
 #   define TL_DEPRECATED(message) __attribute__((deprecated(message)))
+/** @brief Branch prediction hint: condition is likely true */
 #   define TL_LIKELY(x)   __builtin_expect(!!(x), 1)
+/** @brief Branch prediction hint: condition is unlikely true */
 #   define TL_UNLIKELY(x) __builtin_expect(!!(x), 0)
+/** @brief Thread-local storage specifier (GCC/Clang) */
 #   define TL_THREADLOCAL _Thread_local
 #   if defined(TL_EXPORT)
+/** @brief Export symbol for dynamic library (GCC/Clang) */
 #       define TL_API __attribute__((visibility("default")))
 #   endif
 #elif defined(_MSC_VER)
+/** @brief Force function to be inlined (MSVC) */
 #   define TL_INLINE __forceinline
+/** @brief Prevent function from being inlined (MSVC) */
 #   define TL_NOINLINE __declspec(noinline)
+/** @brief Mark function as deprecated with custom message (MSVC) */
 #   define TL_DEPRECATED(message) __declspec(deprecated(message))
+/** @brief Thread-local storage specifier (MSVC) */
 #   define TL_THREADLOCAL __declspec(thread)
 #   if defined(TL_EXPORT)
+/** @brief Export symbol for DLL (MSVC) */
 #       define TL_API __declspec(dllexport)
 #   elif defined(TL_IMPORT)
+/** @brief Import symbol from DLL (MSVC) */
 #       define TL_API __declspec(dllimport)
 #   endif
 #endif
@@ -246,13 +335,19 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 // ---------------------------------
 // Helper Functions
 // ---------------------------------
-#define TL_GIBI_BYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
-#define TL_MEBI_BYTES(amount) ((amount) * 1024ULL * 1024ULL)
+/** @brief Convert amount to bytes using binary kibi (1024 bytes) */
 #define TL_KIBI_BYTES(amount) ((amount) * 1024ULL)
+/** @brief Convert amount to bytes using binary mebi (1024^2 bytes) */
+#define TL_MEBI_BYTES(amount) ((amount) * 1024ULL * 1024ULL)
+/** @brief Convert amount to bytes using binary gibi (1024^3 bytes) */
+#define TL_GIBI_BYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
 
-#define TL_GIGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
-#define TL_MEGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL)
+/** @brief Convert amount to bytes using decimal kilo (1000 bytes) */
 #define TL_KILO_BYTES(amount) ((amount) * 1000ULL)
+/** @brief Convert amount to bytes using decimal mega (1000^2 bytes) */
+#define TL_MEGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL)
+/** @brief Convert amount to bytes using decimal giga (1000^3 bytes) */
+#define TL_GIGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
 
 #include <cglm/types-struct.h>
 

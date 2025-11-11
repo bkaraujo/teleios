@@ -30,7 +30,6 @@ static TLPlatform platform = { 0 };
  * is the entry point for the entire engine.
  */
 b8 tl_platform_initialize(void) {
-    // Select platform implementation at compile-time BEFORE any logging
 #ifdef TL_PLATFORM_LINUX
     platform.initialize         = tl_lnx_initialize;
     platform.terminate          = tl_lnx_terminate;

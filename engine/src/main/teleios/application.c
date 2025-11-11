@@ -16,20 +16,22 @@ static b8 m_paused = false;
 // OpenGL Commands (executed on graphics thread)
 // ---------------------------------
 
-static void tl_setup_clear_color(void) {
+static void* tl_setup_clear_color(void) {
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
+    return NULL;
 }
 
-static void tl_render_frame(void) {
+static void* tl_render_frame(void) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    //glfwSwapBuffers(tl_window_handler());
+    glfwSwapBuffers(tl_window_handler());
+    return NULL;
 }
 
 // ---------------------------------
 // Event Handlers
 // ---------------------------------
 
-static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
+static TLEventStatus tl_application_handle_window_minimized(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
 
     m_paused = true;
@@ -41,7 +43,7 @@ static TLEventStatus tl_process_window_minimized(const TLEvent *event) {
     TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
 }
 
-static TLEventStatus tl_process_window_closed(const TLEvent *event) {
+static TLEventStatus tl_application_handle_window_closed(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
 
     m_running = false;
@@ -49,7 +51,7 @@ static TLEventStatus tl_process_window_closed(const TLEvent *event) {
     TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
 }
 
-static TLEventStatus tl_process_window_restored(const TLEvent *event) {
+static TLEventStatus tl_application_handle_window_restored(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
 
     m_paused = false;
@@ -61,9 +63,9 @@ static TLEventStatus tl_process_window_restored(const TLEvent *event) {
 b8 tl_application_initialize(void) {
     TL_PROFILER_PUSH
 
-    tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_process_window_closed);
-    tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_process_window_restored);
-    tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_process_window_minimized);
+    tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_application_handle_window_closed);
+    tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_application_handle_window_restored);
+    tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_application_handle_window_minimized);
     
     TL_PROFILER_POP_WITH(true)
 }
@@ -84,7 +86,7 @@ b8 tl_application_run(void) {
     glfwShowWindow(tl_window_handler());
 
     // Setup clear color on graphics thread (synchronous - wait for completion)
-    tl_graphics_submit_sync(tl_setup_clear_color);
+    tl_graphics_submit_async(tl_setup_clear_color);
 
     while (m_running) {
         const u64 new_time = tl_time_epoch_micros();
@@ -110,16 +112,16 @@ b8 tl_application_run(void) {
         (void)alpha;  // Suppress unused variable warning until render is implemented
 
         // Submit rendering work to graphics thread (asynchronous - returns immediately)
-        tl_graphics_submit_async(tl_render_frame);
+        tl_graphics_submit_sync(tl_render_frame);
 
         // Poll events on main thread (GLFW requirement)
         glfwPollEvents();
 
-        glfwSwapBuffers(tl_window_handler());
-
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {
-            TLINFO("FPS: %llu | UPS: %llu", frame_count, update_count);
+            static char buffer[60];
+            snprintf(buffer, sizeof(buffer), "FPS: %llu | UPS: %llu", frame_count, update_count);
+            glfwSetWindowTitle(tl_window_handler(), buffer);
 
             frame_count = update_count = 0;
             fps_timer -= ONE_SECOND_MICROS;

@@ -37,4 +37,36 @@ struct TLAllocator {
     };
 };
 
+inline const char* tl_memory_type_name(const TLMemoryTag tag) {
+    switch (tag) {
+        case TL_MEMORY_BLOCK: return "TL_MEMORY_BLOCK";
+        case TL_MEMORY_CONTAINER_ITERATOR: return "TL_MEMORY_CONTAINER_ITERATOR";
+        case TL_MEMORY_GRAPHICS: return "TL_MEMORY_GRAPHICS";
+        case TL_MEMORY_SERIALIZER: return "TL_MEMORY_SERIALIZER";
+        case TL_MEMORY_CONTAINER_QUEUE: return "TL_MEMORY_CONTAINER_QUEUE";
+        case TL_MEMORY_CONTAINER_STACK: return "TL_MEMORY_CONTAINER_STACK";
+        case TL_MEMORY_CONTAINER_LIST: return "TL_MEMORY_CONTAINER_LIST";
+        case TL_MEMORY_CONTAINER_NODE: return "TL_MEMORY_CONTAINER_NODE";
+        case TL_MEMORY_CONTAINER_MAP: return "TL_MEMORY_CONTAINER_MAP";
+        case TL_MEMORY_CONTAINER_MAP_ENTRY: return "TL_MEMORY_CONTAINER_MAP_ENTRY";
+        case TL_MEMORY_STRING: return "TL_MEMORY_STRING";
+        case TL_MEMORY_ULID: return "TL_MEMORY_ULID";
+        case TL_MEMORY_PROFILER: return "TL_MEMORY_PROFILER";
+        case TL_MEMORY_SCENE: return "TL_MEMORY_SCENE";
+        case TL_MEMORY_ECS_COMPONENT: return "TL_MEMORY_ECS_COMPONENT";
+        case TL_MEMORY_THREAD: return "TL_MEMORY_THREAD";
+        case TL_MEMORY_MAXIMUM: return "TL_MEMORY_MAXIMUM";
+    }
+
+    return "??";
+}
+
+inline const char* tl_memory_allocator_name(const TLAllocatorType type) {
+    switch (type) {
+    case TL_ALLOCATOR_LINEAR: return "TL_ALLOCATOR_LINEAR";
+    case TL_ALLOCATOR_DYNAMIC: return "TL_ALLOCATOR_DYNAMIC";
+    }
+    return "??";
+}
+
 #endif

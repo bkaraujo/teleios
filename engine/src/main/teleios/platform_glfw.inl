@@ -164,6 +164,7 @@ static b8 tl_window_create(void) {
 
 static void tl_window_terminate(void) {
     TL_PROFILER_PUSH
+    TLTRACE("Destroying GLFW Window")
     glfwDestroyWindow(m_window);
     TL_PROFILER_POP
 }

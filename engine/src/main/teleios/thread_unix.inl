@@ -172,7 +172,7 @@ TLMutex* tl_mutex_create(TLAllocator* allocator) {
         return NULL;
     }
 
-    TLDEBUG("Mutex created: %p", mutex);
+    TLDEBUG("Mutex created:0x%p", mutex);
     return mutex;
 }
 
@@ -187,7 +187,7 @@ void tl_mutex_destroy(TLMutex* mutex) {
         TLERROR("tl_mutex_destroy: pthread_mutex_destroy failed with error %d", result);
     }
 
-    TLDEBUG("Mutex destroyed: %p", mutex);
+    TLDEBUG("Mutex destroyed:0x%p", mutex);
     tl_memory_free(m_thread_allocator, mutex);
 }
 
@@ -257,7 +257,7 @@ TLCondition* tl_condition_create(TLAllocator* allocator) {
         return NULL;
     }
 
-    TLDEBUG("Condition variable created: %p", condition);
+    TLDEBUG("Condition variable created:0x%p", condition);
     return condition;
 }
 
@@ -272,7 +272,7 @@ void tl_condition_destroy(TLCondition* condition) {
         TLERROR("tl_condition_destroy: pthread_cond_destroy failed with error %d", result);
     }
 
-    TLDEBUG("Condition variable destroyed: %p", condition);
+    TLDEBUG("Condition variable destroyed:0x%p", condition);
     tl_memory_free(m_thread_allocator, condition);
 }
 
