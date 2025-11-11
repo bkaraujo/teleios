@@ -30,6 +30,7 @@ static TLThread* m_worker_thread = NULL;
 b8 tl_graphics_initialize(void) {
     TL_PROFILER_PUSH
 
+    // Watch for window closing event so we can join the graphics thread
     if (!tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_graphics_handle_window_closed)) {
         TLERROR("Failed to subscribe to window closed event")
         TL_PROFILER_POP_WITH(false)

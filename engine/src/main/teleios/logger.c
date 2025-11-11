@@ -36,7 +36,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
     tl_time_clock(&clock);
     
     static TL_THREADLOCAL char buffer[TELEIOS_LOG_LENGTH];
-    const int len = snprintf(buffer, TELEIOS_LOG_LENGTH, "%s%d-%02d-%02d %02d:%02d:%02d,%06u %6llu %-20s:%04d %-7s %s\n\033[1;30m",
+    const int len = snprintf(buffer, TELEIOS_LOG_LENGTH, "%s%d-%02d-%02d %02d:%02d:%02d,%06u %6llu %20s:%04d %-7s %s\n\033[1;30m",
         colors[level],
         clock.year, clock.month, clock.day,
         clock.hour, clock.minute, clock.second, clock.millis,

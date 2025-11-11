@@ -1,6 +1,5 @@
 #include "teleios/teleios.h"
 #include "teleios/application.h"
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 // ---------------------------------
@@ -11,21 +10,6 @@ static u64 frame_count = 0;
 static u64 update_count = 0;
 static b8 m_running = false;
 static b8 m_paused = false;
-
-// ---------------------------------
-// OpenGL Commands (executed on graphics thread)
-// ---------------------------------
-
-static void* tl_setup_clear_color(void) {
-    glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
-    return NULL;
-}
-
-static void* tl_render_frame(void) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    glfwSwapBuffers(tl_window_handler());
-    return NULL;
-}
 
 // ---------------------------------
 // Event Handlers
@@ -84,35 +68,35 @@ b8 tl_application_run(void) {
 
     m_running = true;
     glfwShowWindow(tl_window_handler());
-
-    // Setup clear color on graphics thread (synchronous - wait for completion)
-    tl_graphics_submit_async(tl_setup_clear_color);
-
     while (m_running) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
 
-        // Cap frame time to prevent spiral of death
-        if (delta_time > FRAME_CAP) {
-            TLWARN("Frame time %.2f ms exceeded, capping to %.2f ms", delta_time / 1000.0, FRAME_CAP / 1000.0);
-            delta_time = FRAME_CAP;
-        }
+        if (!m_paused) {
+            // Cap frame time to prevent spiral of death
+            if (delta_time > FRAME_CAP) {
+                TLWARN("Frame time %.2f ms exceeded, capping to %.2f ms", delta_time / 1000.0, FRAME_CAP / 1000.0);
+                delta_time = FRAME_CAP;
+            }
 
-        fps_timer += delta_time;
-        accumulator += delta_time;
-        while (accumulator >= STEP) {
-            // update(STEP);
-            update_count++;
-            accumulator -= STEP;
-        }
+            tl_renderer_frame_begin();
 
-        const f64 alpha = accumulator / STEP;
-        // render(alpha);
-        (void)alpha;  // Suppress unused variable warning until render is implemented
+            fps_timer += delta_time;
+            accumulator += delta_time;
+            while (accumulator >= STEP) {
+                // update(STEP);
+                update_count++;
+                accumulator -= STEP;
+            }
+
+            const f64 alpha = accumulator / STEP;
+            // render(alpha);
+            (void)alpha;  // Suppress unused variable warning until render is implemented
+        }
 
         // Submit rendering work to graphics thread (asynchronous - returns immediately)
-        tl_graphics_submit_sync(tl_render_frame);
+        tl_renderer_frame_end();
 
         // Poll events on main thread (GLFW requirement)
         glfwPollEvents();

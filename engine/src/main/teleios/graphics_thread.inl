@@ -29,6 +29,7 @@ static void* tl_graphics_worker(void* _) {
 
     // Disable VSync for immediate buffer swaps
     glfwSwapInterval(0);
+    glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
 
     // Main worker loop - process tasks from queue until shutdown signal
     for ( ; ; ) {
