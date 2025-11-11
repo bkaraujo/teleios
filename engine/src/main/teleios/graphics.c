@@ -38,6 +38,32 @@ b8 tl_graphics_initialize(void) {
     m_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
     m_queue = tl_queue_create(m_allocator, TL_GRAPHICS_QUEUE_CAPACITY);
 
+    // Create object pool for graphics tasks
+    m_task_pool = tl_pool_create(m_allocator, sizeof(TLGraphicTask), TL_GRAPHICS_QUEUE_CAPACITY);
+    if (!m_task_pool) {
+        TLFATAL("Failed to create graphics task pool")
+    }
+
+    // Pre-allocate mutex and condition variable for each task in the pool
+    for (u16 i = 0; i < TL_GRAPHICS_QUEUE_CAPACITY; ++i) {
+        TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
+        if (!task) {
+            TLFATAL("Failed to acquire task from pool during initialization")
+        }
+
+        task->completion_mutex = tl_mutex_create(m_allocator);
+        task->completion_condition = tl_condition_create(m_allocator);
+
+        if (!task->completion_mutex || !task->completion_condition) {
+            TLFATAL("Failed to create synchronization primitives for graphics task")
+        }
+
+        // Release back to pool - task is now ready for use
+        tl_pool_release(m_task_pool, task);
+    }
+
+    TLINFO("Graphics task pool initialized: %u tasks pre-allocated", TL_GRAPHICS_QUEUE_CAPACITY)
+
     m_worker_thread = tl_thread_create(tl_graphics_worker, NULL);
     if (!m_worker_thread) {
         TLFATAL("Failed to create graphics worker thread")
@@ -57,7 +83,35 @@ b8 tl_graphics_terminate(void) {
     tl_thread_join(m_worker_thread, NULL);
     m_worker_thread = NULL;
 
-    // Cleanup
+    // Destroy pre-allocated synchronization primitives in task pool
+    if (m_task_pool) {
+        TLTRACE("Destroying graphics task pool synchronization primitives")
+
+        // Reset pool to ensure all tasks are available
+        tl_pool_reset(m_task_pool);
+
+        // Destroy mutex and condition variable for each task
+        for (u16 i = 0; i < TL_GRAPHICS_QUEUE_CAPACITY; ++i) {
+            TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
+            if (task == NULL) continue;
+
+            if (task->completion_mutex) {
+                tl_mutex_destroy(task->completion_mutex);
+                task->completion_mutex = NULL;
+            }
+
+            if (task->completion_condition) {
+                tl_condition_destroy(task->completion_condition);
+                task->completion_condition = NULL;
+            }
+        }
+
+        TLTRACE("Destroying task pool 0x%p", m_task_pool)
+        tl_pool_destroy(m_task_pool);
+        m_task_pool = NULL;
+    }
+
+    // Cleanup queue
     if (m_queue) {
         TLTRACE("Destroying queue 0x%p", m_queue)
         tl_queue_destroy(m_queue);

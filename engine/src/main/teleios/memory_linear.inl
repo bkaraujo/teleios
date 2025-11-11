@@ -4,7 +4,7 @@
 #include "teleios/memory_types.inl"
 
 // Forward declaration for tl_malloc (defined in memory.c)
-extern void* tl_malloc(const u32 size, const char* message);
+extern void* tl_malloc(u32 size, const char* error_message);
 
 // ---------------------------------
 // LINEAR allocator - allocate from pages
@@ -12,7 +12,7 @@ extern void* tl_malloc(const u32 size, const char* message);
 static void* tl_memory_linear_allocate(TLAllocator* allocator, const TLMemoryTag tag, const u32 size) {
     for (u16 i = 0 ; i < allocator->linear.page_count ; ++i) {
         TLMemoryPage* page = allocator->linear.page + i;
-        u32 available = page->size - page->index;
+        const u32 available = page->size - page->index;
         if (available < size + sizeof(TLMemoryTag)) continue;
 
         TLDEBUG("LINEAR alloc: size %d, tag %s", size, tl_memory_type_name(tag));
@@ -36,7 +36,7 @@ static void* tl_memory_linear_allocate(TLAllocator* allocator, const TLMemoryTag
 static void tl_memory_linear_resize(TLAllocator* allocator) {
     TL_PROFILER_PUSH_WITH("0x%p", allocator)
 
-    u16 new_page_count = (u16)(allocator->linear.page_count * 1.75f) + 1;
+    const u16 new_page_count = (u16)(allocator->linear.page_count * 1.75f) + 1;
     TLMemoryPage* new_pages = tl_malloc(sizeof(TLMemoryPage) * new_page_count, "Failed to resize LINEAR allocator");
     memcpy(new_pages, allocator->linear.page, sizeof(TLMemoryPage) * allocator->linear.page_count);
 

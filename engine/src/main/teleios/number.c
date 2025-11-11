@@ -14,7 +14,7 @@ u8 tl_number_i32_digits(const i32 number) {
     TL_PROFILER_POP_WITH(digits)
 }
 
-void tl_number_i32_to_char(const char* buffer, i32 value, u8 base){
+void tl_number_i32_to_char(const char* buffer, i32 value, const u8 base){
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, %d, %d", buffer, value, base)
 
     // check that the base if valid

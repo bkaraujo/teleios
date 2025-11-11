@@ -134,6 +134,7 @@ typedef enum {
     TL_MEMORY_GRAPHICS,                 ///< Graphics subsystem (textures, shaders, etc)
     TL_MEMORY_SERIALIZER,               ///< Serialization buffers (YAML, JSON parsing)
     TL_MEMORY_CONTAINER_QUEUE,          ///< Queue container allocations
+    TL_MEMORY_CONTAINER_POOL,           ///< Object pool allocations
     TL_MEMORY_CONTAINER_STACK,          ///< Stack container allocations
     TL_MEMORY_CONTAINER_LIST,           ///< Linked list allocations
     TL_MEMORY_CONTAINER_NODE,           ///< Container node structures

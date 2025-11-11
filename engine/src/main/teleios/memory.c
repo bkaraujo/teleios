@@ -8,10 +8,10 @@ static TLAllocator* m_allocators;
 
 // Helper function for memory allocation (used by .inl files)
 // Not static to allow access from included .inl files
-void* tl_malloc(const u32 size, const char* message) {
-    TL_PROFILER_PUSH_WITH("%d, %s", size, message)
+void* tl_malloc(const u32 size, const char* error_message) {
+    TL_PROFILER_PUSH_WITH("%d, %s", size, error_message)
     void * memory = malloc(size);
-    if (memory == NULL) TLFATAL(message)
+    if (memory == NULL) TLFATAL(error_message)
     memset(memory, 0, size);
     TL_PROFILER_POP_WITH(memory)
 }
@@ -25,7 +25,7 @@ b8 tl_memory_initialize(void){
 }
 
 TLAllocator* tl_memory_allocator_create(const u32 size, const TLAllocatorType type){
-    TL_PROFILER_PUSH_WITH("%d, %s", size, tl_memory_allocator_name(type))
+    TL_PROFILER_PUSH_WITH("%u, %s", size, tl_memory_allocator_name(type))
 
     // Allocate allocator individually on heap (prevents pointer invalidation)
     TLAllocator* allocator = tl_malloc(sizeof(TLAllocator), "Failed to allocate TLAllocator");
@@ -120,7 +120,7 @@ void tl_memory_free(TLAllocator* allocator, void* pointer){
 }
 
 void tl_memory_set(void *target, const i32 value, const u32 size){
-    TL_PROFILER_PUSH_WITH("0x%p, %d, %llu", target, value, size)
+    TL_PROFILER_PUSH_WITH("0x%p, %d, %u", target, value, size)
 
     if (size == 0) TLFATAL("size is 0")
     if (target == NULL) TLFATAL("target is NULL")
@@ -131,7 +131,7 @@ void tl_memory_set(void *target, const i32 value, const u32 size){
 }
 
 void tl_memory_copy(void *target, const void *source, const u32 size){
-    TL_PROFILER_PUSH_WITH("0x%p, 0x%p, %llu", target, source, size)
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p, %u", target, source, size)
 
     if (size == 0) TLFATAL("size is 0")
     if (source == NULL) TLFATAL("source is NULL")

@@ -39,6 +39,7 @@ struct TLAllocator {
 
 inline const char* tl_memory_type_name(const TLMemoryTag tag) {
     switch (tag) {
+        case TL_MEMORY_CONTAINER_POOL: return "TL_MEMORY_CONTAINER_POOL";
         case TL_MEMORY_BLOCK: return "TL_MEMORY_BLOCK";
         case TL_MEMORY_CONTAINER_ITERATOR: return "TL_MEMORY_CONTAINER_ITERATOR";
         case TL_MEMORY_GRAPHICS: return "TL_MEMORY_GRAPHICS";
@@ -63,8 +64,8 @@ inline const char* tl_memory_type_name(const TLMemoryTag tag) {
 
 inline const char* tl_memory_allocator_name(const TLAllocatorType type) {
     switch (type) {
-    case TL_ALLOCATOR_LINEAR: return "TL_ALLOCATOR_LINEAR";
-    case TL_ALLOCATOR_DYNAMIC: return "TL_ALLOCATOR_DYNAMIC";
+        case TL_ALLOCATOR_LINEAR: return "TL_ALLOCATOR_LINEAR";
+        case TL_ALLOCATOR_DYNAMIC: return "TL_ALLOCATOR_DYNAMIC";
     }
     return "??";
 }

@@ -345,7 +345,7 @@ void tl_profiler_frame_push(const char* filename, u64 lineno, const char* functi
 #if defined(TELEIOS_BUILD_DEBUG)
 #   define TL_PROFILER_POP do { tl_profiler_frame_pop(); return; } while (false);
 #else
-#   define TL_PROFILER_POP
+#   define TL_PROFILER_POP return;
 #endif
 
 /**
@@ -391,7 +391,7 @@ void tl_profiler_frame_push(const char* filename, u64 lineno, const char* functi
 #if defined(TELEIOS_BUILD_DEBUG)
 #   define TL_PROFILER_POP_WITH(v) do { tl_profiler_frame_pop(); return v; } while (false);
 #else
-#   define TL_PROFILER_POP_WITH(v)
+#   define TL_PROFILER_POP_WITH(v) return v;
 #endif
 
 #endif

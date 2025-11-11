@@ -61,11 +61,10 @@ static void* tl_graphics_worker(void* _) {
             task->completed = true;
             tl_condition_signal(task->completion_condition);
             tl_mutex_unlock(task->completion_mutex);
+            // Note: Sync jobs are released back to pool by the submitting thread
         } else {
-            // Async jobs were allocated on heap - free them now
-            if (task->heap_allocated) {
-                tl_memory_free(m_allocator, task);
-            }
+            // Async jobs: release back to pool for reuse
+            tl_pool_release(m_task_pool, task);
         }
     }
 

@@ -15,7 +15,9 @@
       "Bash(engine.exe:*)",
       "Bash(build/bin/Debug/engine.exe:*)",
       "Bash(taskkill:*)",
-      "Bash(nul)"
+      "Bash(nul)",
+      "Bash(.buildbinDebugengine.exe)",
+      "Bash(timeout /t 3)"
     ],
     "deny": [],
     "ask": []

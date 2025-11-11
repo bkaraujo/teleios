@@ -3,6 +3,9 @@
 
 #include "teleios/memory_types.inl"
 
+// Forward declaration from memory.c
+extern void* tl_malloc(u32 size, const char* error_message);
+
 // ---------------------------------
 // DYNAMIC allocator - allocate from heap and track
 // ---------------------------------

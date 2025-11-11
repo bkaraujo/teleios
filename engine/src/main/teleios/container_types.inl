@@ -21,4 +21,18 @@ struct TLQueue {
     TLAllocator* allocator; // Memory allocator for cleanup
 };
 
+// ---------------------------------
+// Object Pool Implementation
+// ---------------------------------
+
+struct TLObjectPool {
+    u8* memory;             // Contiguous memory block for all objects
+    b8* in_use;             // Bitmap: true if object is acquired
+    u32 object_size;        // Size of each object in bytes
+    u16 capacity;           // Total number of objects
+    u16 next_free;          // Hint: next potentially free object
+    TLMutex* mutex;         // Thread-safety for acquire/release operations
+    TLAllocator* allocator; // Memory allocator for cleanup
+};
+
 #endif

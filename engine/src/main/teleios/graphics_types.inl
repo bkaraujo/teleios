@@ -20,16 +20,16 @@ typedef struct {
         void* (*func_with_args)(void*);
     };
 
-    void* args;                 // NULL if NO_ARGS
-    void* result;
+    void* args;                         // NULL if NO_ARGS
+    void* result;                       // Result of the processing
 
-    b8 is_sync;                 // Synchronization for sync jobs
-    b8 completed;               // Flag to prevent lost wakeup
-    b8 heap_allocated;          // True for async jobs (allocated on heap)
-    TLMutex* completion_mutex;
-    TLCondition* completion_condition;
+    b8 is_sync;                         // Synchronization for sync jobs
+    b8 completed;                       // Flag to prevent lost wakeup
+    TLMutex* completion_mutex;          // Pre-allocated mutex for sync jobs
+    TLCondition* completion_condition;  // Pre-allocated condition for sync jobs
 } TLGraphicTask;
 
 static TLQueue* m_queue;
+static TLObjectPool* m_task_pool;
 
 #endif

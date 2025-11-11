@@ -133,6 +133,7 @@ set(ENGINE_SOURCES
     src/main/teleios/event.c
     src/main/teleios/number.c
     src/main/teleios/container_queue.c
+    src/main/teleios/container_pool.c
 )
 
 # Collect engine header files

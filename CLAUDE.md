@@ -236,7 +236,7 @@ Uses compiler-specific attributes for DLL export/import:
 - `tl_memory_allocator_create()` / `tl_memory_allocator_destroy()` - Create/destroy custom allocators
 - `tl_memory_alloc()` - Allocate memory with tag for tracking
 - `tl_memory_set()` / `tl_memory_copy()` - Memory manipulation utilities
-- **Tagged allocations**: Memory tags (e.g., `TL_MEMORY_THREAD`, `TL_MEMORY_SCENE`) for debugging and profiling
+- **Tagged allocations**: Memory tags for debugging and profiling (e.g., `TL_MEMORY_THREAD`, `TL_MEMORY_GRAPHICS`, `TL_MEMORY_CONTAINER_QUEUE`, `TL_MEMORY_CONTAINER_POOL`)
 - **Custom allocators**: Per-subsystem memory pools for cache efficiency
 
 **Thread** ([teleios/thread.h](engine/src/main/teleios/thread.h)):
@@ -263,7 +263,16 @@ Uses compiler-specific attributes for DLL export/import:
 - **Dedicated rendering thread**: All OpenGL commands execute on separate worker thread
 - **GLAD initialization**: Performed on graphics thread (thread with active OpenGL context)
 - **Version logging**: Reports OpenGL version and CGLM version at initialization
-- **Thread-safe work queue**: Producer-consumer pattern with mutex + condition variables (capacity: 256 jobs)
+- **Thread-safe work queue**: Producer-consumer pattern with mutex + condition variables (capacity: 512 jobs)
+  - Uses TLQueue internally (see Container module)
+  - Protected by mutex for thread-safe enqueue/dequeue
+  - Condition variable signals worker thread when work arrives
+- **Object pool for tasks**: Pre-allocated pool of graphics tasks (capacity: 512)
+  - Uses TLObjectPool (see Container module)
+  - Each task has pre-allocated mutex and condition variable for sync jobs
+  - Eliminates malloc/free overhead during task submission
+  - Zero runtime allocations - all memory pre-allocated at initialization
+  - Tasks are acquired from pool during submission and released after execution
 - **4 submission functions**:
   - `tl_graphics_submit_sync(func)` - Synchronous work without parameters (blocks until complete)
   - `tl_graphics_submit_sync_args(func, args)` - Synchronous work with parameters (blocks until complete)
@@ -288,9 +297,41 @@ Uses compiler-specific attributes for DLL export/import:
 - `tl_number_i32_to_char()` - Convert i32 to character array with specified base
 - Utility functions for numeric operations and conversions
 
+**Container** ([teleios/container.h](engine/src/main/teleios/container.h)):
+
+*Queue API:*
+- `tl_queue_create()` / `tl_queue_destroy()` - Create/destroy circular queue (ring buffer)
+- `tl_queue_offer()` / `tl_queue_push()` - Enqueue items (add to back)
+- `tl_queue_pop()` - Dequeue items (remove from front)
+- `tl_queue_peek()` - View front item without removal
+- `tl_queue_size()` / `tl_queue_capacity()` - Query queue status
+- `tl_queue_is_empty()` / `tl_queue_is_full()` - Check queue state
+- `tl_queue_clear()` - Empty queue without destroying it
+- **Fixed capacity**: Determined at creation time (uses u16 for capacity/size)
+- **Generic storage**: Holds void pointers to arbitrary data
+- **Memory management**: Uses custom allocators (LINEAR or DYNAMIC), tagged as TL_MEMORY_CONTAINER_QUEUE
+- **NOT thread-safe**: Requires external locking for multi-threaded use
+- **Use case**: Graphics work queue, message queues, command buffers
+
+*Object Pool API:*
+- `tl_pool_create(allocator, object_size, capacity)` / `tl_pool_destroy()` - Create/destroy object pool
+- `tl_pool_acquire()` - Acquire object from pool (returns NULL if exhausted)
+- `tl_pool_release(pool, object)` - Release object back to pool for reuse
+- `tl_pool_available()` / `tl_pool_in_use()` / `tl_pool_capacity()` - Query pool status
+- `tl_pool_reset()` - Release all objects back to pool
+- **Pre-allocated objects**: All objects allocated during pool creation (zero-initialized)
+- **Fixed capacity**: Determined at creation time, cannot be changed (uses u16 for capacity)
+- **Contiguous memory**: All objects stored in single memory block for cache efficiency
+- **Bitmap tracking**: Boolean array tracks which objects are in use
+- **Next-free hint**: Circular index optimization for fast allocation
+- **Thread-safe**: Uses internal mutex for all acquire/release/query operations
+- **Memory management**: Tagged as TL_MEMORY_CONTAINER_POOL, uses custom allocators
+- **Use case**: Graphics task pool, entity pools, particle systems, reusable object collections
+- **Performance**: Eliminates malloc/free overhead, predictable memory usage, no fragmentation
+
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event, number
+- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event, number, container
 
 ### Module Organization
 
@@ -299,6 +340,41 @@ All engine code lives under `engine/src/main/`:
 - `glad/*.{h,c}` - GLAD OpenGL loader (vendored)
 - `stb/*.h` - STB single-header libraries (stb_image.h)
 - `main.c` - Engine entry point
+
+### Container Module Architecture
+
+The Container module provides two data structures: Queue (ring buffer) and Object Pool.
+
+**File Organization:**
+```
+container.h                 # Public API (queue + object pool)
+container_types.inl         # Shared type definitions (TLQueue, TLObjectPool)
+container_queue.c           # Queue implementation
+container_pool.c            # Object Pool implementation
+```
+
+**Implementation Details:**
+
+*Queue (container_queue.c):*
+- Circular buffer (ring buffer) using array of void pointers
+- Fixed capacity determined at creation
+- Thread-unsafe (requires external locking)
+- Uses head/tail indices for O(1) enqueue/dequeue
+- Mutex + two condition variables for thread-safe blocking operations
+- Memory tagged as TL_MEMORY_CONTAINER_QUEUE
+
+*Object Pool (container_pool.c):*
+- Pre-allocates all objects in contiguous memory block
+- Bitmap (boolean array) tracks which objects are in use
+- Next-free hint (circular index) optimizes allocation
+- Thread-safe with internal mutex protecting all operations
+- Zero runtime allocations - all memory pre-allocated at creation
+- Memory tagged as TL_MEMORY_CONTAINER_POOL
+
+**Performance Characteristics:**
+- Queue: O(1) enqueue/dequeue, no memory allocations after creation
+- Pool: O(n) worst-case acquire (linear search), O(1) release, no fragmentation
+- Pool next-free hint typically makes acquire O(1) in practice
 
 ### Graphics Thread Architecture
 
@@ -323,7 +399,10 @@ Main Thread                     Graphics Thread (Worker)
   - Exit condition: `shutdown == true AND queue empty` (ensures pending work completes)
 - **Synchronous Jobs**: Use per-job mutex/condition for completion signaling (avoids contention on queue mutex)
 - **Memory Management**:
-  - Graphics thread has dedicated allocator (1MB, tag: `TL_MEMORY_GRAPHICS`)
+  - Graphics thread has dedicated DYNAMIC allocator (tag: `TL_MEMORY_GRAPHICS`)
+  - Task pool uses object pool with 512 pre-allocated tasks (capacity: 512 × 56 bytes = 28,672 bytes)
+  - Each task has pre-allocated mutex (48 bytes) and condition variable (16 bytes)
+  - Zero runtime allocations during task submission - all memory pre-allocated at initialization
   - Sync jobs: Safe to use stack-allocated args (function blocks until complete)
   - Async jobs: Args must have appropriate lifetime (heap-allocated or static)
 
@@ -518,9 +597,14 @@ void* tl_memory_alloc(...) {
 ```
 
 **Other Subsystems Using This Pattern:**
-- **Platform**: `platform_windows.inl`, `platform_linux.inl`, `platform_glfw.inl`
+- **Platform**: `platform_windows.inl`, `platform_linux.inl`, `platform_glfw.inl`, `platform_types.inl`
 - **Threading**: `thread_windows.inl`, `thread_unix.inl`
-- **Memory**: `memory_linear.inl`, `memory_dynamic.inl` (reference implementation)
+- **Memory**: `memory_linear.inl`, `memory_dynamic.inl`, `memory_types.inl` (reference implementation)
+- **Graphics**: `graphics_queue.inl`, `graphics_thread.inl`, `graphics_types.inl` (work queue and threading logic)
+  - `graphics_types.inl`: Defines TLGraphicTask structure with pre-allocated mutex/condition
+  - `graphics_queue.inl`: Task submission functions (sync/async) using object pool
+  - `graphics_thread.inl`: Worker thread that processes tasks from queue and releases to pool
+- **Container**: `container_types.inl` (TLQueue and TLObjectPool internal structures)
 
 **When NOT to Use:**
 - Simple modules with single implementation
