@@ -63,7 +63,7 @@ b8 tl_graphics_initialize(void) {
         tl_pool_release(m_task_pool, task);
     }
 
-    TLINFO("Graphics task pool initialized: %u tasks pre-allocated", TL_GRAPHICS_QUEUE_CAPACITY)
+    TLDEBUG("Graphics task pool initialized: %u tasks pre-allocated", TL_GRAPHICS_QUEUE_CAPACITY)
 
     m_worker_thread = tl_thread_create(tl_graphics_worker, NULL);
     if (!m_worker_thread) {

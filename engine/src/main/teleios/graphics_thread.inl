@@ -24,7 +24,7 @@ static void* tl_graphics_worker(void* _) {
         TLFATAL("GLAD failed to initialize on graphics thread")
     }
 
-    TLINFO("OpenGL %s", glGetString(GL_VERSION))
+    TLDEBUG("OpenGL %s", glGetString(GL_VERSION))
     TLDEBUG("CGLM %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
     // Disable VSync for immediate buffer swaps
@@ -44,7 +44,7 @@ static void* tl_graphics_worker(void* _) {
 
         // Check for shutdown signal (both function pointers NULL)
         if (task->func_no_args == NULL && task->func_with_args == NULL) {
-            TLINFO("Graphics worker received shutdown signal")
+            TLDEBUG("Graphics worker received shutdown signal")
             break;
         }
 
@@ -71,7 +71,7 @@ static void* tl_graphics_worker(void* _) {
 
     // Release OpenGL context before exiting
     glfwMakeContextCurrent(NULL);
-    TLINFO("Graphics worker thread exiting")
+    TLDEBUG("Graphics worker thread exiting")
 
     TL_PROFILER_POP_WITH(NULL)
 }
