@@ -126,7 +126,6 @@ set(ENGINE_SOURCES
     src/main/teleios/logger.c
     src/main/teleios/memory.c
     src/main/teleios/platform.c
-    src/main/teleios/profiler.c
     src/main/teleios/application.c
     src/main/teleios/thread.c
     src/main/teleios/graphics.c

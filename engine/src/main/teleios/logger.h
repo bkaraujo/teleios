@@ -188,7 +188,8 @@ typedef enum {
  * tl_logger_loglevel(TL_LOG_LEVEL_WARN);
  * @endcode
  */
-void tl_logger_loglevel(TLLogLevel desired);
+void tl_logger_set_level(TLLogLevel desired);
+TLLogLevel tl_logger_get_level(void);
 
 /**
  * @brief Write a log message to the logger
