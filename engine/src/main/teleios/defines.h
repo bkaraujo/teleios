@@ -351,4 +351,52 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 
 #include <cglm/types-struct.h>
 
+/**
+ * @brief Current date and time representation
+ *
+ * Holds a breakdown of the current date and time into individual components.
+ * This structure is returned by tl_time_clock().
+ *
+ * @note Year is stored as a full 4-digit year (e.g., 2025)
+ * @note Month is 1-12 (not 0-11)
+ * @note Day is 1-31
+ * @note Hour is 0-23
+ * @note Minute is 0-59
+ * @note Second is 0-59
+ * @note Millis is 0-999
+ *
+ * @see tl_time_clock
+ */
+typedef struct {
+  u16 millis;                 ///< Milliseconds (0-999)
+  u16 year;                   ///< Full year (e.g., 2025)
+  u8 month;                   ///< Month (1-12)
+  u8 day;                     ///< Day of month (1-31)
+  u8 hour;                    ///< Hour (0-23)
+  u8 minute;                  ///< Minute (0-59)
+  u8 second;                  ///< Second (0-59)
+} TLDateTime;
+
+/**
+ * @brief Opaque queue data structure handle
+ *
+ * Represents a circular queue instance. The actual structure definition
+ * is in the implementation file (container.c).
+ */
+typedef struct TLQueue TLQueue;
+
+/**
+ * @brief Opaque object pool handle
+ *
+ * Represents a pool of pre-allocated objects for efficient reuse.
+ * The actual structure definition is in the implementation file (container.c).
+ */
+typedef struct TLObjectPool TLObjectPool;
+
+typedef struct TLThread TLThread;
+
+typedef struct TLMutex TLMutex;
+
+typedef struct TLCondition TLCondition;
+
 #endif

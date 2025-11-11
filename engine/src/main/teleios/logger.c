@@ -1,5 +1,4 @@
 #include "teleios/teleios.h"
-#include <string.h>
 
 #ifndef TELEIOS_LOG_LENGTH
 #   define TELEIOS_LOG_LENGTH 1024

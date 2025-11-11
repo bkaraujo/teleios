@@ -6,8 +6,6 @@
 static u16 m_allocators_count = 1;
 static TLAllocator* m_allocators;
 
-// Helper function for memory allocation (used by .inl files)
-// Not static to allow access from included .inl files
 void* tl_malloc(const u32 size, const char* error_message) {
     TL_PROFILER_PUSH_WITH("%d, %s", size, error_message)
     void * memory = malloc(size);

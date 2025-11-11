@@ -1,14 +1,3 @@
-/**
- * @file thread_windows.inl
- * @brief Windows-specific threading implementation
- *
- * Uses Windows API: CreateThread, CRITICAL_SECTION, CONDITION_VARIABLE
- * This file is included directly into thread.c
- *
- * Memory management: Uses DYNAMIC allocator for thread resources to allow
- * individual deallocation and memory leak tracking.
- */
-
 #ifdef TL_PLATFORM_WINDOWS
 
 #include <windows.h>
@@ -52,7 +41,7 @@ struct TLCondition {
 // Thread wrapper for Windows calling convention
 // ---------------------------------
 
-static DWORD WINAPI thread_wrapper(LPVOID param) {
+static DWORD WINAPI thread_wrapper(const LPVOID param) {
     TLThread* thread = (TLThread*)param;
     thread->result = thread->func(thread->arg);
     return 0;
@@ -62,7 +51,7 @@ static DWORD WINAPI thread_wrapper(LPVOID param) {
 // Thread Management
 // ---------------------------------
 
-TLThread* tl_thread_create(TLThreadFunc func, void* arg) {
+TLThread* tl_thread_create(const TLThreadFunc func, void* arg) {
     if (!func) {
         TLERROR("tl_thread_create: func cannot be NULL");
         return NULL;
@@ -139,7 +128,7 @@ u64 tl_thread_id(void) {
     return (u64)GetCurrentThreadId();
 }
 
-void tl_thread_sleep(u32 milliseconds) {
+void tl_thread_sleep(const u32 milliseconds) {
     Sleep(milliseconds);
 }
 
@@ -237,7 +226,7 @@ b8 tl_condition_wait(TLCondition* condition, TLMutex* mutex) {
     return true;
 }
 
-b8 tl_condition_wait_timeout(TLCondition* condition, TLMutex* mutex, u32 timeout_ms) {
+b8 tl_condition_wait_timeout(TLCondition* condition, TLMutex* mutex, const u32 timeout_ms) {
     if (!condition) {
         TLERROR("tl_condition_wait_timeout: condition cannot be NULL");
         return false;

@@ -1,14 +1,3 @@
-/**
- * @file thread_unix.inl
- * @brief Unix/POSIX-specific threading implementation
- *
- * Uses POSIX threads (pthreads): pthread_create, pthread_mutex, pthread_cond
- * This file is included directly into thread.c
- *
- * Memory management: Uses DYNAMIC allocator for thread resources to allow
- * individual deallocation and memory leak tracking.
- */
-
 #if defined(TL_PLATFORM_LINUX) || defined(TL_PLATFORM_APPLE) || defined(TL_PLATFORM_UNIX)
 
 #include <pthread.h>

@@ -1,20 +1,3 @@
-/**
- * @file profiler.h
- * @brief Stack-based function call profiler for call hierarchy tracing and debugging
- *
- * This module provides a lightweight call stack profiler for understanding program
- * execution flow and identifying performance bottlenecks. The profiler is stack-based,
- * meaning it tracks nested function calls in a call hierarchy.
- *
- * Key features:
- * - Stack-based call tracking (up to 1000 nested levels)
- * - Automatic filename, function name, and line number capture
- * - Optional argument logging for parameter values
- * - Entry/exit logging through the logger subsystem
- * - Zero overhead in Release builds (completely compiled out)
- * - Thread-local storage for thread-safe operation
- */
-
 #ifndef __TELEIOS_PROFILER__
 #define __TELEIOS_PROFILER__
 

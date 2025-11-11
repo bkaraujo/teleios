@@ -6,7 +6,7 @@
 // Queue Lifecycle
 // ---------------------------------
 
-TLQueue* tl_queue_create(TLAllocator* allocator, u16 capacity) {
+TLQueue* tl_queue_create(TLAllocator* allocator, const u16 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", allocator, capacity)
 
     if (allocator == NULL) TLFATAL("allocator is NULL")

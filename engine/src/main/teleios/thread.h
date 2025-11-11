@@ -1,23 +1,7 @@
-/**
- * @file thread.h
- * @brief Cross-platform threading abstraction layer
- *
- * Provides a unified API for thread management, mutexes, and condition variables
- * across Windows and POSIX systems.
- */
-
 #ifndef __TELEIOS_THREAD__
 #define __TELEIOS_THREAD__
 
 #include "teleios/defines.h"
-
-// ---------------------------------
-// Forward declarations
-// ---------------------------------
-
-typedef struct TLThread TLThread;
-typedef struct TLMutex TLMutex;
-typedef struct TLCondition TLCondition;
 
 /**
  * Thread function signature

@@ -2,7 +2,6 @@
 #define __TELEIOS_PLATFORM_TYPES__
 
 #include "teleios/defines.h"
-#include "teleios/chrono.h"
 
 /**
  * @brief Platform function pointer table
