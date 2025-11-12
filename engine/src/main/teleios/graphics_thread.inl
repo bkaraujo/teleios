@@ -8,9 +8,6 @@
 #include <GLFW/glfw3.h>
 #include <cglm/version.h>
 
-// Forward declarations from graphics.c
-extern TLAllocator* m_allocator;
-
 // ---------------------------------
 // Graphics Worker Thread
 // ---------------------------------

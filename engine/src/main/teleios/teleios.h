@@ -7,7 +7,7 @@
 #include "teleios/memory.h"
 #include "teleios/window.h"
 #include "teleios/thread.h"
-
+#include "teleios/strings.h"
 #include "teleios/container.h"
 
 #include "teleios/number.h"

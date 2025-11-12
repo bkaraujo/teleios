@@ -43,14 +43,6 @@ typedef enum {
 } TLAllocatorType;
 
 /**
- * @brief Opaque allocator handle
- *
- * Represents a memory allocator instance. The actual structure is defined
- * in the implementation files (memory_linear.inl, memory_dynamic.inl).
- */
-typedef struct TLAllocator TLAllocator;
-
-/**
  * @brief Initialize the memory system
  *
  * Sets up the memory tracking and default allocators. Must be called before

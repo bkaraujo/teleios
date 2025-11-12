@@ -133,7 +133,8 @@ set(ENGINE_SOURCES
     src/main/teleios/number.c
     src/main/teleios/container_queue.c
     src/main/teleios/container_pool.c
-        src/main/teleios/renderer.c
+    src/main/teleios/renderer.c
+    src/main/teleios/strings.c
 )
 
 # Collect engine header files
@@ -154,7 +155,8 @@ set(ENGINE_HEADERS
     src/main/teleios/thread.h
     src/main/teleios/graphics.h
     src/main/teleios/number.h
-        src/main/teleios/renderer.h
+    src/main/teleios/renderer.h
+    src/main/teleios/strings.h
 )
 
 # Create engine executable

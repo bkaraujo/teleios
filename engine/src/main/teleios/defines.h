@@ -352,6 +352,14 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #include <cglm/types-struct.h>
 
 /**
+ * @brief Opaque allocator handle
+ *
+ * Represents a memory allocator instance. The actual structure is defined
+ * in the implementation files (memory_linear.inl, memory_dynamic.inl).
+ */
+typedef struct TLAllocator TLAllocator;
+
+/**
  * @brief Current date and time representation
  *
  * Holds a breakdown of the current date and time into individual components.
