@@ -7,6 +7,7 @@
 static GLFWwindow* m_window;
 static ivec2s m_window_size;
 static ivec2s m_window_position;
+static TLString* m_window_title;
 
 void* tl_window_handler() {
     return m_window;
@@ -18,6 +19,10 @@ ivec2s tl_window_size() {
 
 ivec2s tl_window_position() {
     return m_window_position;
+}
+
+TLString* tl_window_title() {
+    return m_window_title;
 }
 
 static void tl_window_callback_window_closed(GLFWwindow* window) {
@@ -138,7 +143,8 @@ static b8 tl_window_create(void) {
     // --------------------------------------------------------------------------------------
     m_window_size.x = 1024;
     m_window_size.y = 768;
-    m_window = glfwCreateWindow(m_window_size.x, m_window_size.y, "FOSGE", NULL, NULL);
+    m_window_title = tl_config_get("engine.window.title");
+    m_window = glfwCreateWindow(m_window_size.x, m_window_size.y, tl_string_cstr(m_window_title), NULL, NULL);
     if (TL_UNLIKELY(m_window == NULL)) {
         TLERROR("GLFW failed to create window")
         TL_PROFILER_POP_WITH(false)

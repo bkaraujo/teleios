@@ -4,7 +4,7 @@
 #include "teleios/defines.h"
 
 b8 tl_config_initialize();
-void* tl_config_get(TLString* property);
+void* tl_config_get(const char* property);
 TLList* tl_config_list(TLString* property);
 b8 tl_config_terminate(void);
 

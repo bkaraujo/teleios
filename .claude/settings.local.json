@@ -17,7 +17,11 @@
       "Bash(taskkill:*)",
       "Bash(nul)",
       "Bash(.buildbinDebugengine.exe)",
-      "Bash(timeout /t 3)"
+      "Bash(timeout /t 3)",
+      "Bash(copy sandboxapplication.yml buildbinDebugapplication.yml)",
+      "Bash(./engine.exe:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

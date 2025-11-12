@@ -12,7 +12,7 @@ static TLAllocator* m_thread_allocator = NULL;
 static void tl_thread_ensure_allocator(void) {
     if (m_thread_allocator != NULL) return;
     m_thread_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
-    TLDEBUG("Thread system DYNAMIC allocator initialized");
+    TLTRACE("Thread system DYNAMIC allocator initialized");
 }
 
 // ---------------------------------

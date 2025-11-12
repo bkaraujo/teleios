@@ -918,14 +918,10 @@ struct TLStringBuilder {
     TLAllocator* allocator;
 };
 
-TLStringBuilder* tl_string_builder_create(TLAllocator* allocator, u32 initial_capacity) {
-    TL_PROFILER_PUSH_WITH("%p, %u", allocator, initial_capacity)
+TLStringBuilder* tl_string_builder_create(TLAllocator* allocator, const u32 capacity) {
+    TL_PROFILER_PUSH_WITH("%p, %u", allocator, capacity)
 
     if (allocator == NULL) TLFATAL("allocator is NULL")
-
-    if (initial_capacity == 0) {
-        initial_capacity = 256;
-    }
 
     TLStringBuilder* builder = (TLStringBuilder*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLStringBuilder));
     if (builder == NULL) {
@@ -933,16 +929,14 @@ TLStringBuilder* tl_string_builder_create(TLAllocator* allocator, u32 initial_ca
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    builder->buffer = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, initial_capacity);
+    builder->buffer = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, capacity);
     if (builder->buffer == NULL) {
         TLERROR("Failed to allocate memory for builder buffer")
         tl_memory_free(allocator, builder);
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    builder->buffer[0] = '\0';
-    builder->length = 0;
-    builder->capacity = initial_capacity;
+    builder->capacity = capacity;
     builder->allocator = allocator;
 
     TL_PROFILER_POP_WITH(builder)

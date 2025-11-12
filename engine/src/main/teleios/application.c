@@ -75,7 +75,7 @@ b8 tl_application_run(void) {
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {
             static char buffer[60];
-            snprintf(buffer, sizeof(buffer), "FPS: %llu | UPS: %llu", frame_count, update_count);
+            snprintf(buffer, sizeof(buffer), "%s FPS: %llu | UPS: %llu", tl_string_cstr(tl_window_title()), frame_count, update_count);
             glfwSetWindowTitle(tl_window_handler(), buffer);
 
             frame_count = update_count = 0;

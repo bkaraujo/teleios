@@ -38,7 +38,7 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
     tl_memory_set(pool->memory, 0, object_size * capacity);
     tl_memory_set(pool->in_use, 0, sizeof(b8) * capacity);
 
-    TLDEBUG("Object pool created: 0x%p (capacity=%u, object_size=%u, total_mem=%u bytes, thread-safe)",
+    TLTRACE("Object pool created: 0x%p (capacity=%u, object_size=%u, total_mem=%u bytes, thread-safe)",
         pool, capacity, object_size, object_size * capacity)
 
     TL_PROFILER_POP_WITH(pool)
@@ -52,7 +52,7 @@ void tl_pool_destroy(TLObjectPool* pool) {
         TL_PROFILER_POP
     }
 
-    TLDEBUG("Destroying object pool 0x%p", pool)
+    TLTRACE("Destroying object pool 0x%p", pool)
 
     // Destroy mutex
     if (pool->mutex) {

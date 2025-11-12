@@ -127,7 +127,7 @@ TLList* tl_map_get(TLMap* map, const TLString* key) {
     tl_mutex_lock(map->mutex);
 
     const u32 index = tl_map_hash(key, map->capacity);
-    TLMapEntry* entry = map->buckets[index];
+    const TLMapEntry* entry = map->buckets[index];
 
     // Linear search in bucket chain
     while (entry != NULL) {
@@ -368,7 +368,7 @@ TLIterator* tl_map_keys(TLMap* map) {
     // Lock list to create thread-safe snapshot
     tl_mutex_lock(map->mutex);
 
-    TLAllocator* allocator = tl_memory_allocator_create(TL_ALLOCATOR_LINEAR, TL_KIBI_BYTES(4));
+    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
     TLIterator* iterator = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
     iterator->allocator = allocator;
     iterator->current = 0;

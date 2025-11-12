@@ -352,7 +352,7 @@ typedef struct TLStringBuilder TLStringBuilder;
  * @param initial_capacity Initial buffer capacity
  * @return Newly allocated string builder (caller must free with tl_string_builder_destroy)
  */
-TLStringBuilder* tl_string_builder_create(TLAllocator* allocator, u32 initial_capacity);
+TLStringBuilder* tl_string_builder_create(TLAllocator* allocator, u32 capacity);
 
 /**
  * @brief Append a TLString to the builder

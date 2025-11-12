@@ -45,7 +45,7 @@
  * }
  * @endcode
  */
-void* tl_window_handler();
+void* tl_window_handler(void);
 
 /**
  * @brief Get current window dimensions
@@ -86,7 +86,7 @@ void* tl_window_handler();
  * }
  * @endcode
  */
-ivec2s tl_window_size();
+ivec2s tl_window_size(void);
 
 /**
  * @brief Get current window screen position
@@ -132,6 +132,8 @@ ivec2s tl_window_size();
  * save_window_state(pos.x, pos.y);
  * @endcode
  */
-ivec2s tl_window_position();
+ivec2s tl_window_position(void);
+
+TLString* tl_window_title(void);
 
 #endif
