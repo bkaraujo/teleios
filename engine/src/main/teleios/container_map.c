@@ -13,7 +13,7 @@
  * Uses the FNV-1a hash algorithm which is fast and has good distribution
  * for strings.
  */
-static u32 tl_map_hash(const TLString* key, u32 capacity) {
+static u32 tl_map_hash(const TLString* key, const u32 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", key, capacity)
 
     if (key == NULL) {
@@ -24,7 +24,7 @@ static u32 tl_map_hash(const TLString* key, u32 capacity) {
     const u32 len = tl_string_length(key);
 
     // FNV-1a hash
-    static u32 hash = 2166136261u;
+    u32 hash = 2166136261u;
     for (u32 i = 0; i < len; i++) {
         hash ^= (u8)str[i];
         hash *= 16777619u;
@@ -32,27 +32,6 @@ static u32 tl_map_hash(const TLString* key, u32 capacity) {
 
     const u32 index = hash % capacity;
     TL_PROFILER_POP_WITH(index)
-}
-
-/**
- * @brief Round up to next power of 2
- */
-static u32 tl_map_next_power_of_2(u32 n) {
-    TL_PROFILER_PUSH_WITH("%u", n)
-
-    if (n == 0) {
-        TL_PROFILER_POP_WITH(1)
-    }
-
-    n--;
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    n++;
-
-    TL_PROFILER_POP_WITH(n)
 }
 
 /**
@@ -97,14 +76,10 @@ static void tl_map_free_entry(TLAllocator* allocator, TLMapEntry* entry) {
 // Map Lifecycle
 // ---------------------------------
 
-TLMap* tl_map_create(TLAllocator* allocator, u32 capacity) {
+TLMap* tl_map_create(TLAllocator* allocator, const u32 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", allocator, capacity)
 
     if (allocator == NULL) TLFATAL("allocator is NULL")
-    if (capacity == 0) capacity = 16;
-
-    // Round up to power of 2 for efficient modulo
-    capacity = tl_map_next_power_of_2(capacity);
 
     TLMap* map = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_MAP, sizeof(TLMap));
     if (map == NULL) {
@@ -119,12 +94,13 @@ TLMap* tl_map_create(TLAllocator* allocator, u32 capacity) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
+    map->capacity = tl_number_next_power_of_2(capacity == 0 ? 16 : capacity);
+
     // Initialize all buckets to NULL
-    for (u32 i = 0; i < capacity; i++) {
+    for (u32 i = 0; i < map->capacity; i++) {
         map->buckets[i] = NULL;
     }
 
-    map->capacity = capacity;
     map->size = 0;
     map->load_factor = 0.75f;
     map->allocator = allocator;

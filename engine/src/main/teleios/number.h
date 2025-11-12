@@ -88,4 +88,29 @@ u8 tl_number_i32_digits(i32 number);
  */
 TLString* tl_number_i32_to_char(TLAllocator* allocator, i32 value, u8 base);
 
+/**
+ * @brief Calculates the next power of 2 greater than or equal to n.
+ *
+ * This function takes an unsigned 32-bit integer `n` and returns the smallest
+ * power of 2 that is greater than or equal to `n`.
+ *
+ * @param n The input unsigned 32-bit integer.
+ * @return The next power of 2 greater than or equal to `n`.
+ *
+ * @note If `n` is 0, the function returns 1.
+ * @note If `n` is already a power of 2, `n` is returned.
+ *
+ * @code
+ * u32 result;
+ *
+ * result = tl_number_next_power_of_2(0);   // Returns 1
+ * result = tl_number_next_power_of_2(1);   // Returns 1
+ * result = tl_number_next_power_of_2(3);   // Returns 4
+ * result = tl_number_next_power_of_2(4);   // Returns 4
+ * result = tl_number_next_power_of_2(7);   // Returns 8
+ * result = tl_number_next_power_of_2(33);  // Returns 64
+ * result = tl_number_next_power_of_2(UINT32_MAX); // Returns 0 (overflow)
+ * @endcode
+ */;
+u32 tl_number_next_power_of_2(u32 n);
 #endif

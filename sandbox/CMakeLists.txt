@@ -8,7 +8,7 @@ set(SANDBOX_SOURCES
 )
 
 # Create sandbox executable
-add_executable(sandbox
+add_library(sandbox SHARED
     ${SANDBOX_SOURCES}
 )
 
