@@ -52,8 +52,10 @@ if(NOT libyaml_POPULATED)
     )
 
     # Platform-specific definitions for libyaml
-    target_compile_definitions(yaml PRIVATE
+    target_compile_definitions(yaml PUBLIC
         YAML_DECLARE_STATIC
+    )
+    target_compile_definitions(yaml PRIVATE
         YAML_VERSION_MAJOR=0
         YAML_VERSION_MINOR=2
         YAML_VERSION_PATCH=5
@@ -138,6 +140,8 @@ set(ENGINE_SOURCES
     src/main/teleios/container_iterator.c
     src/main/teleios/renderer.c
     src/main/teleios/strings.c
+        src/main/teleios/config.c
+        src/main/teleios/config.h
 )
 
 # Collect engine header files
@@ -160,6 +164,8 @@ set(ENGINE_HEADERS
     src/main/teleios/number.h
     src/main/teleios/renderer.h
     src/main/teleios/strings.h
+        src/main/teleios/config.c
+        src/main/teleios/config.h
 )
 
 # Create engine executable
@@ -263,4 +269,11 @@ elseif(APPLE)
             OpenGL::GL
     )
 endif()
+
+# Post-build: Copy engine executable to dist directory
+add_custom_command(TARGET engine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/dist
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:engine> ${CMAKE_SOURCE_DIR}/dist/
+    COMMENT "Copying engine.exe to dist directory"
+)
 

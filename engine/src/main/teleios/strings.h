@@ -3,16 +3,6 @@
 
 #include "teleios/defines.h"
 
-
-/**
- * @brief String object structure
- *
- * Encapsulates a null-terminated C string with cached length and allocator
- * reference. Strings are immutable - all transformation operations return new
- * instances.
- */
-typedef struct TLString TLString;
-
 // ============================================================================
 // String Creation and Destruction
 // ============================================================================

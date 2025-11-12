@@ -297,6 +297,25 @@ Uses compiler-specific attributes for DLL export/import:
 - `tl_number_i32_to_char()` - Convert i32 to character array with specified base
 - Utility functions for numeric operations and conversions
 
+**Strings** ([teleios/strings.h](engine/src/main/teleios/strings.h)):
+- `TLString` - Immutable string object with cached length and allocator reference
+- **Creation**: `tl_string_create()`, `tl_string_create_empty()`, `tl_string_create_with_capacity()`, `tl_string_destroy()`
+- **Properties**: `tl_string_length()`, `tl_string_char_at()`, `tl_string_cstr()`, `tl_string_is_empty()`
+- **Comparison**: `tl_string_equals()`, `tl_string_equals_ignore_case()`, `tl_string_equals_cstr()`
+- **Search**: `tl_string_index_of()`, `tl_string_contains()`, `tl_string_starts_with()`, `tl_string_ends_with()`
+- **Transformation**: `tl_string_substring()`, `tl_string_to_lower()`, `tl_string_to_upper()`, `tl_string_trim()`, `tl_string_replace_all()`
+- **Concatenation**: `tl_string_concat()`, `tl_string_append()` (in-place), `tl_cstr_join()` (C string utility)
+- **Splitting**: `tl_string_split()`, `tl_string_split_destroy()`
+- **String Builder**: `TLStringBuilder` for efficient incremental string building
+  - `tl_string_builder_create()`, `tl_string_builder_append()`, `tl_string_builder_build()`, `tl_string_builder_destroy()`
+- **Immutability**: All transformation functions return new TLString instances (except `tl_string_append()`)
+- **Memory management**: Uses custom allocators, tagged as TL_MEMORY_STRING
+
+**Renderer** ([teleios/renderer.h](engine/src/main/teleios/renderer.h)):
+- `tl_renderer_frame_begin()` - Begin a new render frame
+- `tl_renderer_frame_end()` - End the current render frame
+- **Basic rendering infrastructure**: Frame management for OpenGL rendering
+
 **Container** ([teleios/container.h](engine/src/main/teleios/container.h)):
 
 *Queue API:*
@@ -329,9 +348,55 @@ Uses compiler-specific attributes for DLL export/import:
 - **Use case**: Graphics task pool, entity pools, particle systems, reusable object collections
 - **Performance**: Eliminates malloc/free overhead, predictable memory usage, no fragmentation
 
+*Double Linked List API:*
+- `tl_list_create()` / `tl_list_destroy()` - Create/destroy double linked list
+- `tl_list_push_front()` / `tl_list_push_back()` - Insert at front/back (O(1))
+- `tl_list_insert_after()` / `tl_list_insert_before()` - Insert relative to node (O(1))
+- `tl_list_pop_front()` / `tl_list_pop_back()` - Remove from front/back (O(1))
+- `tl_list_remove()` - Remove specific node (O(1))
+- `tl_list_front()` / `tl_list_back()` - Get first/last node without removal
+- `tl_list_size()` / `tl_list_is_empty()` / `tl_list_clear()` - Query and modify list state
+- `tl_list_iterator()` - Create snapshot-based iterator for lock-free iteration
+- **Thread-safe**: Uses internal mutex for all operations
+- **Bidirectional traversal**: Double links support forward and backward iteration
+- **Generic storage**: Holds void pointers to arbitrary data
+- **Memory management**: Tagged as TL_MEMORY_CONTAINER_LIST, uses custom allocators
+- **Use case**: Event queues, entity lists, command buffers
+
+*Hash Map API (TLString -> TLList*):*
+- `tl_map_create(allocator, capacity)` / `tl_map_destroy()` - Create/destroy hash map
+- `tl_map_get()` - Get list for key (returns NULL if not found)
+- `tl_map_get_or_create()` - Get list for key, creating if needed
+- `tl_map_put(map, key, value)` - Add value to list for key
+- `tl_map_contains()` - Check if key exists
+- `tl_map_remove()` - Remove key and return its list
+- `tl_map_size()` / `tl_map_capacity()` / `tl_map_is_empty()` / `tl_map_clear()` - Query and modify map state
+- `tl_map_keys()` - Create snapshot-based iterator for lock-free key iteration
+- **Key type**: TLString (immutable strings)
+- **Value type**: TLList* (each key maps to a list of void pointers)
+- **Collision resolution**: Separate chaining with linked list
+- **Auto-resize**: Grows when load factor (0.75) is exceeded
+- **Hash function**: FNV-1a algorithm for good string distribution
+- **Thread-safe**: Uses internal mutex for all operations
+- **Memory management**: Tagged as TL_MEMORY_CONTAINER_MAP, owns keys and values
+- **Use case**: YAML parsing (sections -> properties), resource management (type -> instances)
+
+*Iterator API (Snapshot-based):*
+- `tl_iterator_destroy()` - Destroy iterator and free snapshot
+- `tl_iterator_has_next()` - Check if more items available
+- `tl_iterator_next()` - Get next item and advance
+- `tl_iterator_rewind()` - Reset to beginning for re-iteration
+- `tl_iterator_size()` - Get total number of items in snapshot
+- **Lock-free iteration**: Snapshot created with lock, iteration is lock-free
+- **Cache-friendly**: Contiguous memory layout for performance
+- **Snapshot isolation**: Changes to original collection don't affect iteration
+- **Optimized for hot loops**: Direct array access (O(1))
+- **Created from**: `tl_list_iterator()` or `tl_map_keys()`
+- **Use case**: High-performance iteration over lists/maps without holding locks
+
 **Main Header** ([teleios/teleios.h](engine/src/main/teleios/teleios.h)):
 - Single include for all engine functionality
-- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event, number, container
+- Includes: defines, profiler, platform, memory, window, thread, chrono, logger, filesystem, graphics, event, number, strings, renderer, container
 
 ### Module Organization
 
@@ -343,14 +408,17 @@ All engine code lives under `engine/src/main/`:
 
 ### Container Module Architecture
 
-The Container module provides two data structures: Queue (ring buffer) and Object Pool.
+The Container module provides five data structures: Queue, Object Pool, Double Linked List, Hash Map, and Iterator.
 
 **File Organization:**
 ```
-container.h                 # Public API (queue + object pool)
-container_types.inl         # Shared type definitions (TLQueue, TLObjectPool)
-container_queue.c           # Queue implementation
+container.h                 # Public API (queue, pool, list, map, iterator)
+container_types.inl         # Shared type definitions (TLQueue, TLObjectPool, TLList, TLMap, TLIterator)
+container_queue.c           # Queue implementation (ring buffer)
 container_pool.c            # Object Pool implementation
+container_list.c            # Double Linked List implementation
+container_map.c             # Hash Map implementation (TLString -> TLList*)
+container_iterator.c        # Snapshot-based Iterator implementation
 ```
 
 **Implementation Details:**
@@ -371,10 +439,36 @@ container_pool.c            # Object Pool implementation
 - Zero runtime allocations - all memory pre-allocated at creation
 - Memory tagged as TL_MEMORY_CONTAINER_POOL
 
+*Double Linked List (container_list.c):*
+- Bidirectional linked list with head/tail pointers
+- Each node stores void* data plus prev/next pointers
+- Thread-safe with internal mutex protecting all operations
+- All operations (insert, remove) are O(1)
+- Memory tagged as TL_MEMORY_CONTAINER_LIST
+
+*Hash Map (container_map.c):*
+- Separate chaining hash table (TLString keys -> TLList* values)
+- FNV-1a hash function for string keys
+- Auto-resize when load factor exceeds 0.75
+- Capacity rounded up to power of 2
+- Thread-safe with internal mutex protecting all operations
+- Owns both keys (copies TLString) and values (TLList*)
+- Memory tagged as TL_MEMORY_CONTAINER_MAP
+
+*Iterator (container_iterator.c):*
+- Snapshot-based iteration for lock-free traversal
+- Creates contiguous array copy of items at snapshot time
+- No locking required after creation (immutable snapshot)
+- Direct array access for cache-friendly iteration
+- Can be rewound for multiple passes over same snapshot
+- Created from lists or maps via `tl_list_iterator()` or `tl_map_keys()`
+
 **Performance Characteristics:**
-- Queue: O(1) enqueue/dequeue, no memory allocations after creation
-- Pool: O(n) worst-case acquire (linear search), O(1) release, no fragmentation
-- Pool next-free hint typically makes acquire O(1) in practice
+- Queue: O(1) enqueue/dequeue, no allocations after creation
+- Pool: O(n) worst-case acquire (linear search), O(1) release, typically O(1) with next-free hint
+- List: O(1) insert/remove at any position, O(n) search
+- Map: O(1) average get/put/remove, O(n) worst-case (hash collisions), auto-resize at 75% load
+- Iterator: O(n) snapshot creation, O(1) iteration access, lock-free after creation
 
 ### Graphics Thread Architecture
 
@@ -604,7 +698,13 @@ void* tl_memory_alloc(...) {
   - `graphics_types.inl`: Defines TLGraphicTask structure with pre-allocated mutex/condition
   - `graphics_queue.inl`: Task submission functions (sync/async) using object pool
   - `graphics_thread.inl`: Worker thread that processes tasks from queue and releases to pool
-- **Container**: `container_types.inl` (TLQueue and TLObjectPool internal structures)
+- **Container**: Multiple implementations with shared type definitions
+  - `container_types.inl`: Shared type definitions (TLQueue, TLObjectPool, TLList, TLMap, TLIterator)
+  - `container_queue.c`: Ring buffer implementation
+  - `container_pool.c`: Pre-allocated object pool
+  - `container_list.c`: Double linked list with bidirectional traversal
+  - `container_map.c`: Hash map with TLString keys and TLList* values
+  - `container_iterator.c`: Snapshot-based lock-free iteration
 
 **When NOT to Use:**
 - Simple modules with single implementation

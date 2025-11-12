@@ -1,68 +1,3 @@
-/**
- * @file defines.h
- * @brief Platform detection, type definitions, and compiler-specific macros
- *
- * This header provides:
- * - Platform detection macros (Windows, Linux, macOS, etc.)
- * - POSIX compliance level detection
- * - Standard library includes based on C standard version
- * - Custom type aliases (u8, i32, f32, b8, etc.)
- * - Compiler-specific attribute macros
- * - Memory size helper macros
- *
- * @section platforms Supported Platforms
- * - **Windows**: TL_PLATFORM_WINDOWS (64-bit only)
- * - **Linux**: TL_PLATFORM_LINUX
- * - **macOS**: TL_PLATFORM_APPLE
- * - **Android**: TL_PLATFORM_ANDROID (Linux-based)
- * - **POSIX**: TL_PLATFORM_POSIX
- *
- * @section types Type Aliases
- * The engine uses custom type aliases for consistency:
- * - Unsigned integers: u8, u16, u32, u64
- * - Signed integers: i8, i16, i32, i64
- * - Floating point: f32 (float), f64 (double)
- * - Boolean: b8 (_Bool)
- *
- * @section macros Compiler Macros
- * - TL_API: Export/import DLL symbols
- * - TL_INLINE: Force function inlining
- * - TL_NOINLINE: Prevent function inlining
- * - TL_THREADLOCAL: Thread-local storage
- * - TL_LIKELY(x): Branch prediction hint (true expected)
- * - TL_UNLIKELY(x): Branch prediction hint (false expected)
- * - TL_DEPRECATED(msg): Mark function as deprecated
- *
- * @section memory Memory Size Helpers
- * - TL_KIBI_BYTES(n): n * 1024 bytes
- * - TL_MEBI_BYTES(n): n * 1024 * 1024 bytes
- * - TL_GIBI_BYTES(n): n * 1024 * 1024 * 1024 bytes
- * - TL_KILO_BYTES(n): n * 1000 bytes (decimal)
- * - TL_MEGA_BYTES(n): n * 1000 * 1000 bytes
- * - TL_GIGA_BYTES(n): n * 1000 * 1000 * 1000 bytes
- *
- * @section example Usage Example
- * @code
- * #include "teleios/defines.h"
- *
- * // Use type aliases
- * u32 count = 0;
- * f32 delta = 0.016f;
- * b8 running = true;
- *
- * // Memory allocation
- * void* buffer = malloc(TL_MEBI_BYTES(4)); // 4 MiB
- *
- * // Branch prediction
- * if (TL_LIKELY(ptr != NULL)) {
- *     // Hot path
- * }
- * @endcode
- *
- * @author TELEIOS Team
- * @version 0.1.0
- */
-
 #ifndef __TL_DEFINES__
 #define __TL_DEFINES__
 
@@ -422,5 +357,14 @@ typedef struct TLThread TLThread;
 typedef struct TLMutex TLMutex;
 
 typedef struct TLCondition TLCondition;
+
+/**
+ * @brief String object structure
+ *
+ * Encapsulates a null-terminated C string with cached length and allocator
+ * reference. Strings are immutable - all transformation operations return new
+ * instances.
+ */
+typedef struct TLString TLString;
 
 #endif
