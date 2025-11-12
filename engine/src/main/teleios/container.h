@@ -1041,6 +1041,31 @@ TLList* tl_map_get(TLMap* map, const TLString* key);
 TLList* tl_map_get_or_create(TLMap* map, const TLString* key);
 
 /**
+ * @brief Put a value into the map using a C string key
+ *
+ * Convenience function that creates a TLString key from a C string,
+ * gets or creates the list for that key, and adds the value to it.
+ *
+ * @param map Map to modify
+ * @param cstr_key C string key
+ * @param value Value to add (will be added to the list for this key)
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Creates a new key TLString if key doesn't exist
+ * @note Value is added to the list associated with the key
+ * @note Key TLString is created internally (temporary allocation)
+ *
+ * @see tl_map_get_or_create
+ * @see tl_list_push_back
+ *
+ * @code
+ * TLString* value = tl_string_create(heap, "John");
+ * tl_map_put(map, "user.name", value);
+ * @endcode
+ */
+void tl_map_put(TLMap* map, TLString* key, void* value);
+
+/**
  * @brief Check if map contains a key
  *
  * Returns true if the map contains an entry for the given key.

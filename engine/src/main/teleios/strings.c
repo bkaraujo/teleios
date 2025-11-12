@@ -401,6 +401,44 @@ TLString* tl_string_copy(const TLString* str) {
     TL_PROFILER_POP_WITH(copy)
 }
 
+// ============================================================================
+// C String Utilities
+// ============================================================================
+
+void tl_cstr_join(char* dest, const u32 dest_size, const char* str1, const char* str2) {
+    TL_PROFILER_PUSH_WITH("%p, %u, %p, %p", dest, dest_size, str1, str2)
+
+    if (dest == NULL) TLFATAL("dest is NULL")
+    if (str1 == NULL) TLFATAL("str1 is NULL")
+    if (str2 == NULL) TLFATAL("str2 is NULL")
+    if (dest_size == 0) TLFATAL("dest_size is 0")
+
+    const u32 len1 = (u32)strlen(str1);
+    const u32 len2 = (u32)strlen(str2);
+    const u32 total_len = len1 + len2;
+
+    if (total_len >= dest_size) {
+        // Truncate if too long
+        const u32 max_copy = dest_size - 1;
+        if (len1 >= max_copy) {
+            tl_memory_copy(dest, str1, max_copy);
+            dest[max_copy] = '\0';
+        } else {
+            tl_memory_copy(dest, str1, len1);
+            const u32 remaining = max_copy - len1;
+            tl_memory_copy(dest + len1, str2, remaining);
+            dest[max_copy] = '\0';
+        }
+    } else {
+        // Normal case - both strings fit
+        tl_memory_copy(dest, str1, len1);
+        tl_memory_copy(dest + len1, str2, len2);
+        dest[total_len] = '\0';
+    }
+
+    TL_PROFILER_POP
+}
+
 TLString* tl_string_substring(const TLString* str, u32 start, u32 end) {
     TL_PROFILER_PUSH_WITH("%p, %u, %u", str, start, end)
 
@@ -720,6 +758,39 @@ TLString* tl_string_concat_cstr(const TLString* str, const char* cstr) {
     result->allocator = str->allocator;
 
     TL_PROFILER_POP_WITH(result)
+}
+
+void tl_string_append(TLString* str, const char* cstr) {
+    TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
+
+    if (str == NULL) TLFATAL("str is NULL")
+    if (cstr == NULL) TLFATAL("cstr is NULL")
+
+    const u32 cstr_len = (u32)strlen(cstr);
+    if (cstr_len == 0) {
+        TL_PROFILER_POP
+    }
+
+    const u32 new_length = str->length + cstr_len;
+
+    // Reallocate buffer to accommodate new content
+    char* new_data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, new_length + 1);
+    if (new_data == NULL) {
+        TLERROR("Failed to allocate memory for expanded string data")
+        TL_PROFILER_POP
+    }
+
+    // Copy existing content and append new content
+    tl_memory_copy(new_data, str->data, str->length);
+    tl_memory_copy(new_data + str->length, cstr, cstr_len);
+    new_data[new_length] = '\0';
+
+    // Free old buffer and update string
+    tl_memory_free(str->allocator, str->data);
+    str->data = new_data;
+    str->length = new_length;
+
+    TL_PROFILER_POP
 }
 
 TLString* tl_string_concat_multiple(TLAllocator* allocator, const TLString** strings) {

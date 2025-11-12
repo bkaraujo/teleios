@@ -86,6 +86,6 @@ u8 tl_number_i32_digits(i32 number);
  * tl_number_i32_to_char(buffer, 1295, 36); // "zzz" (35*36^2 + 35*36 + 35)
  * @endcode
  */
-void tl_number_i32_to_char(const char* buffer, i32 value, u8 base);
+TLString* tl_number_i32_to_char(TLAllocator* allocator, i32 value, u8 base);
 
 #endif

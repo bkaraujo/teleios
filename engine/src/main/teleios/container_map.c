@@ -234,6 +234,26 @@ TLList* tl_map_get_or_create(TLMap* map, const TLString* key) {
     TL_PROFILER_POP_WITH(new_list)
 }
 
+void tl_map_put(TLMap* map, TLString* key, void* value) {
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", map, key, value)
+
+    if (map == NULL) TLFATAL("map is NULL")
+    if (key == NULL) TLFATAL("key is NULL")
+
+    // Get or create list for this key
+    TLList* list = tl_map_get_or_create(map, key);
+
+    // Add value to the list
+    if (list != NULL) {
+        tl_list_push_back(list, value);
+    }
+
+    // Clean up temporary key
+    tl_string_destroy(key);
+
+    TL_PROFILER_POP
+}
+
 b8 tl_map_contains(TLMap* map, const TLString* key) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", map, key)
 

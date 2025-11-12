@@ -22,10 +22,9 @@ static const char* tl_event_name(const TLEventCodes code) {
         case TL_EVENT_WINDOW_FOCUS_LOST     : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_LOST")
         case TL_EVENT_MAXIMUM               : TL_PROFILER_POP_WITH("TL_EVENT_MAXIMUM")
         default                             : {
-                const u8 digits = tl_number_i32_digits(code);
-                const char* buffer = tl_memory_alloc(m_allocator, TL_MEMORY_STRING, digits + 1);
-                tl_number_i32_to_char(buffer, code, 10);
-                TL_PROFILER_POP_WITH(buffer);
+                const TLString* string = tl_number_i32_to_char(m_allocator, code, 10);
+                const char* cstr = tl_string_cstr(string);
+                TL_PROFILER_POP_WITH(cstr);
         }
     }
 }

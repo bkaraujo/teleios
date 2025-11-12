@@ -210,6 +210,28 @@ b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr);
  */
 TLString* tl_string_copy(const TLString* str);
 
+// ============================================================================
+// C String Utilities
+// ============================================================================
+
+/**
+ * @brief Join/concatenate multiple C strings into a buffer
+ * @param dest Destination buffer
+ * @param dest_size Size of destination buffer (including null terminator)
+ * @param str1 First string to concatenate
+ * @param str2 Second string to concatenate
+ *
+ * @note Result is null-terminated
+ * @note If combined length exceeds dest_size-1, output is truncated
+ * @note dest buffer must be pre-allocated with at least dest_size bytes
+ *
+ * @code
+ * char buffer[256];
+ * tl_char_join(buffer, sizeof(buffer), "hello", "world");  // "helloworld"
+ * @endcode
+ */
+void tl_cstr_join(char* dest, u32 dest_size, const char* str1, const char* str2);
+
 /**
  * @brief Extract substring from string
  * @param str The source string
@@ -282,6 +304,17 @@ TLString* tl_string_concat(const TLString* str1, const TLString* str2);
  * @return Newly allocated concatenated string (caller must free with tl_string_destroy)
  */
 TLString* tl_string_concat_cstr(const TLString* str, const char* cstr);
+
+/**
+ * @brief Append C string to existing string (modifies in-place)
+ * @param str TLString instance to modify
+ * @param cstr C string to append
+ *
+ * @note This function modifies the string in-place, reallocating if necessary
+ * @note Use this for efficient appending when you don't need immutability
+ * @note For immutable operations, use tl_string_concat_cstr instead
+ */
+void tl_string_append(TLString* str, const char* cstr);
 
 /**
  * @brief Concatenate multiple strings (NULL-terminated array)

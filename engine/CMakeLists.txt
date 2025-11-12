@@ -138,8 +138,6 @@ set(ENGINE_SOURCES
     src/main/teleios/container_iterator.c
     src/main/teleios/renderer.c
     src/main/teleios/strings.c
-        src/main/teleios/yaml.c
-        src/main/teleios/yaml.h
 )
 
 # Collect engine header files
@@ -162,8 +160,6 @@ set(ENGINE_HEADERS
     src/main/teleios/number.h
     src/main/teleios/renderer.h
     src/main/teleios/strings.h
-        src/main/teleios/yaml.c
-        src/main/teleios/yaml.h
 )
 
 # Create engine executable
