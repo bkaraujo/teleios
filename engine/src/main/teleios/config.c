@@ -4,15 +4,15 @@
 static TLAllocator* m_allocator;
 static TLMap* m_properties;
 
-static void tl_serializer_walk(TLString* file_path);
+static void tl_serializer_walk();
 
-b8 tl_config_initialize(TLString* file_path) {
-    TL_PROFILER_PUSH_WITH("0x%p", file_path)
+b8 tl_config_initialize() {
+    TL_PROFILER_PUSH
 
     m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
     m_properties = tl_map_create(m_allocator, 32);
 
-    tl_serializer_walk(file_path);
+    tl_serializer_walk();
 
     TL_PROFILER_POP_WITH(true)
 }
@@ -74,10 +74,10 @@ typedef struct {
     u32 sequence;
 } TLTuple;
 
-static void tl_serializer_walk(TLString* file_path) {
-    TL_PROFILER_PUSH_WITH("0x%p", file_path)
-    FILE* file = fopen(tl_string_cstr(file_path), "r");
-    if (file == NULL) TLFATAL("Failed to open %s", tl_string_cstr(file_path));
+static void tl_serializer_walk() {
+    TL_PROFILER_PUSH
+    FILE* file = fopen("application.yml", "r");
+    if (file == NULL) TLFATAL("Failed to open application.yml");
 
     yaml_parser_t parser;
     if (!yaml_parser_initialize(&parser)) { fclose(file); TLFATAL("Failed to initialize parser!"); }

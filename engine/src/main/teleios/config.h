@@ -3,7 +3,7 @@
 
 #include "teleios/defines.h"
 
-b8 tl_config_initialize(TLString* file_path);
+b8 tl_config_initialize();
 void* tl_config_get(TLString* property);
 TLList* tl_config_list(TLString* property);
 b8 tl_config_terminate(void);

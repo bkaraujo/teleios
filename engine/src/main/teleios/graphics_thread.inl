@@ -13,6 +13,7 @@
 // ---------------------------------
 
 static void* tl_graphics_worker(void* _) {
+    (void) _;  // Unused parameter
     TL_PROFILER_PUSH
 
     // Acquire OpenGL context on this thread

@@ -61,6 +61,11 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
+    if (!tl_config_initialize()) {
+        TLERROR("Config system failed to initialize")
+        TL_PROFILER_POP_WITH(false)
+    }
+
     // Initialize GLFW
     if (!glfwInit()) {
         TLERROR("GLFW failed to initialize")
@@ -103,15 +108,20 @@ b8 tl_platform_terminate(void) {
     // Terminate GLFW
     glfwTerminate();
 
-    // Terminate platform-specific subsystem
-    if (!platform.terminate()) {
-        TLERROR("Platform failed to terminate")
+    if (!tl_config_terminate()) {
+        TLERROR("Config system failed to terminate")
         TL_PROFILER_POP_WITH(false)
     }
 
     // Terminate memory system (last, as other systems may use it)
     if (!tl_memory_terminate()) {
         TLERROR("Memory system failed to terminate")
+        TL_PROFILER_POP_WITH(false)
+    }
+
+    // Terminate platform-specific subsystem
+    if (!platform.terminate()) {
+        TLERROR("Platform failed to terminate")
         TL_PROFILER_POP_WITH(false)
     }
 

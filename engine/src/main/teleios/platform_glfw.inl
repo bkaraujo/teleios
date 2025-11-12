@@ -21,10 +21,12 @@ ivec2s tl_window_position() {
 }
 
 static void tl_window_callback_window_closed(GLFWwindow* window) {
+    (void) window;  // Unused parameter
     tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
 }
 
-static void tl_window_callback_window_pos(GLFWwindow* _, const int xPos, const int yPos) {
+static void tl_window_callback_window_pos(GLFWwindow* window, const int xPos, const int yPos) {
+    (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.i32[0] = xPos;
     event.i32[1] = yPos;
@@ -33,6 +35,7 @@ static void tl_window_callback_window_pos(GLFWwindow* _, const int xPos, const i
 }
 
 static void tl_window_callback_window_size(GLFWwindow* window, const int width, const int height) {
+    (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.i32[0] = width;
     event.i32[1] = height;
@@ -41,21 +44,27 @@ static void tl_window_callback_window_size(GLFWwindow* window, const int width, 
 }
 
 static void tl_window_callback_window_focus(GLFWwindow* window, const i32 focused) {
+    (void) window;  // Unused parameter
     tl_event_submit(focused ? TL_EVENT_WINDOW_FOCUS_GAINED : TL_EVENT_WINDOW_FOCUS_LOST, NULL);
 }
 
 static void tl_window_callback_window_minimized(GLFWwindow* window, const i32 minimized) {
+    (void) window;  // Unused parameter
     tl_event_submit(minimized ? TL_EVENT_WINDOW_MINIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
 
 static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 maximized) {
+    (void) window;  // Unused parameter
     tl_event_submit(maximized ? TL_EVENT_WINDOW_MAXIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
 
 static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key, const int scancode, const int action, const int mods) {
+    (void) window;  // Unused parameter
+    (void) scancode;  // Unused parameter
+    (void) mods;  // Unused parameter
     if (action == GLFW_REPEAT) return;
 
-    i32 type;
+    u16 type;
     if (action == GLFW_PRESS) {
         type = TL_EVENT_INPUT_KEY_PRESSED;
     } else {
@@ -63,11 +72,12 @@ static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key,
     }
 
     TLEvent event = { 0 };
-    event.u32[0] = key;
+    event.u32[0] = (u32)key;
     tl_event_submit(type, &event);
 }
 
 static void tl_window_callback_input_cursor_position(GLFWwindow* window, const double xpos, const double ypos) {
+    (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.u32[0] = (u32) xpos;
     event.u32[1] = (u32) ypos;
@@ -76,18 +86,21 @@ static void tl_window_callback_input_cursor_position(GLFWwindow* window, const d
 }
 
 static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int button, const int action, const int mods) {
-    i32 type;
+    (void) window;  // Unused parameter
+    (void) mods;  // Unused parameter
 
+    u16 type;
     if (action == GLFW_PRESS)   { type = TL_EVENT_INPUT_CURSOR_PRESSED; }
     else                        { type = TL_EVENT_INPUT_CURSOR_RELEASED; }
 
     TLEvent event = { 0 };
-    event.u32[0] = button;
+    event.u32[0] = (u32)button;
 
     tl_event_submit(type, &event);
 }
 
 static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const double xoffset, const double yoffset) {
+    (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.u8[0] =  xoffset > 0 ? 1 : xoffset < 0 ? -1 : 0;
     event.u8[1] = yoffset > 0 ? 1 : yoffset < 0 ? -1 : 0;
@@ -96,6 +109,7 @@ static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const dou
 }
 
 static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const int entered) {
+    (void) window;  // Unused parameter
     tl_event_submit(entered ? TL_EVENT_INPUT_CURSOR_ENTERED : TL_EVENT_INPUT_CURSOR_EXITED, NULL);
 }
 

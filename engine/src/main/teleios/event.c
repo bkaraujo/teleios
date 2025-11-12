@@ -7,7 +7,7 @@ static const char* tl_event_name(const TLEventCodes code) {
     TL_PROFILER_PUSH_WITH("%d", code)
 
     if (m_allocator == NULL) {
-        m_allocator = tl_memory_allocator_create(TL_MEBI_BYTES(1), TL_ALLOCATOR_LINEAR);
+        m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
     }
 
     switch (code) {
@@ -21,24 +21,25 @@ static const char* tl_event_name(const TLEventCodes code) {
         case TL_EVENT_WINDOW_FOCUS_GAINED   : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_GAINED")
         case TL_EVENT_WINDOW_FOCUS_LOST     : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_FOCUS_LOST")
         case TL_EVENT_MAXIMUM               : TL_PROFILER_POP_WITH("TL_EVENT_MAXIMUM")
-        default                             : {
-                const TLString* string = tl_number_i32_to_char(m_allocator, code, 10);
-                const char* cstr = tl_string_cstr(string);
-                TL_PROFILER_POP_WITH(cstr);
-        }
     }
+
+    const TLString* string = tl_number_i32_to_char(m_allocator, code, 10);
+    const char* cstr = tl_string_cstr(string);
+
+    TL_PROFILER_POP_WITH(cstr);
 }
 
 b8 tl_event_subscribe(const u16 event, const TLEventHandler handler) {
+    TL_PROFILER_PUSH_WITH("%u, %0x%p", event, handler)
 
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Eventy type beyond %d", TL_EVENT_MAXIMUM);
-        return false;
+        TL_PROFILER_POP_WITH(false)
     }
 
     if (m_handlers[event][U8_MAX - 1] != NULL) {
         TLWARN("Event %u reached maximum of %d handlers", event, U8_MAX - 1);
-        return false;
+        TL_PROFILER_POP_WITH(false)
     }
 
     for (u8 i = 0; i < U8_MAX; ++i) {
@@ -50,10 +51,12 @@ b8 tl_event_subscribe(const u16 event, const TLEventHandler handler) {
         }
     }
 
-    return true;
+    TL_PROFILER_POP_WITH(true)
 }
 
 void tl_event_submit(const u16 event, const TLEvent* data) {
+    TL_PROFILER_PUSH_WITH("%u, %0x%p", event, data)
+
     if (event >= TL_EVENT_MAXIMUM) {
         TLWARN("Event type beyond %d", TL_EVENT_MAXIMUM);
         TL_PROFILER_POP
@@ -67,4 +70,6 @@ void tl_event_submit(const u16 event, const TLEvent* data) {
             }
         }
     }
+
+    TL_PROFILER_POP
 }
