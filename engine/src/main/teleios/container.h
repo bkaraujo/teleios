@@ -7,7 +7,6 @@
 // QUEUE API
 // =================================
 
-
 /**
  * @brief Create a new queue with specified capacity
  *
@@ -474,5 +473,857 @@ u16 tl_pool_capacity(const TLObjectPool* pool);
  * @endcode
  */
 void tl_pool_reset(TLObjectPool* pool);
+
+// =================================
+// DOUBLE LINKED LIST API
+// =================================
+
+/**
+ * @brief Create a new empty double linked list
+ *
+ * Allocates and initializes an empty double linked list with bidirectional
+ * traversal support. Nodes can be inserted and removed from both ends efficiently.
+ *
+ * @param allocator Memory allocator to use (must be valid and remain alive)
+ * @return Pointer to new list, or NULL on allocation failure
+ *
+ * @note The allocator must remain valid for the list's entire lifetime
+ * @note List memory is tagged as TL_MEMORY_CONTAINER_LIST
+ * @note Thread-safe - uses internal mutex for synchronization
+ * @note Initial list state is empty (head and tail are NULL)
+ *
+ * @see tl_list_destroy
+ *
+ * @code
+ * TLAllocator* heap = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
+ * TLList* list = tl_list_create(heap);
+ *
+ * if (list == NULL) {
+ *     TLERROR("List creation failed");
+ *     return false;
+ * }
+ * @endcode
+ */
+TLList* tl_list_create(TLAllocator* allocator);
+
+/**
+ * @brief Destroy a list and free all nodes
+ *
+ * Deallocates the list structure and all nodes. Data pointed to by nodes
+ * is not freed (list only holds pointers).
+ *
+ * @param list List to destroy (may be NULL)
+ *
+ * @note Safe to call with NULL (no-op)
+ * @note Data pointed to by nodes is NOT freed (list only holds pointers)
+ * @note After destruction, using the list is undefined behavior
+ *
+ * @see tl_list_create
+ *
+ * @code
+ * TLList* list = tl_list_create(heap);
+ * // ... use list ...
+ *
+ * // Free data if needed before destroying list
+ * TLListNode* node = tl_list_front(list);
+ * while (node != NULL) {
+ *     void* data = tl_list_data(node);
+ *     free(data);  // Free pointed-to data if needed
+ *     node = tl_list_next(node);
+ * }
+ *
+ * tl_list_destroy(list);
+ * @endcode
+ */
+void tl_list_destroy(TLList* list);
+
+/**
+ * @brief Create an iterator with a snapshot of the list
+ *
+ * Creates a snapshot of all items in the list at the time of creation.
+ * The iterator is optimized for hot loops with:
+ * - Contiguous memory layout (cache-friendly)
+ * - No locking after creation
+ * - Direct array access (O(1))
+ *
+ * @param list List to iterate over
+ * @return Pointer to new iterator, or NULL on allocation failure
+ *
+ * @note Snapshot creation is THREAD-SAFE (uses list mutex)
+ * @note After creation, iteration is LOCK-FREE
+ * @note Iterator must be destroyed with tl_iterator_destroy()
+ * @note Snapshot is independent of list changes after creation
+ * @note Optimized for high-performance hot loops
+ *
+ * @see tl_iterator_destroy
+ * @see tl_iterator_next
+ *
+ * @code
+ * TLIterator* iter = tl_iterator_create(list);
+ *
+ * if (iter == NULL) {
+ *     TLERROR("Iterator creation failed");
+ *     return;
+ * }
+ *
+ * // Fast iteration (no locks)
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     process_item(item);
+ * }
+ *
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+TLIterator* tl_list_iterator(TLList* list);
+
+/**
+ * @brief Insert data at the front of the list
+ *
+ * Creates a new node with the given data and inserts it at the beginning
+ * of the list. Operation is O(1).
+ *
+ * @param list List to insert into
+ * @param data Void pointer to store (can be NULL)
+ * @return Pointer to newly created node, or NULL on allocation failure
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Data is stored as-is; the list doesn't take ownership
+ * @note Returns newly created node for potential later reference
+ *
+ * @see tl_list_push_back
+ * @see tl_list_pop_front
+ *
+ * @code
+ * TLListNode* node = tl_list_push_front(list, some_pointer);
+ * if (node == NULL) {
+ *     TLERROR("Failed to insert node");
+ * }
+ * @endcode
+ */
+void tl_list_push_front(TLList* list, void* data);
+
+/**
+ * @brief Insert data at the back of the list
+ *
+ * Creates a new node with the given data and inserts it at the end
+ * of the list. Operation is O(1).
+ *
+ * @param list List to insert into
+ * @param data Void pointer to store (can be NULL)
+ * @return Pointer to newly created node, or NULL on allocation failure
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Data is stored as-is; the list doesn't take ownership
+ * @note Returns newly created node for potential later reference
+ *
+ * @see tl_list_push_front
+ * @see tl_list_pop_back
+ *
+ * @code
+ * TLListNode* node = tl_list_push_back(list, some_pointer);
+ * if (node == NULL) {
+ *     TLERROR("Failed to insert node");
+ * }
+ * @endcode
+ */
+void tl_list_push_back(TLList* list, void* data);
+
+/**
+ * @brief Insert data after a specific node
+ *
+ * Creates a new node with the given data and inserts it immediately
+ * after the specified node. Operation is O(1).
+ *
+ * @param list List containing the node
+ * @param node Node to insert after (must be in this list)
+ * @param data Void pointer to store (can be NULL)
+ * @return Pointer to newly created node, or NULL on allocation failure
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note If node is NULL, behaves like tl_list_push_back
+ * @note Inserting after tail makes the new node the new tail
+ *
+ * @see tl_list_insert_before
+ * @see tl_list_push_back
+ *
+ * @code
+ * TLListNode* middle = tl_list_front(list);
+ * TLListNode* new_node = tl_list_insert_after(list, middle, new_data);
+ * @endcode
+ */
+void tl_list_insert_after(TLList* list, TLListNode* node, void* data);
+
+/**
+ * @brief Insert data before a specific node
+ *
+ * Creates a new node with the given data and inserts it immediately
+ * before the specified node. Operation is O(1).
+ *
+ * @param list List containing the node
+ * @param node Node to insert before (must be in this list)
+ * @param data Void pointer to store (can be NULL)
+ * @return Pointer to newly created node, or NULL on allocation failure
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note If node is NULL, behaves like tl_list_push_front
+ * @note Inserting before head makes the new node the new head
+ *
+ * @see tl_list_insert_after
+ * @see tl_list_push_front
+ *
+ * @code
+ * TLListNode* middle = tl_list_back(list);
+ * TLListNode* new_node = tl_list_insert_before(list, middle, new_data);
+ * @endcode
+ */
+void tl_list_insert_before(TLList* list, TLListNode* node, void* data);
+
+/**
+ * @brief Remove and return data from the front of the list
+ *
+ * Removes the first node and returns its data. The list must not be empty.
+ * Operation is O(1).
+ *
+ * @param list List to remove from
+ * @return The void pointer stored in the removed node
+ *
+ * @note Behavior is undefined if list is empty - caller must check with tl_list_is_empty()
+ * @note Thread-safe - uses internal mutex
+ * @note The node is freed, but the data is not
+ *
+ * @see tl_list_is_empty
+ * @see tl_list_push_front
+ * @see tl_list_front
+ *
+ * @code
+ * if (!tl_list_is_empty(list)) {
+ *     void* data = tl_list_pop_front(list);
+ *     process_data(data);
+ * }
+ * @endcode
+ */
+void* tl_list_pop_front(TLList* list);
+
+/**
+ * @brief Remove and return data from the back of the list
+ *
+ * Removes the last node and returns its data. The list must not be empty.
+ * Operation is O(1).
+ *
+ * @param list List to remove from
+ * @return The void pointer stored in the removed node
+ *
+ * @note Behavior is undefined if list is empty - caller must check with tl_list_is_empty()
+ * @note Thread-safe - uses internal mutex
+ * @note The node is freed, but the data is not
+ *
+ * @see tl_list_is_empty
+ * @see tl_list_push_back
+ * @see tl_list_back
+ *
+ * @code
+ * if (!tl_list_is_empty(list)) {
+ *     void* data = tl_list_pop_back(list);
+ *     process_data(data);
+ * }
+ * @endcode
+ */
+void* tl_list_pop_back(TLList* list);
+
+/**
+ * @brief Remove a specific node from the list
+ *
+ * Removes the given node from the list and returns its data.
+ * Operation is O(1).
+ *
+ * @param list List containing the node
+ * @param node Node to remove (must be in this list)
+ * @return The void pointer stored in the removed node
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note The node is freed, but the data is not
+ * @note Removing the only node makes the list empty
+ *
+ * @see tl_list_pop_front
+ * @see tl_list_pop_back
+ *
+ * @code
+ * TLListNode* node = tl_list_front(list);
+ * while (node != NULL) {
+ *     TLListNode* next = tl_list_next(node);
+ *     if (should_remove(tl_list_data(node))) {
+ *         void* data = tl_list_remove(list, node);
+ *         free(data);
+ *     }
+ *     node = next;
+ * }
+ * @endcode
+ */
+void* tl_list_remove(TLList* list, TLListNode* node);
+
+/**
+ * @brief Get the first node in the list
+ *
+ * Returns the head node without modifying the list.
+ *
+ * @param list List to query
+ * @return Pointer to first node, or NULL if list is empty
+ *
+ * @note Does not remove the node
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_list_back
+ * @see tl_list_next
+ * @see tl_list_pop_front
+ *
+ * @code
+ * TLListNode* node = tl_list_front(list);
+ * if (node != NULL) {
+ *     void* data = tl_list_data(node);
+ *     process_data(data);
+ * }
+ * @endcode
+ */
+void* tl_list_front(TLList* list);
+
+/**
+ * @brief Get the last node in the list
+ *
+ * Returns the tail node without modifying the list.
+ *
+ * @param list List to query
+ * @return Pointer to last node, or NULL if list is empty
+ *
+ * @note Does not remove the node
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_list_front
+ * @see tl_list_prev
+ * @see tl_list_pop_back
+ *
+ * @code
+ * TLListNode* node = tl_list_back(list);
+ * if (node != NULL) {
+ *     void* data = tl_list_data(node);
+ *     process_data(data);
+ * }
+ * @endcode
+ */
+void* tl_list_back(TLList* list);
+
+/**
+ * @brief Get current number of nodes in list
+ *
+ * Returns how many nodes are currently in the list.
+ *
+ * @param list List to query
+ * @return Number of nodes currently in list
+ *
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_list_is_empty
+ *
+ * @code
+ * TLINFO("List contains %u nodes", tl_list_size(list));
+ * @endcode
+ */
+u32 tl_list_size(TLList* list);
+
+/**
+ * @brief Check if list is empty
+ *
+ * Returns true if the list contains no nodes.
+ *
+ * @param list List to check
+ * @return true if list is empty, false if it contains nodes
+ *
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_list_size
+ *
+ * @code
+ * if (tl_list_is_empty(list)) {
+ *     TLINFO("List is empty");
+ * } else {
+ *     process_list(list);
+ * }
+ * @endcode
+ */
+b8 tl_list_is_empty(TLList* list);
+
+/**
+ * @brief Clear the list (remove all nodes without destroying it)
+ *
+ * Removes and frees all nodes in the list. The list structure remains
+ * valid and can be immediately reused.
+ *
+ * @param list List to clear
+ *
+ * @note Data pointed to by removed nodes is NOT freed
+ * @note Thread-safe - uses internal mutex
+ * @note This is faster than destroying and recreating the list
+ *
+ * @see tl_list_destroy
+ * @see tl_list_is_empty
+ *
+ * @code
+ * // Free all data before clearing
+ * TLListNode* node = tl_list_front(list);
+ * while (node != NULL) {
+ *     void* data = tl_list_data(node);
+ *     free(data);
+ *     node = tl_list_next(node);
+ * }
+ *
+ * // Clear the list
+ * tl_list_clear(list);
+ * @endcode
+ */
+void tl_list_clear(TLList* list);
+
+// =================================
+// HASHMAP API (TLString -> TLList*)
+// =================================
+
+/**
+ * @brief Create a new hash map with TLString keys and TLList* values
+ *
+ * Allocates and initializes a hash map with separate chaining for collision
+ * resolution. Each key is a TLString and each value is a TLList of void*.
+ *
+ * @param allocator Memory allocator to use (must be valid and remain alive)
+ * @param capacity Initial number of buckets (will be rounded up to power of 2)
+ * @return Pointer to new map, or NULL on allocation failure
+ *
+ * @note The allocator must remain valid for the map's entire lifetime
+ * @note Map memory is tagged as TL_MEMORY_CONTAINER_MAP
+ * @note Thread-safe - uses internal mutex for synchronization
+ * @note Default load factor is 0.75 (map resizes when 75% full)
+ * @note Keys and values are owned by the map and will be freed on destroy
+ *
+ * @see tl_map_destroy
+ *
+ * @code
+ * TLAllocator* heap = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
+ * TLMap* map = tl_map_create(heap, 16);
+ *
+ * if (map == NULL) {
+ *     TLERROR("Map creation failed");
+ *     return false;
+ * }
+ * @endcode
+ */
+TLMap* tl_map_create(TLAllocator* allocator, u32 capacity);
+
+/**
+ * @brief Destroy a map and free all keys and values
+ *
+ * Deallocates the map structure, all keys (TLString), and all values (TLList).
+ * Data pointed to by list items is NOT freed.
+ *
+ * @param map Map to destroy (may be NULL)
+ *
+ * @note Safe to call with NULL (no-op)
+ * @note All TLString keys are destroyed
+ * @note All TLList values are destroyed (but not the data they contain)
+ * @note After destruction, using the map is undefined behavior
+ *
+ * @see tl_map_create
+ *
+ * @code
+ * TLMap* map = tl_map_create(heap, 16);
+ * // ... use map ...
+ * tl_map_destroy(map);
+ * @endcode
+ */
+void tl_map_destroy(TLMap* map);
+
+/**
+* @brief Create an iterator with a snapshot of the map keys
+ *
+ * Creates a snapshot of all items in the map keys at the time of creation.
+ * The iterator is optimized for hot loops with:
+ * - Contiguous memory layout (cache-friendly)
+ * - No locking after creation
+ * - Direct array access (O(1))
+ *
+ * @param map Map to iterate over
+ * @return Pointer to new iterator, or NULL on allocation failure
+ *
+ * @note Snapshot creation is THREAD-SAFE (uses list mutex)
+ * @note After creation, iteration is LOCK-FREE
+ * @note Iterator must be destroyed with tl_iterator_destroy()
+ * @note Snapshot is independent of list changes after creation
+ * @note Optimized for high-performance hot loops
+ *
+ * @see tl_iterator_destroy
+ * @see tl_iterator_next
+ *
+ * @code
+ * TLIterator* iter = tl_map_keys(map);
+ *
+ * if (iter == NULL) {
+ *     TLERROR("Iterator creation failed");
+ *     return;
+ * }
+ *
+ * // Fast iteration (no locks)
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     process_item(item);
+ * }
+ *
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+TLIterator* tl_map_keys(TLMap* map);
+
+/**
+ * @brief Get the list associated with a key
+ *
+ * Returns the TLList* associated with the given key. If the key doesn't exist,
+ * returns NULL.
+ *
+ * @param map Map to query
+ * @param key Key to look up
+ * @return TLList* associated with key, or NULL if key not found
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Returned list pointer is valid until the key is removed or map is destroyed
+ * @note The returned list can be modified directly (it's not a copy)
+ *
+ * @see tl_map_get_or_create
+ * @see tl_map_contains
+ *
+ * @code
+ * TLString* key = tl_string_create(heap, "users");
+ * TLList* users = tl_map_get(map, key);
+ *
+ * if (users != NULL) {
+ *     // List exists for this key
+ *     tl_list_push_back(users, user_data);
+ * }
+ *
+ * tl_string_destroy(key);
+ * @endcode
+ */
+TLList* tl_map_get(TLMap* map, const TLString* key);
+
+/**
+ * @brief Get the list for a key, creating it if it doesn't exist
+ *
+ * Returns the TLList* associated with the given key. If the key doesn't exist,
+ * creates a new entry with an empty list.
+ *
+ * @param map Map to modify
+ * @param key Key to look up or create
+ * @return TLList* associated with key (never NULL unless map is NULL)
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note If key doesn't exist, a copy of the key is stored in the map
+ * @note The returned list is owned by the map
+ * @note May trigger a resize if load factor is exceeded
+ *
+ * @see tl_map_get
+ * @see tl_map_remove
+ *
+ * @code
+ * TLString* key = tl_string_create(heap, "users");
+ * TLList* users = tl_map_get_or_create(map, key);
+ *
+ * // Always safe to use the list (it's created if needed)
+ * tl_list_push_back(users, user_data);
+ *
+ * tl_string_destroy(key);
+ * @endcode
+ */
+TLList* tl_map_get_or_create(TLMap* map, const TLString* key);
+
+/**
+ * @brief Check if map contains a key
+ *
+ * Returns true if the map contains an entry for the given key.
+ *
+ * @param map Map to query
+ * @param key Key to check
+ * @return true if key exists, false otherwise
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Faster than tl_map_get() when you only need to check existence
+ *
+ * @see tl_map_get
+ *
+ * @code
+ * TLString* key = tl_string_create(heap, "users");
+ *
+ * if (tl_map_contains(map, key)) {
+ *     TLINFO("Users list exists");
+ * } else {
+ *     TLINFO("No users list yet");
+ * }
+ *
+ * tl_string_destroy(key);
+ * @endcode
+ */
+b8 tl_map_contains(TLMap* map, const TLString* key);
+
+/**
+ * @brief Remove a key-value pair from the map
+ *
+ * Removes the entry for the given key and returns its list. The list is
+ * detached from the map but not destroyed.
+ *
+ * @param map Map to modify
+ * @param key Key to remove
+ * @return TLList* that was associated with the key, or NULL if key not found
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note The TLString key is destroyed
+ * @note The returned TLList* must be destroyed by the caller with tl_list_destroy()
+ * @note Returns NULL if key doesn't exist
+ *
+ * @see tl_map_clear
+ * @see tl_map_destroy
+ *
+ * @code
+ * TLString* key = tl_string_create(heap, "users");
+ * TLList* users = tl_map_remove(map, key);
+ *
+ * if (users != NULL) {
+ *     // Clean up list contents
+ *     while (!tl_list_is_empty(users)) {
+ *         void* data = tl_list_pop_front(users);
+ *         free(data);
+ *     }
+ *     tl_list_destroy(users);
+ * }
+ *
+ * tl_string_destroy(key);
+ * @endcode
+ */
+TLList* tl_map_remove(TLMap* map, const TLString* key);
+
+/**
+ * @brief Get current number of key-value pairs in map
+ *
+ * Returns how many entries are currently in the map.
+ *
+ * @param map Map to query
+ * @return Number of key-value pairs
+ *
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_map_capacity
+ * @see tl_map_is_empty
+ *
+ * @code
+ * TLINFO("Map contains %u entries", tl_map_size(map));
+ * @endcode
+ */
+u32 tl_map_size(TLMap* map);
+
+/**
+ * @brief Get current capacity (number of buckets) of map
+ *
+ * Returns the current number of buckets in the map's internal hash table.
+ *
+ * @param map Map to query
+ * @return Number of buckets
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Capacity may increase automatically when load factor is exceeded
+ *
+ * @see tl_map_size
+ *
+ * @code
+ * TLINFO("Map has %u buckets and %u entries",
+ *     tl_map_capacity(map),
+ *     tl_map_size(map));
+ * @endcode
+ */
+u32 tl_map_capacity(TLMap* map);
+
+/**
+ * @brief Check if map is empty
+ *
+ * Returns true if the map contains no entries.
+ *
+ * @param map Map to check
+ * @return true if map is empty, false if it contains entries
+ *
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_map_size
+ *
+ * @code
+ * if (tl_map_is_empty(map)) {
+ *     TLINFO("Map is empty");
+ * } else {
+ *     process_map(map);
+ * }
+ * @endcode
+ */
+b8 tl_map_is_empty(TLMap* map);
+
+/**
+ * @brief Clear the map (remove all entries without destroying it)
+ *
+ * Removes and frees all entries, keys, and values. The map structure remains
+ * valid and can be immediately reused.
+ *
+ * @param map Map to clear
+ *
+ * @note All TLString keys are destroyed
+ * @note All TLList values are destroyed (but not the data they contain)
+ * @note Thread-safe - uses internal mutex
+ * @note This is faster than destroying and recreating the map
+ *
+ * @see tl_map_destroy
+ * @see tl_map_is_empty
+ *
+ * @code
+ * // Free all data before clearing
+ * // (Note: This requires iterating all buckets and entries manually)
+ *
+ * // Clear the map
+ * tl_map_clear(map);
+ * @endcode
+ */
+void tl_map_clear(TLMap* map);
+
+// =================================
+// ITERATOR API (Snapshot-based)
+// =================================
+
+/**
+ * @brief Destroy an iterator and free its memory
+ *
+ * Frees the snapshot array and iterator structure.
+ *
+ * @param iterator Iterator to destroy (may be NULL)
+ *
+ * @note Safe to call with NULL (no-op)
+ * @note Does NOT affect the original list
+ * @note Does NOT free the data pointed to by items
+ *
+ * @see tl_iterator_create
+ *
+ * @code
+ * TLIterator* iter = tl_iterator_create(list);
+ * // ... use iterator ...
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+void tl_iterator_destroy(TLIterator* iterator);
+
+/**
+ * @brief Check if iterator has more items
+ *
+ * Returns true if there are more items to iterate over.
+ * Optimized for hot loops - uses inline comparison.
+ *
+ * @param iterator Iterator to check
+ * @return true if more items available, false otherwise
+ *
+ * @note Inline function for maximum performance
+ * @note Returns false if iterator is NULL
+ *
+ * @see tl_iterator_next
+ *
+ * @code
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     // Hot loop code here
+ * }
+ * @endcode
+ */
+b8 tl_iterator_has_next(const TLIterator* iterator);
+
+/**
+ * @brief Get next item from iterator
+ *
+ * Returns the next item and advances the iterator.
+ * Optimized for hot loops with direct array access.
+ *
+ * @param iterator Iterator to advance
+ * @return Next void* pointer, or NULL if no more items or iterator is NULL
+ *
+ * @note Does NOT check bounds - use tl_iterator_has_next() first
+ * @note Direct array access for maximum performance
+ * @note Returns NULL if iterator is NULL or exhausted
+ *
+ * @see tl_iterator_has_next
+ * @see tl_iterator_reset
+ *
+ * @code
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     MyData* data = (MyData*)item;
+ *     process(data);
+ * }
+ * @endcode
+ */
+void* tl_iterator_next(TLIterator* iterator);
+
+/**
+ * @brief Rewind iterator to beginning
+ *
+ * Resets the internal index to 0, allowing re-iteration over the snapshot.
+ *
+ * @param iterator Iterator to reset
+ *
+ * @note Does not create a new snapshot
+ * @note Inline function for performance
+ *
+ * @see tl_iterator_create
+ *
+ * @code
+ * TLIterator* iter = tl_iterator_create(list);
+ *
+ * // First pass
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     first_pass(item);
+ * }
+ *
+ * // Second pass over same snapshot
+ * tl_iterator_rewind(iter);
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     second_pass(item);
+ * }
+ *
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+void tl_iterator_rewind(TLIterator* iterator);
+
+/**
+ * @brief Get total number of items in iterator snapshot
+ *
+ * Returns the size of the snapshot (number of items captured).
+ *
+ * @param iterator Iterator to query
+ * @return Number of items in snapshot, or 0 if iterator is NULL
+ *
+ * @note Inline function for performance
+ * @note This is the size at snapshot time, not current list size
+ *
+ * @see tl_iterator_create
+ *
+ * @code
+ * TLIterator* iter = tl_iterator_create(list);
+ * TLINFO("Iterating over %u items", tl_iterator_size(iter));
+ *
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     process(item);
+ * }
+ *
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+u32 tl_iterator_size(const TLIterator* iterator);
 
 #endif

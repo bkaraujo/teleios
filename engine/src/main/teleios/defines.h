@@ -393,6 +393,22 @@ typedef struct {
  */
 typedef struct TLQueue TLQueue;
 
+typedef struct TLListNode TLListNode;
+
+typedef struct TLList TLList;
+
+typedef struct TLMapEntry TLMapEntry;
+
+typedef struct TLMap TLMap;
+
+/**
+ * @brief Iterator structure for snapshot-based iteration
+ *
+ * Iterator that creates a snapshot of a list at creation time.
+ * Optimized for hot loops with contiguous memory layout and lock-free iteration.
+ */
+typedef struct TLIterator TLIterator;
+
 /**
  * @brief Opaque object pool handle
  *
