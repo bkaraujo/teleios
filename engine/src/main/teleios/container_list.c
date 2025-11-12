@@ -41,9 +41,7 @@ void tl_list_destroy(TLList* list) {
     if (list->mutex) tl_mutex_destroy(list->mutex);
 
     // Free list structure if using dynamic allocator
-    if (list->allocator->type == TL_ALLOCATOR_DYNAMIC) {
-        tl_memory_free(list->allocator, list);
-    }
+    tl_memory_free(list->allocator, list);
 
     TL_PROFILER_POP
 }
@@ -59,7 +57,7 @@ TLIterator* tl_list_iterator (TLList* list) {
     // Lock list to create thread-safe snapshot
     tl_mutex_lock(list->mutex);
 
-    TLAllocator* allocator = tl_memory_allocator_create(TL_ALLOCATOR_LINEAR, TL_KIBI_BYTES(4));
+    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
     TLIterator* iterator = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
     iterator->allocator = allocator;
     iterator->current = 0;
@@ -115,9 +113,7 @@ static TLListNode* tl_list_create_node(TLAllocator* allocator, void* data) {
 static void tl_list_free_node(TLAllocator* allocator, TLListNode* node) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", allocator, node)
 
-    if (allocator->type == TL_ALLOCATOR_DYNAMIC) {
-        tl_memory_free(allocator, node);
-    }
+    tl_memory_free(allocator, node);
 
     TL_PROFILER_POP
 }

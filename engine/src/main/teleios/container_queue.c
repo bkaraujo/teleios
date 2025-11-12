@@ -40,10 +40,8 @@ void tl_queue_destroy(TLQueue* queue) {
     if (queue->mutex) tl_mutex_destroy(queue->mutex);
     if (queue->not_empty) tl_condition_destroy(queue->not_empty);
     if (queue->not_full) tl_condition_destroy(queue->not_full);
-    if (queue->allocator->type == TL_ALLOCATOR_DYNAMIC) {
-        tl_memory_free(queue->allocator, queue->items);
-        tl_memory_free(queue->allocator, queue);
-    }
+    tl_memory_free(queue->allocator, queue->items);
+    tl_memory_free(queue->allocator, queue);
 
     TL_PROFILER_POP
 }

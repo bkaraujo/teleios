@@ -4,7 +4,7 @@
 int main(const int argc, const char* argv[]) {
     (void)argc;  // Unused parameter
     (void)argv;  // Unused parameter
-    tl_logger_set_level(TL_LOG_LEVEL_VERBOSE);
+    // tl_logger_set_level(TL_LOG_LEVEL_DEBUG);
     // ####################################################################
     // 1 - Iniciar OS
     // ####################################################################

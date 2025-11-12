@@ -59,12 +59,9 @@ void tl_pool_destroy(TLObjectPool* pool) {
         tl_mutex_destroy(pool->mutex);
     }
 
-    // Free memory if using dynamic allocator
-    if (pool->allocator->type == TL_ALLOCATOR_DYNAMIC) {
-        tl_memory_free(pool->allocator, pool->memory);
-        tl_memory_free(pool->allocator, pool->in_use);
-        tl_memory_free(pool->allocator, pool);
-    }
+    tl_memory_free(pool->allocator, pool->memory);
+    tl_memory_free(pool->allocator, pool->in_use);
+    tl_memory_free(pool->allocator, pool);
 
     TL_PROFILER_POP
 }

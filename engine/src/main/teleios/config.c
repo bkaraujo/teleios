@@ -83,23 +83,22 @@ static void tl_serializer_walk() {
     if (!yaml_parser_initialize(&parser)) { fclose(file); TLFATAL("Failed to initialize parser!"); }
     yaml_parser_set_input_file(&parser, file);
 
+    TLAllocator *allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
+    TLList *sequences = tl_list_create(allocator);
+
     u8 block_index = 0;
     u16 prefix_index = 0;
     yaml_token_t token;
-    TLAllocator *allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    TLList *sequences = tl_list_create(allocator);
-    char element[U8_MAX]; // current YAML_KEY_TOKEN
-    char prefix[U16_MAX]; // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
-    char property[TL_YAML_PROPERTY_MAX_SIZE];
+    char element[U8_MAX]; tl_memory_set(element, 0, U8_MAX); // current YAML_KEY_TOKEN
+    char prefix[U16_MAX]; tl_memory_set(prefix, 0, U16_MAX); // YAML_KEY_TOKEN path to YAML_SCALAR_TOKEN value
+    char property[TL_YAML_PROPERTY_MAX_SIZE]; tl_memory_set(property, 0, TL_YAML_PROPERTY_MAX_SIZE);
 
     do {
         yaml_parser_scan(&parser, &token);
 
         switch(token.type) {
             default: continue;
-            case YAML_NO_TOKEN: {
-                TLFATAL("Malformed YAML token");
-            } break;
+            case YAML_NO_TOKEN: TLFATAL("Malformed YAML token");
             // #########################################################################################################
             // YAML_BLOCK_SEQUENCE_START_TOKEN
             // #########################################################################################################
@@ -107,7 +106,7 @@ static void tl_serializer_walk() {
                 // -----------------------------------------------------------
                 // If it's already inside a block persist into 'prefix'
                 // -----------------------------------------------------------
-                TLTuple *tuple = tl_memory_alloc(allocator, sizeof(TLTuple), TL_MEMORY_SERIALIZER);
+                TLTuple *tuple = tl_memory_alloc(allocator, TL_MEMORY_SERIALIZER, sizeof(TLTuple));
                 tuple->sequence = 0;
 
                 tuple->name = tl_string_create(allocator, prefix);
@@ -201,6 +200,7 @@ static void tl_serializer_walk() {
             case YAML_SCALAR_TOKEN: {
                 tl_memory_set(property, 0, TL_YAML_PROPERTY_MAX_SIZE);
                 tl_cstr_join(property, TL_YAML_PROPERTY_MAX_SIZE, prefix, element);
+                TLDEBUG("property %s = %s", property, (char*) token.data.scalar.value)
                 tl_map_put(m_properties, tl_string_create(m_properties->allocator, property), tl_string_create(allocator, (char*) token.data.scalar.value));
             } break;
             // #########################################################################################################

@@ -65,9 +65,7 @@ static void tl_map_free_entry(TLAllocator* allocator, TLMapEntry* entry) {
     if (entry->key) tl_string_destroy(entry->key);
     if (entry->value) tl_list_destroy(entry->value);
 
-    if (allocator->type == TL_ALLOCATOR_DYNAMIC) {
-        tl_memory_free(allocator, entry);
-    }
+    tl_memory_free(allocator, entry);
 
     TL_PROFILER_POP
 }
@@ -82,33 +80,11 @@ TLMap* tl_map_create(TLAllocator* allocator, const u32 capacity) {
     if (allocator == NULL) TLFATAL("allocator is NULL")
 
     TLMap* map = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_MAP, sizeof(TLMap));
-    if (map == NULL) {
-        TLERROR("Failed to allocate map")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     map->buckets = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_MAP, sizeof(TLMapEntry*) * capacity);
-    if (map->buckets == NULL) {
-        tl_memory_free(allocator, map);
-        TLERROR("Failed to allocate buckets")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     map->capacity = tl_number_next_power_of_2(capacity == 0 ? 16 : capacity);
-
-    // Initialize all buckets to NULL
-    for (u32 i = 0; i < map->capacity; i++) {
-        map->buckets[i] = NULL;
-    }
-
-    map->size = 0;
     map->load_factor = 0.75f;
     map->allocator = allocator;
     map->mutex = tl_mutex_create(allocator);
-
-    if (!map->mutex) {
-        TLFATAL("Failed to create mutex for map")
-    }
 
     TL_PROFILER_POP_WITH(map)
 }
@@ -128,10 +104,8 @@ void tl_map_destroy(TLMap* map) {
     if (map->mutex) tl_mutex_destroy(map->mutex);
 
     // Free buckets array and map structure
-    if (map->allocator->type == TL_ALLOCATOR_DYNAMIC) {
-        tl_memory_free(map->allocator, map->buckets);
-        tl_memory_free(map->allocator, map);
-    }
+    tl_memory_free(map->allocator, map->buckets);
+    tl_memory_free(map->allocator, map);
 
     TL_PROFILER_POP
 }
@@ -284,9 +258,7 @@ TLList* tl_map_remove(TLMap* map, const TLString* key) {
 
             // Free entry but not its value (caller takes ownership)
             tl_string_destroy(entry->key);
-            if (map->allocator->type == TL_ALLOCATOR_DYNAMIC) {
-                tl_memory_free(map->allocator, entry);
-            }
+            tl_memory_free(map->allocator, entry);
 
             map->size--;
             tl_mutex_unlock(map->mutex);

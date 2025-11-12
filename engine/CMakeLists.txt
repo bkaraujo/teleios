@@ -166,6 +166,7 @@ set(ENGINE_HEADERS
     src/main/teleios/strings.h
         src/main/teleios/config.c
         src/main/teleios/config.h
+        src/main/teleios/profiler.c
 )
 
 # Create engine executable

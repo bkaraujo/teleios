@@ -1,6 +1,8 @@
 #include "teleios/teleios.h"
 #include <ctype.h>
 
+#include "memory_types.inl"
+
 struct TLString {
     char* data;              ///< Null-terminated character array
     u32 length;              ///< Cached string length (excluding null terminator)
@@ -20,17 +22,7 @@ TLString* tl_string_create(TLAllocator* allocator, const char* cstr) {
     const u32 length = (u32) strlen(cstr);
 
     TLString* str = (TLString*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (str == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     str->data = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, length + 1);
-    if (str->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(allocator, str);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(str->data, cstr, length + 1);
     str->length = length;
@@ -45,20 +37,7 @@ TLString* tl_string_create_empty(TLAllocator* allocator) {
     if (allocator == NULL) TLFATAL("allocator is NULL")
 
     TLString* str = (TLString*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (str == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     str->data = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, 1);
-    if (str->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(allocator, str);
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
-    str->data[0] = '\0';
-    str->length = 0;
     str->allocator = allocator;
 
     TL_PROFILER_POP_WITH(str)
@@ -70,20 +49,7 @@ TLString* tl_string_create_with_capacity(TLAllocator* allocator, u32 capacity) {
     if (allocator == NULL) TLFATAL("allocator is NULL")
 
     TLString* str = (TLString*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (str == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     str->data = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, capacity + 1);
-    if (str->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(allocator, str);
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
-    str->data[0] = '\0';
-    str->length = 0;
     str->allocator = allocator;
 
     TL_PROFILER_POP_WITH(str)
@@ -93,10 +59,10 @@ void tl_string_destroy(TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
 
     if (str == NULL) TLFATAL("str is NULL")
-
     if (str->data != NULL) {
         tl_memory_free(str->allocator, str->data);
     }
+
     tl_memory_free(str->allocator, str);
 
     TL_PROFILER_POP
@@ -775,10 +741,6 @@ void tl_string_append(TLString* str, const char* cstr) {
 
     // Reallocate buffer to accommodate new content
     char* new_data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, new_length + 1);
-    if (new_data == NULL) {
-        TLERROR("Failed to allocate memory for expanded string data")
-        TL_PROFILER_POP
-    }
 
     // Copy existing content and append new content
     tl_memory_copy(new_data, str->data, str->length);

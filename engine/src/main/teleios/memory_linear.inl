@@ -15,7 +15,7 @@ static void* tl_memory_linear_allocate(TLAllocator* allocator, const TLMemoryTag
         const u32 available = page->size - page->index;
         if (available < size + sizeof(TLMemoryTag)) continue;
 
-        TLDEBUG("LINEAR alloc: size %d, tag %s", size, tl_memory_type_name(tag));
+        TLTRACE("LINEAR alloc: size %d, tag %s", size, tl_memory_type_name(tag));
         TLMemory* block = (TLMemory*) (page->payload + page->index);
         block->tag = tag;
 
@@ -50,7 +50,7 @@ static void tl_memory_linear_resize(TLAllocator* allocator) {
     allocator->linear.page = new_pages;
     allocator->linear.page_count = new_page_count;
 
-    TLDEBUG("LINEAR allocator resized:0x%p (pages=%u)", allocator, new_page_count);
+    TLTRACE("LINEAR allocator resized:0x%p (pages=%u)", allocator, new_page_count);
 
     TL_PROFILER_POP
 }
@@ -96,7 +96,7 @@ static void tl_memory_linear_destroy(TLAllocator* allocator) {
     allocator->linear.page = NULL;
     allocator->linear.page_count = 0;
 
-    TLDEBUG("LINEAR allocator destroyed:0x%p", allocator);
+    TLTRACE("LINEAR allocator destroyed:0x%p", allocator);
 
     TL_PROFILER_POP
 }

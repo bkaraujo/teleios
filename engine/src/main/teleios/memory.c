@@ -38,13 +38,13 @@ TLAllocator* tl_memory_allocator_create(const u32 size, const TLAllocatorType ty
         allocator->linear.page->index = 0;
         allocator->linear.page->payload = tl_malloc(size, "Failed to allocate TLMemoryPage->payload");
 
-        TLDEBUG("LINEAR allocator created:0x%p (page_size=%u)", allocator, size);
+        TLTRACE("LINEAR allocator created:0x%p (page_size=%u)", allocator, size);
     } else {
-        if (size > 0) TLERROR("DYNAMIC allocator does not requires a size")
+        if (size > 0) TLWARN("DYNAMIC allocator does not requires a size")
         allocator->dynamic.head = NULL;
         allocator->dynamic.allocation_count = 0;
 
-        TLDEBUG("DYNAMIC allocator created:0x%p", allocator);
+        TLTRACE("DYNAMIC allocator created:0x%p", allocator);
     }
 
     TL_PROFILER_POP_WITH(allocator)
@@ -105,7 +105,6 @@ void tl_memory_free(TLAllocator* allocator, void* pointer){
 
     switch (allocator->type) {
         case TL_ALLOCATOR_LINEAR:
-            TLERROR("Cannot free individual allocations from LINEAR allocator0x%p", allocator);
             break;
         case TL_ALLOCATOR_DYNAMIC:
             tl_memory_dynamic_free(allocator, pointer);
