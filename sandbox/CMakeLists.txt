@@ -87,3 +87,10 @@ elseif(UNIX AND NOT APPLE)
     )
 endif()
 
+# Post-build: Copy sandbox dll to dist directory
+add_custom_command(TARGET sandbox POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/dist
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sandbox> ${CMAKE_SOURCE_DIR}/dist/
+    COMMENT "Copying sandbox.dll to dist directory"
+)
+

@@ -796,6 +796,13 @@ Build outputs are organized in the `build/` directory:
 - `build/_deps/` - Downloaded dependencies (GLFW, libyaml, Lua source and build)
 - `build/CMakeFiles/` - CMake internal files and dependency tracking
 
+**Distribution Directory:**
+- `dist/` - Ready-to-run executables (automatically copied during build)
+  - `engine.exe` / `engine` - Engine executable
+  - `sandbox.dll` / `sandbox.so` / `sandbox.dylib` - Sandbox library
+
+After a successful build, the engine and sandbox binaries are automatically copied to the `dist/` directory in the project root. This directory contains the final distribution-ready files that can be run directly or packaged for deployment.
+
 CMake automatically tracks dependencies and performs incremental builds.
 
 ## Development Workflow
