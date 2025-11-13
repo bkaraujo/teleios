@@ -67,6 +67,7 @@ b8 tl_platform_initialize(void) {
     }
 
     // Initialize GLFW
+    TLDEBUG("GLFW %s", glfwGetVersionString())
     if (!glfwInit()) {
         TLERROR("GLFW failed to initialize")
         TL_PROFILER_POP_WITH(false)
