@@ -67,8 +67,6 @@ static void* tl_memory_linear_alloc(TLAllocator* allocator, const TLMemoryTag ta
     }
 
     void* memory = tl_memory_linear_allocate(allocator, tag, size);
-
-    // If no space available, create a new page
     if (memory == NULL) {
         tl_memory_linear_resize(allocator);
         memory = tl_memory_linear_allocate(allocator, tag, size);

@@ -64,10 +64,6 @@ TLThread* tl_thread_create(const TLThreadFunc func, void* arg) {
     tl_thread_ensure_allocator();
 
     TLThread* thread = (TLThread*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLThread));
-    if (!thread) {
-        TLERROR("tl_thread_create: Failed to allocate thread structure");
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     thread->func = func;
     thread->arg = arg;

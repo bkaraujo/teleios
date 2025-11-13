@@ -189,6 +189,8 @@ b8 tl_string_ends_with(const TLString* str, const TLString* suffix);
  */
 b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr);
 
+b8 tl_string_cstr_ends_with(const char* cstr, const TLString* str);
+
 // ============================================================================
 // String Transformation (returns new TLString)
 // ============================================================================

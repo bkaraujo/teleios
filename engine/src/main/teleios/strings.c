@@ -23,10 +23,9 @@ TLString* tl_string_create(TLAllocator* allocator, const char* cstr) {
 
     TLString* str = (TLString*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLString));
     str->data = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, length + 1);
-
-    tl_memory_copy(str->data, cstr, length + 1);
     str->length = length;
     str->allocator = allocator;
+    tl_memory_copy(str->data, cstr, length + 1);
 
     TL_PROFILER_POP_WITH(str)
 }
@@ -74,39 +73,25 @@ void tl_string_destroy(TLString* str) {
 
 u32 tl_string_length(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
-
-    if (str == NULL) {
-        TL_PROFILER_POP_WITH(0)
-    }
-
+    if (str == NULL) TL_PROFILER_POP_WITH(0)
     TL_PROFILER_POP_WITH(str->length)
 }
 
 char tl_string_char_at(const TLString* str, const u32 index) {
     TL_PROFILER_PUSH_WITH("%p, %u", str, index)
-
-    if (str == NULL || index >= str->length) {
-        TL_PROFILER_POP_WITH('\0')
-    }
-
+    if (str == NULL || index >= str->length) TL_PROFILER_POP_WITH('\0')
     TL_PROFILER_POP_WITH(str->data[index])
 }
 
 const char* tl_string_cstr(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
-
-    if (str == NULL) {
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
+    if (str == NULL) TL_PROFILER_POP_WITH(NULL)
     TL_PROFILER_POP_WITH(str->data)
 }
 
 b8 tl_string_is_empty(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
-
     const b8 result = (str == NULL || str->length == 0);
-
     TL_PROFILER_POP_WITH(result)
 }
 
@@ -116,38 +101,17 @@ b8 tl_string_is_empty(const TLString* str) {
 
 b8 tl_string_equals(const TLString* str1, const TLString* str2) {
     TL_PROFILER_PUSH_WITH("%p, %p", str1, str2)
-
-    if (str1 == str2) {
-        TL_PROFILER_POP_WITH(true)
-    }
-
-    if (str1 == NULL || str2 == NULL) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    if (str1->length != str2->length) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    const b8 result = (strcmp(str1->data, str2->data) == 0);
-
-    TL_PROFILER_POP_WITH(result)
+    if (str1 == str2) TL_PROFILER_POP_WITH(true)
+    if (str1 == NULL || str2 == NULL) TL_PROFILER_POP_WITH(false)
+    if (str1->length != str2->length) TL_PROFILER_POP_WITH(false)
+    TL_PROFILER_POP_WITH(strcmp(str1->data, str2->data) == 0)
 }
 
 b8 tl_string_equals_ignore_case(const TLString* str1, const TLString* str2) {
     TL_PROFILER_PUSH_WITH("%p, %p", str1, str2)
-
-    if (str1 == str2) {
-        TL_PROFILER_POP_WITH(true)
-    }
-
-    if (str1 == NULL || str2 == NULL) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    if (str1->length != str2->length) {
-        TL_PROFILER_POP_WITH(false)
-    }
+    if (str1 == str2) TL_PROFILER_POP_WITH(true)
+    if (str1 == NULL || str2 == NULL) TL_PROFILER_POP_WITH(false)
+    if (str1->length != str2->length) TL_PROFILER_POP_WITH(false)
 
     const char* p1 = str1->data;
     const char* p2 = str2->data;
@@ -156,25 +120,18 @@ b8 tl_string_equals_ignore_case(const TLString* str1, const TLString* str2) {
         if (tolower((unsigned char)*p1) != tolower((unsigned char)*p2)) {
             TL_PROFILER_POP_WITH(false)
         }
+
         p1++;
         p2++;
     }
 
-    const b8 result = (*p1 == *p2);
-
-    TL_PROFILER_POP_WITH(result)
+    TL_PROFILER_POP_WITH(*p1 == *p2)
 }
 
 b8 tl_string_equals_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
-
-    if (str == NULL || cstr == NULL) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    const b8 result = (strcmp(str->data, cstr) == 0);
-
-    TL_PROFILER_POP_WITH(result)
+    if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(false)
+    TL_PROFILER_POP_WITH(strcmp(str->data, cstr) == 0)
 }
 
 // ============================================================================
@@ -183,82 +140,40 @@ b8 tl_string_equals_cstr(const TLString* str, const char* cstr) {
 
 i32 tl_string_index_of_char(const TLString* str, const char ch) {
     TL_PROFILER_PUSH_WITH("%p, '%c'", str, ch)
-
-    if (str == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
+    if (str == NULL) TL_PROFILER_POP_WITH(-1)
     const char* ptr = strchr(str->data, ch);
-    if (ptr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
-    const i32 index = (i32)(ptr - str->data);
-
-    TL_PROFILER_POP_WITH(index)
+    if (ptr == NULL) TL_PROFILER_POP_WITH(-1)
+    TL_PROFILER_POP_WITH((i32)(ptr - str->data))
 }
 
 i32 tl_string_last_index_of_char(const TLString* str, const char ch) {
     TL_PROFILER_PUSH_WITH("%p, '%c'", str, ch)
-
-    if (str == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
-    const char* ptr = strrchr(str->data, ch);
-    if (ptr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
-    const i32 index = (i32)(ptr - str->data);
-
-    TL_PROFILER_POP_WITH(index)
+    if (str == NULL) TL_PROFILER_POP_WITH(-1)
+    const char* ptr = strchr(str->data, ch);
+    if (ptr == NULL) TL_PROFILER_POP_WITH(-1)
+    TL_PROFILER_POP_WITH((i32)(ptr - str->data))
 }
 
 i32 tl_string_index_of(const TLString* str, const TLString* substr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, substr)
-
-    if (str == NULL || substr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
+    if (str == NULL || substr == NULL) TL_PROFILER_POP_WITH(-1)
     const char* ptr = strstr(str->data, substr->data);
-    if (ptr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
-    const i32 index = (i32)(ptr - str->data);
-
-    TL_PROFILER_POP_WITH(index)
+    if (ptr == NULL) TL_PROFILER_POP_WITH(-1)
+    TL_PROFILER_POP_WITH((i32)(ptr - str->data))
 }
 
 i32 tl_string_index_of_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
-
-    if (str == NULL || cstr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
+    if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(-1)
     const char* ptr = strstr(str->data, cstr);
-    if (ptr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
-    const i32 index = (i32)(ptr - str->data);
-
-    TL_PROFILER_POP_WITH(index)
+    if (ptr == NULL) TL_PROFILER_POP_WITH(-1)
+    TL_PROFILER_POP_WITH((i32)(ptr - str->data))
 }
 
 i32 tl_string_last_index_of(const TLString* str, const TLString* substr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, substr)
-
-    if (str == NULL || substr == NULL) {
-        TL_PROFILER_POP_WITH(-1)
-    }
-
-    if (substr->length == 0) {
-        TL_PROFILER_POP_WITH(-1)
-    }
+    if (str == NULL || substr == NULL) TL_PROFILER_POP_WITH(-1)
+    if (substr->length == 0) TL_PROFILER_POP_WITH(-1)
 
     i32 last_index = -1;
     const char* ptr = str->data;
@@ -273,84 +188,84 @@ i32 tl_string_last_index_of(const TLString* str, const TLString* substr) {
 
 b8 tl_string_contains(const TLString* str, const TLString* substr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, substr)
-
     const b8 result = (tl_string_index_of(str, substr) != -1);
-
     TL_PROFILER_POP_WITH(result)
 }
 
 b8 tl_string_contains_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
-
     const b8 result = (tl_string_index_of_cstr(str, cstr) != -1);
-
     TL_PROFILER_POP_WITH(result)
 }
 
 b8 tl_string_starts_with(const TLString* str, const TLString* prefix) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, prefix)
-
-    if (str == NULL || prefix == NULL) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    if (prefix->length > str->length) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    const b8 result = (strncmp(str->data, prefix->data, prefix->length) == 0);
-
-    TL_PROFILER_POP_WITH(result)
+    if (str == NULL || prefix == NULL) TL_PROFILER_POP_WITH(false)
+    if (prefix->length > str->length) TL_PROFILER_POP_WITH(false)
+    TL_PROFILER_POP_WITH(strncmp(str->data, prefix->data, prefix->length) == 0)
 }
 
 b8 tl_string_starts_with_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
-
-    if (str == NULL || cstr == NULL) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
+    if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(false)
     const u32 cstr_len = (u32)strlen(cstr);
-    if (cstr_len > str->length) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    const b8 result = (strncmp(str->data, cstr, cstr_len) == 0);
-
-    TL_PROFILER_POP_WITH(result)
+    if (cstr_len > str->length) TL_PROFILER_POP_WITH(false)
+    TL_PROFILER_POP_WITH(strncmp(str->data, cstr, cstr_len) == 0)
 }
 
 b8 tl_string_ends_with(const TLString* str, const TLString* suffix) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, suffix)
+    if (str == NULL || suffix == NULL) TL_PROFILER_POP_WITH(false)
+    if (suffix->length > str->length) TL_PROFILER_POP_WITH(false)
 
-    if (str == NULL || suffix == NULL) {
-        TL_PROFILER_POP_WITH(false)
+    // Compare character by character from end to beginning
+    for (u32 i = 0; i < suffix->length; i++) {
+        if (str->data[str->length - suffix->length + i] != suffix->data[i]) {
+            TL_PROFILER_POP_WITH(false)
+        }
     }
 
-    if (suffix->length > str->length) {
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    const b8 result = (strcmp(str->data + str->length - suffix->length, suffix->data) == 0);
-
-    TL_PROFILER_POP_WITH(result)
+    TL_PROFILER_POP_WITH(true)
 }
 
 b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
-
-    if (str == NULL || cstr == NULL) {
-        TL_PROFILER_POP_WITH(false)
-    }
+    if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(false)
 
     const u32 cstr_len = (u32)strlen(cstr);
-    if (cstr_len > str->length) {
-        TL_PROFILER_POP_WITH(false)
+    if (cstr_len > str->length) TL_PROFILER_POP_WITH(false)
+    if (cstr_len == str->length) TL_PROFILER_POP_WITH(strcmp(str->data, cstr) == 0)
+
+    const char* pStr = str->data + str->length - 1; // point to the last character
+    const char* pCstr = cstr + cstr_len - 1;        // point to the last character
+
+    for (u32 i = 0; i < cstr_len; i++) {
+        if (*pStr-- != *pCstr--) {
+            TL_PROFILER_POP_WITH(false)
+        }
     }
 
-    const b8 result = (strcmp(str->data + str->length - cstr_len, cstr) == 0);
+    TL_PROFILER_POP_WITH(true)
+}
 
-    TL_PROFILER_POP_WITH(result)
+b8 tl_string_cstr_ends_with(const char* cstr, const TLString* str) {
+    TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
+    if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(false)
+
+    const u32 cstr_len = (u32)strlen(cstr);
+    if (cstr_len < str->length) TL_PROFILER_POP_WITH(false)
+    if (cstr_len == str->length) TL_PROFILER_POP_WITH(strcmp(str->data, cstr) == 0)
+
+    const char* pStr = str->data + str->length - 1; // point to the last character
+    const char* pCstr = cstr + cstr_len - 1;        // point to the last character
+
+    for (u32 i = 0; i < str->length; i++) {
+        if (*pStr-- != *pCstr--) {
+            TL_PROFILER_POP_WITH(false)
+        }
+    }
+
+    TL_PROFILER_POP_WITH(true)
 }
 
 // ============================================================================
@@ -359,17 +274,13 @@ b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr) {
 
 TLString* tl_string_copy(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
-
     if (str == NULL) TLFATAL("str is NULL")
-
     TLString* copy = tl_string_create(str->allocator, str->data);
-
     TL_PROFILER_POP_WITH(copy)
 }
 
 TLString* tl_string_substring(const TLString* str, u32 start, u32 end) {
     TL_PROFILER_PUSH_WITH("%p, %u, %u", str, start, end)
-
     if (str == NULL) TLFATAL("str is NULL")
 
     if (start > str->length) start = str->length;
@@ -379,17 +290,7 @@ TLString* tl_string_substring(const TLString* str, u32 start, u32 end) {
     const u32 substr_len = end - start;
 
     TLString* substr = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (substr == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     substr->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, substr_len + 1);
-    if (substr->data == NULL) {
-        TLERROR("Failed to allocate memory for substring data")
-        tl_memory_free(str->allocator, substr);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(substr->data, str->data + start, substr_len);
     substr->data[substr_len] = '\0';
@@ -405,21 +306,12 @@ TLString* tl_string_to_lower(const TLString* str) {
     if (str == NULL) TLFATAL("str is NULL")
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, str->length + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     for (u32 i = 0; i < str->length; i++) {
         result->data[i] = (char)tolower((unsigned char)str->data[i]);
     }
+
     result->data[str->length] = '\0';
     result->length = str->length;
     result->allocator = str->allocator;
@@ -433,17 +325,7 @@ TLString* tl_string_to_upper(const TLString* str) {
     if (str == NULL) TLFATAL("str is NULL")
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, str->length + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     for (u32 i = 0; i < str->length; i++) {
         result->data[i] = (char)toupper((unsigned char)str->data[i]);
@@ -481,17 +363,7 @@ TLString* tl_string_trim(const TLString* str) {
     const u32 length = (u32)(end - start + 1);
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, length + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(result->data, start, length);
     result->data[length] = '\0';
@@ -507,17 +379,7 @@ TLString* tl_string_replace_char(const TLString* str, const char old_char, const
     if (str == NULL) TLFATAL("str is NULL")
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, str->length + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     for (u32 i = 0; i < str->length; i++) {
         result->data[i] = (str->data[i] == old_char) ? new_char : str->data[i];
@@ -544,17 +406,7 @@ TLString* tl_string_replace_first(const TLString* str, const TLString* old_str, 
     const u32 result_len = str->length - old_str->length + new_str->length;
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, result_len + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(result->data, str->data, index);
     tl_memory_copy(result->data + index, new_str->data, new_str->length);
@@ -592,17 +444,7 @@ TLString* tl_string_replace_all(const TLString* str, const TLString* old_str, co
     const u32 result_len = str->length + count * (new_str->length - old_str->length);
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, result_len + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     char* dest = result->data;
     const char* src = str->data;
@@ -636,17 +478,7 @@ TLString* tl_string_concat(const TLString* str1, const TLString* str2) {
     const u32 total_len = str1->length + str2->length;
 
     TLString* result = (TLString*)tl_memory_alloc(str1->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str1->allocator, TL_MEMORY_STRING, total_len + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str1->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(result->data, str1->data, str1->length);
     tl_memory_copy(result->data + str1->length, str2->data, str2->length);
@@ -667,17 +499,7 @@ TLString* tl_string_concat_cstr(const TLString* str, const char* cstr) {
     const u32 total_len = str->length + cstr_len;
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, total_len + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(result->data, str->data, str->length);
     tl_memory_copy(result->data + str->length, cstr, cstr_len);
@@ -730,17 +552,7 @@ TLString* tl_string_concat_multiple(TLAllocator* allocator, const TLString** str
     }
 
     TLString* result = (TLString*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result->data = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, total_len + 1);
-    if (result->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(allocator, result);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     char* dest = result->data;
     for (u32 i = 0; strings[i] != NULL; i++) {
@@ -771,11 +583,6 @@ TLString** tl_string_split(const TLString* str, const char delimiter, u32* out_c
     }
 
     TLString** result = (TLString**)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, count * sizeof(TLString*));
-    if (result == NULL) {
-        TLERROR("Failed to allocate memory for split array")
-        *out_count = 0;
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     u32 index = 0;
     const char* start = str->data;
@@ -785,27 +592,7 @@ TLString** tl_string_split(const TLString* str, const char delimiter, u32* out_c
             const u32 len = (u32)(p - start);
 
             result[index] = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-            if (result[index] == NULL) {
-                TLERROR("Failed to allocate memory for TLString")
-                for (u32 i = 0; i < index; i++) {
-                    tl_string_destroy(result[i]);
-                }
-                tl_memory_free(str->allocator, result);
-                *out_count = 0;
-                TL_PROFILER_POP_WITH(NULL)
-            }
-
             result[index]->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, len + 1);
-            if (result[index]->data == NULL) {
-                TLERROR("Failed to allocate memory for string data")
-                tl_memory_free(str->allocator, result[index]);
-                for (u32 i = 0; i < index; i++) {
-                    tl_string_destroy(result[i]);
-                }
-                tl_memory_free(str->allocator, result);
-                *out_count = 0;
-                TL_PROFILER_POP_WITH(NULL)
-            }
 
             tl_memory_copy(result[index]->data, start, len);
             result[index]->data[len] = '\0';
@@ -820,27 +607,7 @@ TLString** tl_string_split(const TLString* str, const char delimiter, u32* out_c
     // Handle last segment
     const u32 len = (u32)(str->data + str->length - start);
     result[index] = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
-    if (result[index] == NULL) {
-        TLERROR("Failed to allocate memory for TLString")
-        for (u32 i = 0; i < index; i++) {
-            tl_string_destroy(result[i]);
-        }
-        tl_memory_free(str->allocator, result);
-        *out_count = 0;
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     result[index]->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, len + 1);
-    if (result[index]->data == NULL) {
-        TLERROR("Failed to allocate memory for string data")
-        tl_memory_free(str->allocator, result[index]);
-        for (u32 i = 0; i < index; i++) {
-            tl_string_destroy(result[i]);
-        }
-        tl_memory_free(str->allocator, result);
-        *out_count = 0;
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     tl_memory_copy(result[index]->data, start, len);
     result[index]->data[len] = '\0';
@@ -886,17 +653,7 @@ TLStringBuilder* tl_string_builder_create(TLAllocator* allocator, const u32 capa
     if (allocator == NULL) TLFATAL("allocator is NULL")
 
     TLStringBuilder* builder = (TLStringBuilder*)tl_memory_alloc(allocator, TL_MEMORY_STRING, sizeof(TLStringBuilder));
-    if (builder == NULL) {
-        TLERROR("Failed to allocate memory for TLStringBuilder")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     builder->buffer = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, capacity);
-    if (builder->buffer == NULL) {
-        TLERROR("Failed to allocate memory for builder buffer")
-        tl_memory_free(allocator, builder);
-        TL_PROFILER_POP_WITH(NULL)
-    }
 
     builder->capacity = capacity;
     builder->allocator = allocator;
@@ -915,11 +672,6 @@ static void tl_string_builder_ensure_capacity(TLStringBuilder* builder, u32 requ
     }
 
     char* new_buffer = (char*)tl_memory_alloc(builder->allocator, TL_MEMORY_STRING, new_capacity);
-    if (new_buffer == NULL) {
-        TLERROR("Failed to allocate memory for expanded buffer")
-        return;
-    }
-
     tl_memory_copy(new_buffer, builder->buffer, builder->length + 1);
     tl_memory_free(builder->allocator, builder->buffer);
 

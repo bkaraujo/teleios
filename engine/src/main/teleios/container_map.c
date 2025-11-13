@@ -41,13 +41,8 @@ static TLMapEntry* tl_map_create_entry(TLAllocator* allocator, const TLString* k
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", allocator, key, value)
 
     TLMapEntry* entry = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_MAP, sizeof(TLMapEntry));
-    if (entry == NULL) {
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     entry->key = tl_string_copy(key);
     entry->value = value;
-    entry->next = NULL;
 
     TL_PROFILER_POP_WITH(entry)
 }
