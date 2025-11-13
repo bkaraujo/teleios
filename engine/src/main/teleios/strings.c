@@ -43,7 +43,7 @@ TLString* tl_string_create_empty(TLAllocator* allocator) {
     TL_PROFILER_POP_WITH(str)
 }
 
-TLString* tl_string_create_with_capacity(TLAllocator* allocator, u32 capacity) {
+TLString* tl_string_reserve(TLAllocator* allocator, const u32 capacity) {
     TL_PROFILER_PUSH_WITH("%p, %u", allocator, capacity)
 
     if (allocator == NULL) TLFATAL("allocator is NULL")
@@ -82,7 +82,7 @@ u32 tl_string_length(const TLString* str) {
     TL_PROFILER_POP_WITH(str->length)
 }
 
-char tl_string_char_at(const TLString* str, u32 index) {
+char tl_string_char_at(const TLString* str, const u32 index) {
     TL_PROFILER_PUSH_WITH("%p, %u", str, index)
 
     if (str == NULL || index >= str->length) {
@@ -181,7 +181,7 @@ b8 tl_string_equals_cstr(const TLString* str, const char* cstr) {
 // String Search
 // ============================================================================
 
-i32 tl_string_index_of_char(const TLString* str, char ch) {
+i32 tl_string_index_of_char(const TLString* str, const char ch) {
     TL_PROFILER_PUSH_WITH("%p, '%c'", str, ch)
 
     if (str == NULL) {
@@ -198,7 +198,7 @@ i32 tl_string_index_of_char(const TLString* str, char ch) {
     TL_PROFILER_POP_WITH(index)
 }
 
-i32 tl_string_last_index_of_char(const TLString* str, char ch) {
+i32 tl_string_last_index_of_char(const TLString* str, const char ch) {
     TL_PROFILER_PUSH_WITH("%p, '%c'", str, ch)
 
     if (str == NULL) {
@@ -310,7 +310,7 @@ b8 tl_string_starts_with_cstr(const TLString* str, const char* cstr) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    u32 cstr_len = (u32)strlen(cstr);
+    const u32 cstr_len = (u32)strlen(cstr);
     if (cstr_len > str->length) {
         TL_PROFILER_POP_WITH(false)
     }
@@ -348,7 +348,7 @@ b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    b8 result = (strcmp(str->data + str->length - cstr_len, cstr) == 0);
+    const b8 result = (strcmp(str->data + str->length - cstr_len, cstr) == 0);
 
     TL_PROFILER_POP_WITH(result)
 }
@@ -365,44 +365,6 @@ TLString* tl_string_copy(const TLString* str) {
     TLString* copy = tl_string_create(str->allocator, str->data);
 
     TL_PROFILER_POP_WITH(copy)
-}
-
-// ============================================================================
-// C String Utilities
-// ============================================================================
-
-void tl_cstr_join(char* dest, const u32 dest_size, const char* str1, const char* str2) {
-    TL_PROFILER_PUSH_WITH("%p, %u, %p, %p", dest, dest_size, str1, str2)
-
-    if (dest == NULL) TLFATAL("dest is NULL")
-    if (str1 == NULL) TLFATAL("str1 is NULL")
-    if (str2 == NULL) TLFATAL("str2 is NULL")
-    if (dest_size == 0) TLFATAL("dest_size is 0")
-
-    const u32 len1 = (u32)strlen(str1);
-    const u32 len2 = (u32)strlen(str2);
-    const u32 total_len = len1 + len2;
-
-    if (total_len >= dest_size) {
-        // Truncate if too long
-        const u32 max_copy = dest_size - 1;
-        if (len1 >= max_copy) {
-            tl_memory_copy(dest, str1, max_copy);
-            dest[max_copy] = '\0';
-        } else {
-            tl_memory_copy(dest, str1, len1);
-            const u32 remaining = max_copy - len1;
-            tl_memory_copy(dest + len1, str2, remaining);
-            dest[max_copy] = '\0';
-        }
-    } else {
-        // Normal case - both strings fit
-        tl_memory_copy(dest, str1, len1);
-        tl_memory_copy(dest + len1, str2, len2);
-        dest[total_len] = '\0';
-    }
-
-    TL_PROFILER_POP
 }
 
 TLString* tl_string_substring(const TLString* str, u32 start, u32 end) {
@@ -539,7 +501,7 @@ TLString* tl_string_trim(const TLString* str) {
     TL_PROFILER_POP_WITH(result)
 }
 
-TLString* tl_string_replace_char(const TLString* str, char old_char, char new_char) {
+TLString* tl_string_replace_char(const TLString* str, const char old_char, const char new_char) {
     TL_PROFILER_PUSH_WITH("%p, '%c', '%c'", str, old_char, new_char)
 
     if (str == NULL) TLFATAL("str is NULL")
@@ -796,7 +758,7 @@ TLString* tl_string_concat_multiple(TLAllocator* allocator, const TLString** str
 // String Splitting
 // ============================================================================
 
-TLString** tl_string_split(const TLString* str, char delimiter, u32* out_count) {
+TLString** tl_string_split(const TLString* str, const char delimiter, u32* out_count) {
     TL_PROFILER_PUSH_WITH("%p, '%c', %p", str, delimiter, out_count)
 
     if (str == NULL) TLFATAL("str is NULL")
@@ -986,7 +948,7 @@ void tl_string_builder_append_cstr(TLStringBuilder* builder, const char* cstr) {
     if (builder == NULL) TLFATAL("builder is NULL")
     if (cstr == NULL) TLFATAL("cstr is NULL")
 
-    u32 cstr_len = (u32)strlen(cstr);
+    const u32 cstr_len = (u32)strlen(cstr);
     tl_string_builder_ensure_capacity(builder, builder->length + cstr_len + 1);
 
     tl_memory_copy(builder->buffer + builder->length, cstr, cstr_len);
@@ -996,7 +958,7 @@ void tl_string_builder_append_cstr(TLStringBuilder* builder, const char* cstr) {
     TL_PROFILER_POP
 }
 
-void tl_string_builder_append_char(TLStringBuilder* builder, char ch) {
+void tl_string_builder_append_char(TLStringBuilder* builder, const char ch) {
     TL_PROFILER_PUSH_WITH("%p, '%c'", builder, ch)
 
     if (builder == NULL) TLFATAL("builder is NULL")

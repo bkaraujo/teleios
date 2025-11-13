@@ -28,7 +28,7 @@ TLString* tl_string_create_empty(TLAllocator* allocator);
  * @param capacity Initial capacity in characters
  * @return Newly allocated TLString with pre-allocated buffer
  */
-TLString* tl_string_create_with_capacity(TLAllocator* allocator, u32 capacity);
+TLString* tl_string_reserve(TLAllocator* allocator, u32 capacity);
 
 /**
  * @brief Destroy a string and free its memory
@@ -203,24 +203,6 @@ TLString* tl_string_copy(const TLString* str);
 // ============================================================================
 // C String Utilities
 // ============================================================================
-
-/**
- * @brief Join/concatenate multiple C strings into a buffer
- * @param dest Destination buffer
- * @param dest_size Size of destination buffer (including null terminator)
- * @param str1 First string to concatenate
- * @param str2 Second string to concatenate
- *
- * @note Result is null-terminated
- * @note If combined length exceeds dest_size-1, output is truncated
- * @note dest buffer must be pre-allocated with at least dest_size bytes
- *
- * @code
- * char buffer[256];
- * tl_char_join(buffer, sizeof(buffer), "hello", "world");  // "helloworld"
- * @endcode
- */
-void tl_cstr_join(char* dest, u32 dest_size, const char* str1, const char* str2);
 
 /**
  * @brief Extract substring from string

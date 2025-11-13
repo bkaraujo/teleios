@@ -141,6 +141,7 @@ static b8 tl_window_create(void) {
     // --------------------------------------------------------------------------------------
     // Create the platform surface
     // --------------------------------------------------------------------------------------
+    // TODO: Apply engine.window.size
     m_window_size.x = 1024;
     m_window_size.y = 768;
     m_window_title = tl_config_get("engine.window.title");
