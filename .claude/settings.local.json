@@ -21,7 +21,9 @@
       "Bash(copy sandboxapplication.yml buildbinDebugapplication.yml)",
       "Bash(./engine.exe:*)",
       "Bash(test:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(Select-String \"profiler|warning|error\")",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

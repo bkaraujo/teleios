@@ -140,38 +140,41 @@ void* tl_queue_peek(TLQueue* queue) {
 // ---------------------------------
 
 u16 tl_queue_size(const TLQueue* queue) {
-    if (queue == NULL) return 0;
+    TL_PROFILER_PUSH_WITH("0x%p", queue)
+    if (queue == NULL) TL_PROFILER_POP_WITH(0)
 
     tl_mutex_lock(queue->mutex);
     const u16 size = queue->count;
     tl_mutex_unlock(queue->mutex);
 
-    return size;
+    TL_PROFILER_POP_WITH(size)
 }
 
 u16 tl_queue_capacity(const TLQueue* queue) {
-    if (queue == NULL) return 0;
-    return queue->capacity;
+    TL_PROFILER_PUSH_WITH("0x%p", queue)
+    if (queue == NULL) TL_PROFILER_POP_WITH(0)
+    TL_PROFILER_POP_WITH(queue->capacity)
 }
 
 b8 tl_queue_is_empty(const TLQueue* queue) {
+    TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) return true;
 
     tl_mutex_lock(queue->mutex);
     const b8 empty = (queue->count == 0);
     tl_mutex_unlock(queue->mutex);
-
-    return empty;
+    TL_PROFILER_POP_WITH(empty)
 }
 
 b8 tl_queue_is_full(const TLQueue* queue) {
+    TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) return false;
 
     tl_mutex_lock(queue->mutex);
     const b8 full = (queue->count >= queue->capacity);
     tl_mutex_unlock(queue->mutex);
 
-    return full;
+    TL_PROFILER_POP_WITH(full)
 }
 
 void tl_queue_clear(TLQueue* queue) {
