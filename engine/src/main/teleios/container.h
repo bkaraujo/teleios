@@ -109,13 +109,12 @@ void tl_queue_push(TLQueue* queue, void* payload);
 /**
  * @brief Dequeue (remove from front) an item from the queue
  *
- * Removes and returns the item at the front of the queue. The queue must
- * not be empty.
+ * Removes and returns the item at the front of the queue, or else return NULL
  *
  * @param queue Queue to remove from
- * @return The void pointer that was at the front of the queue
+ * @return The void pointer that was at the front of the queue or NULL
  *
- * @note Behavior is undefined if queue is empty - caller must check with tl_queue_is_empty()
+ * @note If enmpty returns NULL
  * @note The returned pointer is the original value that was enqueued
  * @note Queue does not manage the lifetime of pointed-to data
  *

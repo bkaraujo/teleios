@@ -31,5 +31,6 @@ typedef struct {
 
 static TLQueue* m_queue;
 static TLObjectPool* m_task_pool;
+static b8 m_shutdown;                   // Shutdown flag for worker thread
 
 #endif

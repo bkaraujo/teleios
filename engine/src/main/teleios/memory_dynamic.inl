@@ -96,7 +96,7 @@ static void tl_memory_dynamic_destroy(TLAllocator* allocator) {
 
         TLERROR("Total memory leaks: %u allocations, %u bytes", leak_count, leaked_bytes);
     } else {
-        TLDEBUG("DYNAMIC allocator destroyed:0x%p (no leaks)", allocator);
+        TLTRACE("DYNAMIC allocator destroyed:0x%p (no leaks)", allocator);
     }
 
     allocator->dynamic.head = NULL;

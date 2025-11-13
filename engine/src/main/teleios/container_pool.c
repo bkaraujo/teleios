@@ -203,7 +203,7 @@ void tl_pool_reset(TLObjectPool* pool) {
 
     tl_mutex_unlock(pool->mutex);
 
-    TLDEBUG("Object pool 0x%p reset (%u objects now available)", pool, pool->capacity)
+    TLTRACE("Object pool 0x%p reset (%u objects now available)", pool, pool->capacity)
 
     TL_PROFILER_POP
 }

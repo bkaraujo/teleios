@@ -11,10 +11,7 @@
 
 static TLEventStatus tl_graphics_handle_window_closed(const TLEvent* event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
-    TLDEBUG("Signaling graphics thread to terminate")
-    TLGraphicTask task = { 0 };
-    tl_queue_push(m_queue, &task);
-
+    m_shutdown = true;
     TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
 }
 
@@ -29,6 +26,9 @@ static TLThread* m_worker_thread = NULL;
 
 b8 tl_graphics_initialize(void) {
     TL_PROFILER_PUSH
+
+    // Initialize shutdown flag
+    m_shutdown = false;
 
     // Watch for window closing event so we can join the graphics thread
     if (!tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_graphics_handle_window_closed)) {

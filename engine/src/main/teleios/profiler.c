@@ -16,8 +16,8 @@ typedef struct {
 } TLFrame;
 
 // Thread-local profiler state
-static u16 tl_profiler_frame_index = U16_MAX;
-static TLFrame tl_profiler_frames[TELEIOS_FRAME_MAXIMUM];
+static TL_THREADLOCAL u16 tl_profiler_frame_index = U16_MAX;
+static TL_THREADLOCAL TLFrame tl_profiler_frames[TELEIOS_FRAME_MAXIMUM];
 
 /**
  * @brief Push new function frame to call stack and log entry

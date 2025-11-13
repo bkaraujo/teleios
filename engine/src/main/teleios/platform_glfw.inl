@@ -144,6 +144,7 @@ static b8 tl_window_create(void) {
     m_window_size.x = 1024;
     m_window_size.y = 768;
     m_window_title = tl_config_get("engine.window.title");
+    TLDEBUG("Creating GLFW Window")
     m_window = glfwCreateWindow(m_window_size.x, m_window_size.y, tl_string_cstr(m_window_title), NULL, NULL);
     if (TL_UNLIKELY(m_window == NULL)) {
         TLERROR("GLFW failed to create window")
@@ -178,13 +179,12 @@ static b8 tl_window_create(void) {
     glfwSetScrollCallback           (m_window, tl_window_callback_input_cursor_scroll);
     glfwSetCursorEnterCallback      (m_window, tl_window_callback_input_cursor_entered);
 
-    glfwMakeContextCurrent(NULL);
     TL_PROFILER_POP_WITH(true)
 }
 
 static void tl_window_terminate(void) {
     TL_PROFILER_PUSH
-    TLTRACE("Destroying GLFW Window")
+    TLDEBUG("Destroying GLFW Window")
     glfwDestroyWindow(m_window);
     TL_PROFILER_POP
 }

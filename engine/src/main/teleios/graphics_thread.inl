@@ -32,19 +32,15 @@ static void* tl_graphics_worker(void* _) {
     // Main worker loop - process tasks from queue until shutdown signal
     for ( ; ; ) {
 
-        // Pop task from queue (blocks if empty)
-        TLGraphicTask* task = (TLGraphicTask*)tl_queue_pop(m_queue);
-
-        if (task == NULL) {
-            TLWARN("Graphics worker received NULL task, continuing...")
-            continue;
-        }
-
-        // Check for shutdown signal (both function pointers NULL)
-        if (task->func_no_args == NULL && task->func_with_args == NULL) {
+        // Check shutdown flag before blocking on queue
+        if (m_shutdown) {
             TLDEBUG("Graphics worker received shutdown signal")
             break;
         }
+
+        // Pop task from queue (blocks if empty)
+        TLGraphicTask* task = (TLGraphicTask*)tl_queue_pop(m_queue);
+        if (task == NULL) { continue; }
 
         // Execute the task based on type
         if (task->type == TL_GRAPHICS_JOB_NO_ARGS) {

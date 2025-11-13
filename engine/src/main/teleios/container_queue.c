@@ -103,9 +103,9 @@ void* tl_queue_pop(TLQueue* queue) {
 
     tl_mutex_lock(queue->mutex);
 
-    // Wait for items if queue is empty (blocking)
-    while (queue->count == 0) {
-        tl_condition_wait(queue->not_empty, queue->mutex);
+    if (queue->count == 0) {
+        tl_mutex_unlock(queue->mutex);
+        TL_PROFILER_POP_WITH(NULL)
     }
 
     void* payload = queue->items[queue->tail];

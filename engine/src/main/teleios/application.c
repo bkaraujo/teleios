@@ -29,9 +29,20 @@ b8 tl_application_initialize(void) {
     TL_PROFILER_POP_WITH(true)
 }
 
+static void tl_application_loop();
+
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
 
+    m_running = true;
+    glfwShowWindow(tl_window_handler());
+    tl_application_loop();
+    glfwHideWindow(tl_window_handler());
+    TL_PROFILER_POP_WITH(true)
+}
+
+static void tl_application_loop() {
+    TL_PROFILER_PUSH
     const f64 STEP = 1000000.0 / 60.0;  // ~16666.67 µs
     const f64 FRAME_CAP = 250000.0;     // Cap at 250ms to prevent spiral of death
 
@@ -39,9 +50,7 @@ b8 tl_application_run(void) {
     u64 last_time = tl_time_epoch_micros();
     f64 fps_timer = 0.0;
 
-    m_running = true;
-    glfwShowWindow(tl_window_handler());
-
+    TLDEBUG("Entering main loop")
     while (m_running) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
@@ -83,8 +92,8 @@ b8 tl_application_run(void) {
         }
     }
 
-    glfwHideWindow(tl_window_handler());
-    TL_PROFILER_POP_WITH(true)
+    TLDEBUG("Exiting main loop")
+    TL_PROFILER_POP
 }
 
 static TLEventStatus tl_application_handle_window_closed(const TLEvent *event) {
