@@ -94,7 +94,6 @@ static b8 tl_window_create(void) {
     m_window_size.y = resolution;
     m_window_title = tl_config_get("engine.window.title");
 
-    TLDEBUG("Creating GLFW Window")
     m_window = glfwCreateWindow(m_window_size.x, m_window_size.y, tl_string_cstr(m_window_title), NULL, NULL);
     if (TL_UNLIKELY(m_window == NULL)) {
         TLERROR("GLFW failed to create window")
@@ -227,7 +226,6 @@ static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const in
 
 static void tl_window_terminate(void) {
     TL_PROFILER_PUSH
-    TLDEBUG("Destroying GLFW Window")
     glfwDestroyWindow(m_window);
     TL_PROFILER_POP
 }

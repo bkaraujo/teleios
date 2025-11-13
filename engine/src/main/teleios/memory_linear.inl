@@ -94,8 +94,6 @@ static void tl_memory_linear_destroy(TLAllocator* allocator) {
     allocator->linear.page = NULL;
     allocator->linear.page_count = 0;
 
-    TLTRACE("LINEAR allocator destroyed:0x%p", allocator);
-
     TL_PROFILER_POP
 }
 

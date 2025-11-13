@@ -34,6 +34,23 @@ static i8 tl_lnx_filesystem_path_separator(void) {
     return '/';
 }
 
+static const char* tl_lnx_filesystem_get_current_directory() {
+    char *buffer = NULL;
+
+    long path_max = pathconf(".", _PC_PATH_MAX);
+    size_t size = (path_max > 0) ? (size_t)path_max : 4096;
+
+    buffer = malloc(size);
+    if (buffer != NULL) {
+        if (getcwd(buffer, size) == NULL) {
+            free(buffer);
+            buffer = NULL;
+        }
+    }
+
+    return buffer;
+}
+
 // ---------------------------------
 // Linux Platform - Timing
 // ---------------------------------

@@ -7,6 +7,7 @@
 
 #include "teleios/teleios.h"
 #include <windows.h>
+#include <direct.h>
 
 // ---------------------------------
 // Windows Platform - State
@@ -63,6 +64,10 @@ static b8 tl_winapi_terminate(void) {
 
 static i8 tl_winapi_filesystem_path_separator(void) {
     return '\\';
+}
+
+static const char* tl_winapi_filesystem_get_current_directory() {
+    return _getcwd(NULL, 0);
 }
 
 // ---------------------------------

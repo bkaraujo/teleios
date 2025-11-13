@@ -15,6 +15,7 @@
 static void* tl_graphics_worker(void* _) {
     (void) _;  // Unused parameter
     TL_PROFILER_PUSH
+    TLDEBUG("Graphics thread initializing")
 
     // Acquire OpenGL context on this thread
     glfwMakeContextCurrent(tl_window_handler());
@@ -65,7 +66,7 @@ static void* tl_graphics_worker(void* _) {
 
     // Release OpenGL context before exiting
     glfwMakeContextCurrent(NULL);
-    TLDEBUG("Graphics worker thread exiting")
+    TLDEBUG("Graphics thread exiting")
 
     TL_PROFILER_POP_WITH(NULL)
 }

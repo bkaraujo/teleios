@@ -27,7 +27,7 @@ void* tl_config_get(const char* property) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    TLDEBUG("Querying property %s", property);
+    TLTRACE("Querying property %s", property);
     TLString* key = tl_string_create(m_allocator, property);
     TLList* list = tl_map_get(m_properties, key);
     tl_string_destroy(key);
@@ -55,6 +55,11 @@ b8 tl_config_terminate(void) {
     if (m_properties != NULL) {
         tl_map_destroy(m_properties);
         m_properties = NULL;
+    }
+
+    if (m_dynamic != NULL) {
+        tl_memory_allocator_destroy(m_dynamic);
+        m_dynamic = NULL;
     }
 
     if (m_allocator != NULL) {
@@ -93,7 +98,7 @@ static void build_path_from_segments(TLStringBuilder* builder, const TLList* seg
     // TLListNode structure: { void* data, void* prev, void* next }
     void* node = segments->head;
     while (node != NULL) {
-        TLString* segment = *((void**)node);  // data is first field
+        const TLString* segment = *((void**)node);  // data is first field
         tl_string_builder_append(builder, segment);
         tl_string_builder_append_cstr(builder, ".");
         node = *((void**)((char*)node + sizeof(void*) * 2));  // next is third field (skip data + prev)
@@ -224,8 +229,8 @@ static void tl_serializer_walk() {
                 // Use m_allocator (global) for values so they persist after tl_serializer_walk() returns
                 TLString* value = tl_string_create(m_allocator, (char*)token.data.scalar.value);
 
-                TLDEBUG("property %s = %s", tl_string_cstr(property), tl_string_cstr(value))
                 // Use allocator (local) for temporary property key used in map lookup
+                TLTRACE("property %s = %s", tl_string_cstr(property), tl_string_cstr(value))
                 tl_map_put(m_properties, tl_string_create(m_properties->allocator, tl_string_cstr(property)), value);
 
                 current_key = NULL;  // Reset key after use

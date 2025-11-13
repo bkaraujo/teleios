@@ -54,15 +54,11 @@ TLAllocator* tl_memory_allocator_create(const u32 size, const TLAllocatorType ty
         allocator->linear.page_count = 1;
         allocator->linear.page = tl_malloc(sizeof(TLMemoryPage), "Failed to allocate TLMemoryPage");
         allocator->linear.page->size = size;
-        allocator->linear.page->index = 0;
         allocator->linear.page->payload = tl_malloc(size, "Failed to allocate TLMemoryPage->payload");
 
         TLTRACE("LINEAR allocator created:0x%p (page_size=%u)", allocator, size);
     } else {
         if (size > 0) TLWARN("DYNAMIC allocator does not requires a size")
-        allocator->dynamic.head = NULL;
-        allocator->dynamic.allocation_count = 0;
-
         TLTRACE("DYNAMIC allocator created:0x%p", allocator);
     }
 
@@ -102,6 +98,7 @@ void tl_memory_allocator_destroy(TLAllocator* allocator){
     }
 
     // Free the allocator structure itself (allocated on heap)
+    TLTRACE("LINEAR allocator destroyed:0x%p", allocator);
     free(allocator);
 
     TL_PROFILER_POP

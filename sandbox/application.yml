@@ -10,7 +10,7 @@ engine:
     modelMatrix: un_model
     viewProjectionMatrix: un_viewProjection
   window:
-    size: HD
+    size: SD
     title: LearnOpenGL
 application:
   scene:

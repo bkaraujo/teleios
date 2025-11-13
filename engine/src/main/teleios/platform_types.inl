@@ -15,12 +15,13 @@
  * This pattern differs from memory/thread systems which use runtime dispatch.
  */
 typedef struct {
-    b8   (*initialize       )(void);
-    b8   (*terminate        )(void);
-    i8   (*path_separator   )(void);
-    u64  (*time_epoch_millis)(void);
-    u64  (*time_epoch_micros)(void);
-    void (*time_clock       )(TLDateTime*);
+    b8          (*initialize            )(void);
+    b8          (*terminate             )(void);
+    i8          (*path_separator        )(void);
+    const char* (*get_current_directory )(void);
+    u64         (*time_epoch_millis     )(void);
+    u64         (*time_epoch_micros     )(void);
+    void        (*time_clock            )(TLDateTime*);
 } TLPlatform;
 
 #endif

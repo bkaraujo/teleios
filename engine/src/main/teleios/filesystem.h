@@ -32,4 +32,6 @@
  */
 i8 tl_filesystem_path_separator(void);
 
+const char* tl_filesystem_get_current_directory(void);
+
 #endif

@@ -31,23 +31,25 @@ static TLPlatform platform = { 0 };
  */
 b8 tl_platform_initialize(void) {
 #ifdef TL_PLATFORM_LINUX
-    platform.initialize         = tl_lnx_initialize;
-    platform.terminate          = tl_lnx_terminate;
-    platform.path_separator     = tl_lnx_filesystem_path_separator;
-    platform.time_clock         = tl_lnx_time_clock;
-    platform.time_epoch_millis  = tl_lnx_time_epoch_millis;
-    platform.time_epoch_micros  = tl_lnx_time_epoch_micros;
+    platform.initialize             = tl_lnx_initialize;
+    platform.terminate              = tl_lnx_terminate;
+    platform.path_separator         = tl_lnx_filesystem_path_separator;
+    platform.get_current_directory  = tl_lnx_filesystem_get_current_directory;
+    platform.time_clock             = tl_lnx_time_clock;
+    platform.time_epoch_millis      = tl_lnx_time_epoch_millis;
+    platform.time_epoch_micros      = tl_lnx_time_epoch_micros;
 #else
-    platform.initialize         = tl_winapi_initialize;
-    platform.terminate          = tl_winapi_terminate;
-    platform.path_separator     = tl_winapi_filesystem_path_separator;
-    platform.time_clock         = tl_winapi_time_clock;
-    platform.time_epoch_millis  = tl_winapi_time_epoch_millis;
-    platform.time_epoch_micros  = tl_winapi_time_epoch_micros;
+    platform.initialize             = tl_winapi_initialize;
+    platform.terminate              = tl_winapi_terminate;
+    platform.path_separator         = tl_winapi_filesystem_path_separator;
+    platform.get_current_directory  = tl_winapi_filesystem_get_current_directory;
+    platform.time_clock             = tl_winapi_time_clock;
+    platform.time_epoch_millis      = tl_winapi_time_epoch_millis;
+    platform.time_epoch_micros      = tl_winapi_time_epoch_micros;
 #endif
-
-    // NOW safe to use profiler/logger since time functions are initialized
     TL_PROFILER_PUSH
+
+    TLINFO("Iniciando %s", platform.get_current_directory())
 
     // Initialize platform-specific subsystem
     if (!platform.initialize()) {

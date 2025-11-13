@@ -18,44 +18,6 @@ The project uses **CMake** (version 3.20+) as its build system with automatic de
 - C11-compatible compiler (Clang, GCC, or MSVC)
 - Git (for downloading dependencies)
 
-See [CMAKE_BUILD.md](CMAKE_BUILD.md) for detailed setup instructions.
-
-### Building the Project
-
-```powershell
-# Build everything (engine + sandbox) - Debug mode
-.\build.ps1
-
-# Clean build
-.\build.ps1 -Clean
-
-# Release build
-.\build.ps1 -Release
-
-# Build only engine
-.\build.ps1 -EngineOnly
-
-# Build only sandbox
-.\build.ps1 -SandboxOnly
-```
-
-#### Manual CMake Build
-
-```bash
-# Configure
-mkdir build && cd build
-cmake -G "MinGW Makefiles" ..  # Windows with MinGW
-# or
-cmake -G "Unix Makefiles" ..    # Linux/macOS
-
-# Build
-cmake --build . --config Debug
-
-# Build specific target
-cmake --build . --target engine
-cmake --build . --target sandbox
-```
-
 ### Build System Architecture
 
 The build system uses CMake with three configuration files:
@@ -97,8 +59,6 @@ All external libraries are automatically downloaded and built by CMake using Fet
 - Supports PNG, JPG, BMP, TGA, PSD, GIF, HDR, PIC formats
 - Header-only, no compilation needed
 
-No manual dependency installation required - just run `.\build.ps1`
-
 ### Engine Build Configuration
 
 The engine is built as a standalone executable with:
@@ -115,7 +75,6 @@ The engine is built as a standalone executable with:
   - GCC/Clang: `-Wall`, `-Wextra`, `-std=c11`
   - Debug: `-O0`/`/Od`, `-g`/`/Zi`
   - Release: `-O3`/`/O2`
-- **Output**: `engine.exe` (Windows), `engine` (Linux/macOS)
 
 ### Sandbox Build Configuration
 
@@ -191,7 +150,7 @@ Uses compiler-specific attributes for DLL export/import:
 - `tl_application_terminate()` - Cleanup
 
 **Game Loop Architecture:**
-- **Fixed timestep**: 60 Hz (16.667ms per update)
+- **Fixed timestep**: defined in the client application.yml file
 - **Accumulator-based**: Decouples simulation from rendering for consistent physics
 - **Spiral of death protection**: Caps max frame time at 250ms
 - **Interpolation support**: Alpha value computed for smooth rendering between updates
@@ -771,16 +730,6 @@ TL_INLINE void* tl_window_handler() {
 - All OpenGL work submitted via `tl_graphics_submit_*()` functions
 - `glfwPollEvents()` called on main thread, rendering submitted asynchronously to graphics thread
 
-## Compiler Configuration
-
-The project supports multiple compilers:
-- **C Standard**: C11 (`-std=c11`)
-- **Warnings**: `-Wall`, `-Wextra`
-- **Supported Compilers**: Clang, GCC, MSVC
-- **Windows-specific**: CodeView debug format (`-gcodeview`) for Clang/GCC
-
-CMake automatically detects and configures the compiler.
-
 ## Build Artifacts
 
 Build outputs are organized in the `build/` directory:
@@ -944,14 +893,6 @@ The logger is highly optimized with measured timings per log call:
 - Extremely deep recursion (>1000 levels, e.g., pathological cases)
 - Production builds (overhead of logging and memory usage)
 - Real-time profiling with minimal overhead (consider external tools like Tracy, Optick)
-
-### Game Loop Performance
-
-- Fixed 60 Hz update rate ensures consistent simulation
-- Accumulator pattern allows rendering faster than 60 FPS without physics jitter
-- Spiral of death protection prevents accumulator overflow in extreme lag scenarios
-- Windows timing: QueryPerformanceCounter optimized with pre-calculated multiplier
-- Linux timing: Direct `clock_gettime()` syscalls
 
 ### Thread Safety
 
