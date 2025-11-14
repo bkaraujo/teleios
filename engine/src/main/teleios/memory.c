@@ -178,24 +178,14 @@ void tl_memory_copy(void *target, const void *source, const u32 size){
 b8 tl_memory_terminate(void) {
     TL_PROFILER_PUSH
 
-    while (true) {
-        if (m_allocators_count == U16_MAX) {
-            break;
-        }
-
+    // Release all dangling allocators
+    while (m_allocators_count > 0) {
         TLAllocator* allocator = m_allocators[m_allocators_count - 1];
-        if (allocator != NULL) {
-            TLWARN("Releasing dangling allocator 0x%p", allocator)
-
+        TLWARN("Releasing dangling allocator 0x%p", allocator)
 #if defined(TELEIOS_BUILD_DEBUG)
-            // Print stack trace showing where this allocator was created
-            tl_profiler_stacktrace_print(&allocator->stack_trace);
+        tl_profiler_stacktrace_print(&allocator->stack_trace);
 #endif
-
-            tl_memory_allocator_destroy(allocator);
-        }
-
-        m_allocators[--m_allocators_count] = NULL;
+        tl_memory_allocator_destroy(allocator);
     }
 
     if (m_allocators != NULL) {
