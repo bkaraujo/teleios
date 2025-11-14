@@ -13,6 +13,7 @@ struct TLQueue {
     u16 head;               // Next slot for insertion
     u16 tail;               // Next slot for removal
     u16 count;              // Current number of items
+    u32 mod_count;          // Modification counter for fail-fast iteration
 
     TLMutex* mutex;         // Thread-safety
     TLCondition* not_empty; // Signals when items are available
@@ -31,6 +32,7 @@ struct TLObjectPool {
     u32 object_size;        // Size of each object in bytes
     u16 capacity;           // Total number of objects
     u16 next_free;          // Hint: next potentially free object
+    u32 mod_count;          // Modification counter for fail-fast iteration
     TLMutex* mutex;         // Thread-safety for acquire/release operations
     TLAllocator* allocator; // Memory allocator for cleanup
 };
@@ -49,6 +51,7 @@ struct TLList {
     TLListNode* head;       // First node in list
     TLListNode* tail;       // Last node in list
     u32 size;               // Current number of nodes
+    u32 mod_count;          // Modification counter for fail-fast iteration
     TLMutex* mutex;         // Thread-safety
     TLAllocator* allocator; // Memory allocator for cleanup
 };
@@ -67,6 +70,7 @@ struct TLMap {
     TLMapEntry** buckets;   // Array of bucket pointers (separate chaining)
     u32 capacity;           // Number of buckets
     u32 size;               // Number of key-value pairs
+    u32 mod_count;          // Modification counter for fail-fast iteration
     f32 load_factor;        // Maximum load factor before resize
     TLMutex* mutex;         // Thread-safety
     TLAllocator* allocator; // Memory allocator for cleanup
@@ -77,10 +81,36 @@ struct TLMap {
 // ---------------------------------
 
 struct TLIterator {
-    void** items;           // Array of void* pointers (snapshot of list)
-    u32 size;               // Total number of items in snapshot
-    u32 current;            // Current iteration index (0-based)
-    TLAllocator* allocator; // Memory allocator for cleanup
+    void* source;           // Pointer to container being iterated (TLList*, TLMap*, TLQueue*, or TLObjectPool*)
+    u32 expected_mod_count; // Expected modification count (for fail-fast)
+    u32 size;               // Total number of items in container
+
+    // Function pointers for polymorphic behavior
+    void    (*has_modified  )(const TLIterator* iterator);  // Check for concurrent modifications
+    b8      (*has_next      )(const TLIterator* iterator);  // Check if more items available
+    void*   (*next          )(TLIterator* iterator      );  // Get next item and advance
+    void    (*rewind        )(TLIterator* iterator      );  // Reset to beginning
+
+    // State specific to container type
+    union {
+        struct {
+            TLListNode* current_node;  // Current node in list
+        } list;
+
+        struct {
+            u32 bucket_index;          // Current bucket index
+            TLMapEntry* current_entry; // Current entry in bucket chain
+        } map;
+
+        struct {
+            u16 index;                 // Current index in circular buffer
+            u16 remaining;             // Number of items left to iterate
+        } queue;
+
+        struct {
+            u16 index;                 // Current index in pool
+        } pool;
+    } state;
 };
 
 #endif

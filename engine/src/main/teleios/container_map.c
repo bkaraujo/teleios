@@ -183,6 +183,7 @@ TLList* tl_map_get_or_create(TLMap* map, const TLString* key) {
     new_entry->next = map->buckets[index];
     map->buckets[index] = new_entry;
     map->size++;
+    map->mod_count++;
 
     tl_mutex_unlock(map->mutex);
     TL_PROFILER_POP_WITH(new_list)
@@ -279,6 +280,7 @@ TLList* tl_map_remove(TLMap* map, const TLString* key) {
             tl_memory_free(map->allocator, entry);
 
             map->size--;
+            map->mod_count++;
             tl_mutex_unlock(map->mutex);
             TL_PROFILER_POP_WITH(value)
         }
@@ -361,7 +363,75 @@ void tl_map_clear(TLMap* map) {
     }
 
     map->size = 0;
+    map->mod_count++;
     tl_mutex_unlock(map->mutex);
+
+    TL_PROFILER_POP
+}
+
+// ---------------------------------
+// Map Iterator Implementation
+// ---------------------------------
+
+static void tl_map_iterator_check_modification(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLMap* map = (const TLMap*)iterator->source;
+    if (map->mod_count != iterator->expected_mod_count) {
+        TLFATAL("Concurrent modification detected during map iteration! Map was modified while being iterated (expected mod_count=%u, actual=%u)",
+                iterator->expected_mod_count, map->mod_count)
+    }
+    TL_PROFILER_POP
+}
+
+static b8 tl_map_iterator_has_next(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const b8 has_next = (iterator->state.map.current_entry != NULL);
+    TL_PROFILER_POP_WITH(has_next)
+}
+
+static void* tl_map_iterator_next(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    if (iterator->state.map.current_entry == NULL) {
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    void* key = (void*)iterator->state.map.current_entry->key;
+
+    // Move to next entry in chain, or next non-empty bucket
+    iterator->state.map.current_entry = iterator->state.map.current_entry->next;
+
+    if (iterator->state.map.current_entry == NULL) {
+        // Current bucket chain exhausted, find next non-empty bucket
+        TLMap* map = (TLMap*)iterator->source;
+        iterator->state.map.bucket_index++;
+
+        while (iterator->state.map.bucket_index < map->capacity) {
+            if (map->buckets[iterator->state.map.bucket_index] != NULL) {
+                iterator->state.map.current_entry = map->buckets[iterator->state.map.bucket_index];
+                break;
+            }
+            iterator->state.map.bucket_index++;
+        }
+    }
+
+    TL_PROFILER_POP_WITH(key)
+}
+
+static void tl_map_iterator_rewind(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    TLMap* map = (TLMap*)iterator->source;
+
+    // Find first non-empty bucket
+    iterator->state.map.bucket_index = 0;
+    iterator->state.map.current_entry = NULL;
+
+    for (u32 i = 0; i < map->capacity; ++i) {
+        if (map->buckets[i] != NULL) {
+            iterator->state.map.bucket_index = i;
+            iterator->state.map.current_entry = map->buckets[i];
+            break;
+        }
+    }
 
     TL_PROFILER_POP
 }
@@ -373,46 +443,35 @@ TLIterator* tl_map_keys(TLMap* map) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
+    // Lock map to capture current state
     tl_mutex_lock(map->mutex);
 
-    if (map->size == 0) {
-        tl_mutex_unlock(map->mutex);
-        TL_PROFILER_POP_WITH(NULL)
-    }
+    // Allocate iterator on map's allocator
+    TLIterator* iterator = tl_memory_alloc(map->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
 
-
-    // Lock list to create thread-safe snapshot
-    tl_mutex_lock(map->mutex);
-
-    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    TLIterator* iterator = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
-    iterator->allocator = allocator;
-    iterator->current = 0;
-
+    // Initialize fail-fast iterator with data
+    iterator->source = map;
+    iterator->expected_mod_count = map->mod_count;
     iterator->size = map->size;
 
-    // Empty list - create empty iterator
-    if (iterator->size == 0) {
-        tl_mutex_unlock(map->mutex);
-        iterator->items = NULL;
+    // Find first non-empty bucket
+    iterator->state.map.bucket_index = 0;
+    iterator->state.map.current_entry = NULL;
 
-        TL_PROFILER_POP_WITH(iterator)
+    for (u32 i = 0; i < map->capacity; ++i) {
+        if (map->buckets[i] != NULL) {
+            iterator->state.map.bucket_index = i;
+            iterator->state.map.current_entry = map->buckets[i];
+            break;
+        }
     }
 
-    // Allocate iterator structure
-    iterator->items = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(void*) * iterator->size);
+    // Assign function pointers
+    iterator->has_modified = tl_map_iterator_check_modification;
+    iterator->has_next = tl_map_iterator_has_next;
+    iterator->next = tl_map_iterator_next;
+    iterator->rewind = tl_map_iterator_rewind;
 
-    // Copy all data pointers into contiguous array
-    // This is the only part that needs the lock - after this, iteration is lock-free
-    TLMapEntry** node = map->buckets;
-
-    u32 index = 0;
-    while (node != NULL && index < iterator->size) {
-        iterator->items[index] = node[index]->key;
-        index++;
-    }
-
-    // Unlock - snapshot is complete
     tl_mutex_unlock(map->mutex);
 
     TL_PROFILER_POP_WITH(iterator)

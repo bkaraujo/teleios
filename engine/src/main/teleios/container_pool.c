@@ -2,6 +2,7 @@
 #include "teleios/teleios.h"
 #include "teleios/container_types.inl"
 
+
 // ---------------------------------
 // Object Pool Lifecycle
 // ---------------------------------
@@ -90,6 +91,7 @@ void* tl_pool_acquire(TLObjectPool* pool) {
             // Found free object
             pool->in_use[index] = true;
             pool->next_free = (index + 1) % pool->capacity;
+            pool->mod_count++;
 
             // Calculate pointer to object
             void* object = pool->memory + (index * pool->object_size);
@@ -140,6 +142,7 @@ void tl_pool_release(TLObjectPool* pool, void* object) {
 
     // Mark as free
     pool->in_use[index] = false;
+    pool->mod_count++;
     // Don't update next_free here - let it continue round-robin from where it left off
     // This prevents LIFO behavior that causes the same object to be reused immediately
 
@@ -216,10 +219,102 @@ void tl_pool_reset(TLObjectPool* pool) {
 
     pool->next_free = 0;
     tl_memory_set(pool->in_use, 0, sizeof(b8) * pool->capacity);
+    pool->mod_count++;
 
     tl_mutex_unlock(pool->mutex);
 
     TLTRACE("Object pool 0x%p reset (%u objects now available)", pool, pool->capacity)
 
     TL_PROFILER_POP
+}
+// ---------------------------------
+// Pool Iterator Implementation
+// ---------------------------------
+
+static void tl_pool_iterator_check_modification(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLObjectPool* pool = (const TLObjectPool*)iterator->source;
+    if (pool->mod_count != iterator->expected_mod_count) {
+        TLFATAL("Concurrent modification detected during pool iteration! Pool was modified while being iterated (expected mod_count=%u, actual=%u)",
+                iterator->expected_mod_count, pool->mod_count)
+    }
+    TL_PROFILER_POP
+}
+
+static b8 tl_pool_iterator_has_next(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLObjectPool* pool = (const TLObjectPool*)iterator->source;
+
+    // Search for next in-use object from current index
+    for (u16 i = iterator->state.pool.index; i < pool->capacity; ++i) {
+        if (pool->in_use[i]) {
+            TL_PROFILER_POP_WITH(true)
+        }
+    }
+
+    TL_PROFILER_POP_WITH(false)
+}
+
+static void* tl_pool_iterator_next(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    TLObjectPool* pool = (TLObjectPool*)iterator->source;
+
+    // Find next in-use object starting from current index
+    while (iterator->state.pool.index < pool->capacity) {
+        if (pool->in_use[iterator->state.pool.index]) {
+            // Found in-use object
+            void* object = pool->memory + (iterator->state.pool.index * pool->object_size);
+            iterator->state.pool.index++;
+            TL_PROFILER_POP_WITH(object)
+        }
+        iterator->state.pool.index++;
+    }
+
+    // No more objects
+    TL_PROFILER_POP_WITH(NULL)
+}
+
+static void tl_pool_iterator_rewind(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    iterator->state.pool.index = 0;
+    TL_PROFILER_POP
+}
+
+TLIterator* tl_pool_iterator(TLObjectPool* pool) {
+    TL_PROFILER_PUSH_WITH("0x%p", pool)
+    if (pool == NULL) {
+        TLERROR("Attempt to use a NULL TLObjectPool")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    // Lock pool to capture current state
+    tl_mutex_lock(pool->mutex);
+
+    // Allocate iterator on pool's allocator
+    TLIterator* iterator = tl_memory_alloc(pool->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
+
+    // Initialize fail-fast iterator with data
+    iterator->source = pool;
+    iterator->expected_mod_count = pool->mod_count;
+
+    // Count in-use objects for size
+    u32 count = 0;
+    for (u16 i = 0; i < pool->capacity; ++i) {
+        if (pool->in_use[i]) {
+            count++;
+        }
+    }
+
+    iterator->size = count;
+    iterator->state.pool.index = 0;
+
+    // Assign function pointers
+    iterator->has_modified = tl_pool_iterator_check_modification;
+    iterator->has_next = tl_pool_iterator_has_next;
+    iterator->next = tl_pool_iterator_next;
+    iterator->rewind = tl_pool_iterator_rewind;
+
+    tl_mutex_unlock(pool->mutex);
+
+    TL_PROFILER_POP_WITH(iterator)
 }

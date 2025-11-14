@@ -2,6 +2,7 @@
 #include "teleios/teleios.h"
 #include "teleios/container_types.inl"
 
+
 // ---------------------------------
 // Queue Lifecycle
 // ---------------------------------
@@ -74,6 +75,7 @@ void tl_queue_offer(TLQueue* queue, void* payload) {
     queue->items[queue->head] = payload;
     queue->head = (queue->head + 1) % queue->capacity;
     queue->count++;
+    queue->mod_count++;
 
     tl_condition_signal(queue->not_empty);
     tl_mutex_unlock(queue->mutex);
@@ -99,6 +101,7 @@ void tl_queue_push(TLQueue* queue, void* payload) {
     queue->items[queue->head] = payload;
     queue->head = (queue->head + 1) % queue->capacity;
     queue->count++;
+    queue->mod_count++;
 
     tl_condition_signal(queue->not_empty);
     tl_mutex_unlock(queue->mutex);
@@ -123,6 +126,7 @@ void* tl_queue_pop(TLQueue* queue) {
     void* payload = queue->items[queue->tail];
     queue->tail = (queue->tail + 1) % queue->capacity;
     queue->count--;
+    queue->mod_count++;
 
     tl_condition_signal(queue->not_full);
     tl_mutex_unlock(queue->mutex);
@@ -215,10 +219,83 @@ void tl_queue_clear(TLQueue* queue) {
     queue->head = 0;
     queue->tail = 0;
     queue->count = 0;
+    queue->mod_count++;
 
     // Signal waiting threads
     tl_condition_broadcast(queue->not_full);
     tl_mutex_unlock(queue->mutex);
 
     TL_PROFILER_POP
+}
+// ---------------------------------
+// Queue Iterator Implementation
+// ---------------------------------
+
+static void tl_queue_iterator_check_modification(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLQueue* queue = (const TLQueue*)iterator->source;
+    if (queue->mod_count != iterator->expected_mod_count) {
+        TLFATAL("Concurrent modification detected during queue iteration! Queue was modified while being iterated (expected mod_count=%u, actual=%u)",
+                iterator->expected_mod_count, queue->mod_count)
+    }
+    TL_PROFILER_POP
+}
+
+static b8 tl_queue_iterator_has_next(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const b8 has_next = (iterator->state.queue.remaining > 0);
+    TL_PROFILER_POP_WITH(has_next)
+}
+
+static void* tl_queue_iterator_next(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    if (iterator->state.queue.remaining == 0) {
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    const TLQueue* queue = (const TLQueue*)iterator->source;
+    void* item = queue->items[iterator->state.queue.index];
+    iterator->state.queue.index = (iterator->state.queue.index + 1) % queue->capacity;
+    iterator->state.queue.remaining--;
+
+    TL_PROFILER_POP_WITH(item)
+}
+
+static void tl_queue_iterator_rewind(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLQueue* queue = (const TLQueue*)iterator->source;
+    iterator->state.queue.index = queue->tail;
+    iterator->state.queue.remaining = queue->count;
+    TL_PROFILER_POP
+}
+
+TLIterator* tl_queue_iterator(TLQueue* queue) {
+    TL_PROFILER_PUSH_WITH("0x%p", queue)
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    // Lock queue to capture current state
+    tl_mutex_lock(queue->mutex);
+
+    // Allocate iterator on queue's allocator
+    TLIterator* iterator = tl_memory_alloc(queue->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
+
+    // Initialize fail-fast iterator with data
+    iterator->source = queue;
+    iterator->expected_mod_count = queue->mod_count;
+    iterator->size = queue->count;
+    iterator->state.queue.index = queue->tail;
+    iterator->state.queue.remaining = queue->count;
+
+    // Assign function pointers
+    iterator->has_modified = tl_queue_iterator_check_modification;
+    iterator->has_next = tl_queue_iterator_has_next;
+    iterator->next = tl_queue_iterator_next;
+    iterator->rewind = tl_queue_iterator_rewind;
+
+    tl_mutex_unlock(queue->mutex);
+
+    TL_PROFILER_POP_WITH(iterator)
 }

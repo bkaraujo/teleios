@@ -42,6 +42,44 @@ void tl_list_destroy(TLList* list) {
     TL_PROFILER_POP
 }
 
+// ---------------------------------
+// List Iterator Implementation
+// ---------------------------------
+
+static void tl_list_iterator_check_modification(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLList* list = (const TLList*)iterator->source;
+    if (list->mod_count != iterator->expected_mod_count) {
+        TLFATAL("Concurrent modification detected during list iteration! List was modified while being iterated (expected mod_count=%u, actual=%u)",
+                iterator->expected_mod_count, list->mod_count)
+    }
+    TL_PROFILER_POP
+}
+
+static b8 tl_list_iterator_has_next(const TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const b8 has_next = (iterator->state.list.current_node != NULL);
+    TL_PROFILER_POP_WITH(has_next)
+}
+
+static void* tl_list_iterator_next(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    if (iterator->state.list.current_node == NULL) {
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    void* data = iterator->state.list.current_node->data;
+    iterator->state.list.current_node = iterator->state.list.current_node->next;
+    TL_PROFILER_POP_WITH(data)
+}
+
+static void tl_list_iterator_rewind(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    const TLList* list = (const TLList*)iterator->source;
+    iterator->state.list.current_node = list->head;
+    TL_PROFILER_POP
+}
+
 TLIterator* tl_list_iterator (TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
@@ -49,36 +87,24 @@ TLIterator* tl_list_iterator (TLList* list) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    // Lock list to create thread-safe snapshot
+    // Lock list to capture current state
     tl_mutex_lock(list->mutex);
 
-    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    TLIterator* iterator = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
-    iterator->allocator = allocator;
+    // Allocate iterator on list's allocator
+    TLIterator* iterator = tl_memory_alloc(list->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
+
+    // Initialize fail-fast iterator with data
+    iterator->source = list;
+    iterator->expected_mod_count = list->mod_count;
     iterator->size = list->size;
+    iterator->state.list.current_node = list->head;
 
-    // Empty list - create empty iterator
-    if (iterator->size == 0) {
-        tl_mutex_unlock(list->mutex);
-        iterator->items = NULL;
+    // Assign function pointers
+    iterator->has_modified = tl_list_iterator_check_modification;
+    iterator->has_next = tl_list_iterator_has_next;
+    iterator->next = tl_list_iterator_next;
+    iterator->rewind = tl_list_iterator_rewind;
 
-        TL_PROFILER_POP_WITH(iterator)
-    }
-
-    // Allocate iterator structure
-    iterator->items = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(void*) * iterator->size);
-
-    // Copy all data pointers into contiguous array
-    // This is the only part that needs the lock - after this, iteration is lock-free
-    const TLListNode* node = list->head;
-    u32 index = 0;
-
-    while (node != NULL && index < iterator->size) {
-        iterator->items[index++] = node->data;
-        node = node->next;
-    }
-
-    // Unlock - snapshot is complete
     tl_mutex_unlock(list->mutex);
 
     TL_PROFILER_POP_WITH(iterator)
@@ -127,6 +153,7 @@ void tl_list_push_front(TLList* list, void* data) {
     }
 
     list->size++;
+    list->mod_count++;
     tl_mutex_unlock(list->mutex);
 
     TL_PROFILER_POP
@@ -154,6 +181,7 @@ void tl_list_push_back(TLList* list, void* data) {
     }
 
     list->size++;
+    list->mod_count++;
     tl_mutex_unlock(list->mutex);
 
     TL_PROFILER_POP
@@ -187,6 +215,7 @@ void tl_list_insert_after(TLList* list, TLListNode* node, void* data) {
 
     node->next = new_node;
     list->size++;
+    list->mod_count++;
 
     tl_mutex_unlock(list->mutex);
 
@@ -221,6 +250,7 @@ void tl_list_insert_before(TLList* list, TLListNode* node, void* data) {
 
     node->prev = new_node;
     list->size++;
+    list->mod_count++;
 
     tl_mutex_unlock(list->mutex);
 
@@ -258,6 +288,7 @@ void* tl_list_pop_front(TLList* list) {
     }
 
     list->size--;
+    list->mod_count++;
 
     tl_list_free_node(list->allocator, node);
     tl_mutex_unlock(list->mutex);
@@ -287,6 +318,7 @@ void* tl_list_pop_back(TLList* list) {
     else                    { list->head = NULL; }
 
     list->size--;
+    list->mod_count++;
     tl_list_free_node(list->allocator, node);
 
     tl_mutex_unlock(list->mutex);
@@ -327,6 +359,7 @@ void* tl_list_remove(TLList* list, TLListNode* node) {
     }
 
     list->size--;
+    list->mod_count++;
 
     tl_list_free_node(list->allocator, node);
     tl_mutex_unlock(list->mutex);
@@ -417,6 +450,7 @@ void tl_list_clear(TLList* list) {
     list->head = NULL;
     list->tail = NULL;
     list->size = 0;
+    list->mod_count++;
 
     tl_mutex_unlock(list->mutex);
 

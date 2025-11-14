@@ -271,6 +271,39 @@ b8 tl_queue_is_full(const TLQueue* queue);
  */
 void tl_queue_clear(TLQueue* queue);
 
+/**
+ * @brief Create an iterator for the queue with fail-fast behavior
+ *
+ * Creates an iterator that tracks the current state of the queue at creation time.
+ * If the queue is modified during iteration, the iterator will detect this and
+ * trigger a FATAL error.
+ *
+ * @param queue Queue to iterate over
+ * @return Pointer to new iterator, or NULL on allocation failure
+ *
+ * @note Thread-safe - uses queue mutex during creation
+ * @note Iterator must be destroyed with tl_iterator_destroy()
+ * @note Modifying queue during iteration causes FATAL error (fail-fast)
+ * @note Iteration follows FIFO order (tail to head)
+ *
+ * @see tl_iterator_destroy
+ * @see tl_iterator_next
+ * @see tl_iterator_has_next
+ *
+ * @code
+ * TLIterator* iter = tl_queue_iterator(queue);
+ *
+ * while (tl_iterator_has_next(iter)) {
+ *     void* item = tl_iterator_next(iter);
+ *     process_item(item);
+ *     // DO NOT modify queue here - will cause FATAL error
+ * }
+ *
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+TLIterator* tl_queue_iterator(TLQueue* queue);
+
 // =================================
 // OBJECT POOL API
 // =================================
@@ -473,6 +506,41 @@ u16 tl_pool_capacity(const TLObjectPool* pool);
  */
 void tl_pool_reset(TLObjectPool* pool);
 
+/**
+ * @brief Create an iterator for the pool with fail-fast behavior
+ *
+ * Creates an iterator that tracks the current state of the pool at creation time.
+ * If the pool is modified during iteration (acquire/release), the iterator will
+ * detect this and trigger a FATAL error.
+ *
+ * @param pool Pool to iterate over
+ * @return Pointer to new iterator, or NULL on allocation failure
+ *
+ * @note Thread-safe - uses pool mutex during creation
+ * @note Iterator must be destroyed with tl_iterator_destroy()
+ * @note Modifying pool during iteration causes FATAL error (fail-fast)
+ * @note Only iterates over currently acquired objects (in-use objects)
+ * @note Iteration order is index-sequential (0 to capacity-1)
+ *
+ * @see tl_iterator_destroy
+ * @see tl_iterator_next
+ * @see tl_iterator_has_next
+ *
+ * @code
+ * TLIterator* iter = tl_pool_iterator(pool);
+ *
+ * while (tl_iterator_has_next(iter)) {
+ *     void* object = tl_iterator_next(iter);
+ *     MyObject* obj = (MyObject*)object;
+ *     process_object(obj);
+ *     // DO NOT acquire/release from pool here - will cause FATAL error
+ * }
+ *
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+TLIterator* tl_pool_iterator(TLObjectPool* pool);
+
 // =================================
 // DOUBLE LINKED LIST API
 // =================================
@@ -537,38 +605,36 @@ TLList* tl_list_create(TLAllocator* allocator);
 void tl_list_destroy(TLList* list);
 
 /**
- * @brief Create an iterator with a snapshot of the list
+ * @brief Create an iterator for the list with fail-fast behavior
  *
- * Creates a snapshot of all items in the list at the time of creation.
- * The iterator is optimized for hot loops with:
- * - Contiguous memory layout (cache-friendly)
- * - No locking after creation
- * - Direct array access (O(1))
+ * Creates an iterator that tracks the current state of the list at creation time.
+ * If the list is modified during iteration, the iterator will detect this and
+ * trigger a FATAL error.
  *
  * @param list List to iterate over
  * @return Pointer to new iterator, or NULL on allocation failure
  *
- * @note Snapshot creation is THREAD-SAFE (uses list mutex)
- * @note After creation, iteration is LOCK-FREE
+ * @note Thread-safe - uses list mutex during creation
  * @note Iterator must be destroyed with tl_iterator_destroy()
- * @note Snapshot is independent of list changes after creation
- * @note Optimized for high-performance hot loops
+ * @note Modifying list during iteration causes FATAL error (fail-fast)
+ * @note Iteration follows forward direction (head to tail)
  *
  * @see tl_iterator_destroy
  * @see tl_iterator_next
+ * @see tl_iterator_has_next
  *
  * @code
- * TLIterator* iter = tl_iterator_create(list);
+ * TLIterator* iter = tl_list_iterator(list);
  *
  * if (iter == NULL) {
  *     TLERROR("Iterator creation failed");
  *     return;
  * }
  *
- * // Fast iteration (no locks)
  * while (tl_iterator_has_next(iter)) {
  *     void* item = tl_iterator_next(iter);
  *     process_item(item);
+ *     // DO NOT modify list here - will cause FATAL error
  * }
  *
  * tl_iterator_destroy(iter);
@@ -939,25 +1005,24 @@ TLMap* tl_map_create(TLAllocator* allocator, u32 capacity);
 void tl_map_destroy(TLMap* map);
 
 /**
-* @brief Create an iterator with a snapshot of the map keys
+ * @brief Create an iterator for the map keys with fail-fast behavior
  *
- * Creates a snapshot of all items in the map keys at the time of creation.
- * The iterator is optimized for hot loops with:
- * - Contiguous memory layout (cache-friendly)
- * - No locking after creation
- * - Direct array access (O(1))
+ * Creates an iterator that tracks the current state of the map at creation time.
+ * If the map is modified during iteration, the iterator will detect this and
+ * trigger a FATAL error.
  *
  * @param map Map to iterate over
  * @return Pointer to new iterator, or NULL on allocation failure
  *
- * @note Snapshot creation is THREAD-SAFE (uses list mutex)
- * @note After creation, iteration is LOCK-FREE
+ * @note Thread-safe - uses map mutex during creation
  * @note Iterator must be destroyed with tl_iterator_destroy()
- * @note Snapshot is independent of list changes after creation
- * @note Optimized for high-performance hot loops
+ * @note Modifying map during iteration causes FATAL error (fail-fast)
+ * @note Returns TLString* keys during iteration
+ * @note Iteration order is bucket-sequential (unordered)
  *
  * @see tl_iterator_destroy
  * @see tl_iterator_next
+ * @see tl_iterator_has_next
  *
  * @code
  * TLIterator* iter = tl_map_keys(map);
@@ -967,10 +1032,11 @@ void tl_map_destroy(TLMap* map);
  *     return;
  * }
  *
- * // Fast iteration (no locks)
  * while (tl_iterator_has_next(iter)) {
- *     void* item = tl_iterator_next(iter);
- *     process_item(item);
+ *     TLString* key = (TLString*)tl_iterator_next(iter);
+ *     TLList* values = tl_map_get(map, key);
+ *     process_values(values);
+ *     // DO NOT modify map here - will cause FATAL error
  * }
  *
  * tl_iterator_destroy(iter);
@@ -1217,24 +1283,27 @@ b8 tl_map_is_empty(TLMap* map);
 void tl_map_clear(TLMap* map);
 
 // =================================
-// ITERATOR API (Snapshot-based)
+// ITERATOR API (Fail-Fast)
 // =================================
 
 /**
  * @brief Destroy an iterator and free its memory
  *
- * Frees the snapshot array and iterator structure.
+ * Frees the iterator structure.
  *
  * @param iterator Iterator to destroy (may be NULL)
  *
  * @note Safe to call with NULL (no-op)
- * @note Does NOT affect the original list
+ * @note Does NOT affect the original container
  * @note Does NOT free the data pointed to by items
  *
- * @see tl_iterator_create
+ * @see tl_list_iterator
+ * @see tl_map_keys
+ * @see tl_queue_iterator
+ * @see tl_pool_iterator
  *
  * @code
- * TLIterator* iter = tl_iterator_create(list);
+ * TLIterator* iter = tl_list_iterator(list);
  * // ... use iterator ...
  * tl_iterator_destroy(iter);
  * @endcode
@@ -1245,20 +1314,21 @@ void tl_iterator_destroy(TLIterator* iterator);
  * @brief Check if iterator has more items
  *
  * Returns true if there are more items to iterate over.
- * Optimized for hot loops - uses inline comparison.
+ * Also performs fail-fast check for concurrent modifications.
  *
  * @param iterator Iterator to check
  * @return true if more items available, false otherwise
  *
- * @note Inline function for maximum performance
+ * @note Checks for concurrent modification (fail-fast)
  * @note Returns false if iterator is NULL
+ * @note Causes FATAL error if container was modified
  *
  * @see tl_iterator_next
  *
  * @code
  * while (tl_iterator_has_next(iter)) {
  *     void* item = tl_iterator_next(iter);
- *     // Hot loop code here
+ *     process_item(item);
  * }
  * @endcode
  */
@@ -1268,17 +1338,17 @@ b8 tl_iterator_has_next(const TLIterator* iterator);
  * @brief Get next item from iterator
  *
  * Returns the next item and advances the iterator.
- * Optimized for hot loops with direct array access.
+ * Performs fail-fast check for concurrent modifications.
  *
  * @param iterator Iterator to advance
  * @return Next void* pointer, or NULL if no more items or iterator is NULL
  *
- * @note Does NOT check bounds - use tl_iterator_has_next() first
- * @note Direct array access for maximum performance
+ * @note Checks for concurrent modification (fail-fast)
  * @note Returns NULL if iterator is NULL or exhausted
+ * @note Causes FATAL error if container was modified
  *
  * @see tl_iterator_has_next
- * @see tl_iterator_reset
+ * @see tl_iterator_rewind
  *
  * @code
  * while (tl_iterator_has_next(iter)) {
@@ -1293,17 +1363,22 @@ void* tl_iterator_next(TLIterator* iterator);
 /**
  * @brief Rewind iterator to beginning
  *
- * Resets the internal index to 0, allowing re-iteration over the snapshot.
+ * Resets the iterator to the beginning of the container.
+ * Performs fail-fast check for concurrent modifications.
  *
  * @param iterator Iterator to reset
  *
- * @note Does not create a new snapshot
- * @note Inline function for performance
+ * @note Resets position to start of container
+ * @note Checks for concurrent modification (fail-fast)
+ * @note Causes FATAL error if container was modified
  *
- * @see tl_iterator_create
+ * @see tl_list_iterator
+ * @see tl_map_keys
+ * @see tl_queue_iterator
+ * @see tl_pool_iterator
  *
  * @code
- * TLIterator* iter = tl_iterator_create(list);
+ * TLIterator* iter = tl_list_iterator(list);
  *
  * // First pass
  * while (tl_iterator_has_next(iter)) {
@@ -1311,7 +1386,7 @@ void* tl_iterator_next(TLIterator* iterator);
  *     first_pass(item);
  * }
  *
- * // Second pass over same snapshot
+ * // Second pass
  * tl_iterator_rewind(iter);
  * while (tl_iterator_has_next(iter)) {
  *     void* item = tl_iterator_next(iter);
@@ -1324,20 +1399,23 @@ void* tl_iterator_next(TLIterator* iterator);
 void tl_iterator_rewind(TLIterator* iterator);
 
 /**
- * @brief Get total number of items in iterator snapshot
+ * @brief Get total number of items in iterator
  *
- * Returns the size of the snapshot (number of items captured).
+ * Returns the number of items in the container at iterator creation time.
  *
  * @param iterator Iterator to query
- * @return Number of items in snapshot, or 0 if iterator is NULL
+ * @return Number of items, or 0 if iterator is NULL
  *
- * @note Inline function for performance
- * @note This is the size at snapshot time, not current list size
+ * @note This is the size at iterator creation time
+ * @note Does NOT check for concurrent modification
  *
- * @see tl_iterator_create
+ * @see tl_list_iterator
+ * @see tl_map_keys
+ * @see tl_queue_iterator
+ * @see tl_pool_iterator
  *
  * @code
- * TLIterator* iter = tl_iterator_create(list);
+ * TLIterator* iter = tl_list_iterator(list);
  * TLINFO("Iterating over %u items", tl_iterator_size(iter));
  *
  * while (tl_iterator_has_next(iter)) {
