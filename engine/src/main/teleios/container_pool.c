@@ -9,24 +9,28 @@
 TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, const u16 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u, %u", allocator, object_size, capacity)
 
-    if (allocator == NULL) TLFATAL("allocator is NULL")
-    if (object_size == 0) TLFATAL("object_size is 0")
-    if (capacity == 0) TLFATAL("capacity is 0")
+    if (allocator == NULL) {
+        TLERROR("Attempt to use a NULL TLAllocator")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    if (object_size == 0) {
+        TLERROR("Attempt to use a object_size 0")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    if (capacity == 0) {
+        TLERROR("Attempt to use a capacity 0")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     // Allocate pool structure
     TLObjectPool* pool = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_POOL, sizeof(TLObjectPool));
-
-    // Allocate contiguous memory block for all objects
     pool->memory = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_POOL, object_size * capacity);
-
-    // Allocate in_use bitmap
     pool->in_use = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_POOL, sizeof(b8) * capacity);
-
-    // Initialize pool metadata
-    pool->object_size = object_size;
     pool->capacity = capacity;
-    pool->next_free = 0;
     pool->allocator = allocator;
+    pool->object_size = object_size;
 
     // Create mutex for thread-safety
     pool->mutex = tl_mutex_create(allocator);
@@ -46,9 +50,8 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
 
 void tl_pool_destroy(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
-
     if (pool == NULL) {
-        TLWARN("Attempted to destroy NULL pool")
+        TLERROR("Attempt to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
@@ -72,8 +75,10 @@ void tl_pool_destroy(TLObjectPool* pool) {
 
 void* tl_pool_acquire(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
-
-    if (pool == NULL) TLFATAL("pool is NULL")
+    if (pool == NULL) {
+        TLERROR("Attempt to use a NULL TLObjectPool")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     tl_mutex_lock(pool->mutex);
 
@@ -103,24 +108,28 @@ void* tl_pool_acquire(TLObjectPool* pool) {
 
 void tl_pool_release(TLObjectPool* pool, void* object) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", pool, object)
+    if (pool == NULL) {
+        TLERROR("Attempt to use a NULL TLObjectPool")
+        TL_PROFILER_POP
+    }
 
-    if (pool == NULL) TLFATAL("pool is NULL")
-    if (object == NULL) TLFATAL("object is NULL")
+    if (object == NULL) {
+        TLERROR("Attempt to use a NULL object")
+        TL_PROFILER_POP
+    }
 
     // Calculate index from object pointer
     const u8* object_ptr = (u8*)object;
     const u64 offset = object_ptr - pool->memory;
 
     if (offset % pool->object_size != 0) {
-        TLFATAL("Object 0x%p is not aligned to object_size %u (offset=%llu)",
-            object, pool->object_size, offset)
+        TLFATAL("Object 0x%p is not aligned to object_size %u (offset=%llu)", object, pool->object_size, offset)
     }
 
     const u16 index = (u16)(offset / pool->object_size);
 
     if (index >= pool->capacity) {
-        TLFATAL("Object 0x%p is outside pool bounds (index=%u, capacity=%u)",
-            object, index, pool->capacity)
+        TLFATAL("Object 0x%p is outside pool bounds (index=%u, capacity=%u)", object, index, pool->capacity)
     }
 
     tl_mutex_lock(pool->mutex);
@@ -147,7 +156,10 @@ void tl_pool_release(TLObjectPool* pool, void* object) {
 
 u16 tl_pool_available(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
-    if (pool == NULL) TL_PROFILER_POP_WITH(0)
+    if (pool == NULL) {
+        TLERROR("Attempt to use a NULL TLObjectPool")
+        TL_PROFILER_POP_WITH(0)
+    }
 
     tl_mutex_lock(pool->mutex);
 
@@ -165,7 +177,10 @@ u16 tl_pool_available(const TLObjectPool* pool) {
 
 u16 tl_pool_in_use(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
-    if (pool == NULL) TL_PROFILER_POP_WITH(0)
+    if (pool == NULL) {
+        TLERROR("Attempt to use a NULL TLObjectPool")
+        TL_PROFILER_POP_WITH(0)
+    }
 
     tl_mutex_lock(pool->mutex);
 
@@ -183,23 +198,24 @@ u16 tl_pool_in_use(const TLObjectPool* pool) {
 
 u16 tl_pool_capacity(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
-    if (pool == NULL) TL_PROFILER_POP_WITH(0)
+    if (pool == NULL) {
+        TLERROR("Attempt to use a NULL TLObjectPool")
+        TL_PROFILER_POP_WITH(0)
+    }
     TL_PROFILER_POP_WITH(pool->capacity);
 }
 
 void tl_pool_reset(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
-
     if (pool == NULL) {
-        TLWARN("Attempted to reset NULL pool")
+        TLERROR("Attempt to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
     tl_mutex_lock(pool->mutex);
 
-    // Mark all objects as free
-    tl_memory_set(pool->in_use, 0, sizeof(b8) * pool->capacity);
     pool->next_free = 0;
+    tl_memory_set(pool->in_use, 0, sizeof(b8) * pool->capacity);
 
     tl_mutex_unlock(pool->mutex);
 

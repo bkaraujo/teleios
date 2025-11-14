@@ -9,8 +9,15 @@
 TLQueue* tl_queue_create(TLAllocator* allocator, const u16 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", allocator, capacity)
 
-    if (allocator == NULL) TLFATAL("allocator is NULL")
-    if (capacity == 0) TLFATAL("capacity is 0")
+    if (allocator == NULL) {
+        TLERROR("Attempt to use a NULL TLAllocator")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    if (capacity == 0) {
+        TLERROR("Attempt to use a capacity of 0")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     TLQueue* queue = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_QUEUE, sizeof(TLQueue));
     queue->items = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_QUEUE, sizeof(void*) * capacity);
@@ -31,9 +38,8 @@ TLQueue* tl_queue_create(TLAllocator* allocator, const u16 capacity) {
 
 void tl_queue_destroy(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-
     if (queue == NULL) {
-        TLWARN("Attempted to destroy NULL queue")
+        TLERROR("Attempt to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -52,8 +58,10 @@ void tl_queue_destroy(TLQueue* queue) {
 
 void tl_queue_offer(TLQueue* queue, void* payload) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", queue, payload)
-
-    if (queue == NULL) TLFATAL("queue is NULL")
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP
+    }
 
     tl_mutex_lock(queue->mutex);
 
@@ -75,8 +83,10 @@ void tl_queue_offer(TLQueue* queue, void* payload) {
 
 void tl_queue_push(TLQueue* queue, void* payload) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", queue, payload)
-
-    if (queue == NULL) TLFATAL("queue is NULL")
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP
+    }
 
     tl_mutex_lock(queue->mutex);
 
@@ -98,8 +108,10 @@ void tl_queue_push(TLQueue* queue, void* payload) {
 
 void* tl_queue_pop(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-
-    if (queue == NULL) TLFATAL("queue is NULL")
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     tl_mutex_lock(queue->mutex);
 
@@ -120,8 +132,10 @@ void* tl_queue_pop(TLQueue* queue) {
 
 void* tl_queue_peek(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-
-    if (queue == NULL) TLFATAL("queue is NULL")
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     tl_mutex_lock(queue->mutex);
 
@@ -141,7 +155,10 @@ void* tl_queue_peek(TLQueue* queue) {
 
 u16 tl_queue_size(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-    if (queue == NULL) TL_PROFILER_POP_WITH(0)
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(0)
+    }
 
     tl_mutex_lock(queue->mutex);
     const u16 size = queue->count;
@@ -152,13 +169,19 @@ u16 tl_queue_size(const TLQueue* queue) {
 
 u16 tl_queue_capacity(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-    if (queue == NULL) TL_PROFILER_POP_WITH(0)
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(0)
+    }
     TL_PROFILER_POP_WITH(queue->capacity)
 }
 
 b8 tl_queue_is_empty(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-    if (queue == NULL) return true;
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(true)
+    }
 
     tl_mutex_lock(queue->mutex);
     const b8 empty = (queue->count == 0);
@@ -168,7 +191,10 @@ b8 tl_queue_is_empty(const TLQueue* queue) {
 
 b8 tl_queue_is_full(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-    if (queue == NULL) return false;
+    if (queue == NULL) {
+        TLERROR("Attempt to use a NULL TLQueue")
+        TL_PROFILER_POP_WITH(false)
+    }
 
     tl_mutex_lock(queue->mutex);
     const b8 full = (queue->count >= queue->capacity);
@@ -179,9 +205,8 @@ b8 tl_queue_is_full(const TLQueue* queue) {
 
 void tl_queue_clear(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
-
     if (queue == NULL) {
-        TLWARN("Attempted to clear NULL queue")
+        TLERROR("Attempt to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 

@@ -71,8 +71,10 @@ static void tl_map_free_entry(TLAllocator* allocator, TLMapEntry* entry) {
 
 TLMap* tl_map_create(TLAllocator* allocator, const u32 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", allocator, capacity)
-
-    if (allocator == NULL) TLFATAL("allocator is NULL")
+    if (allocator == NULL) {
+        TLERROR("Attempt to use a NULL TLAllocator")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     TLMap* map = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_MAP, sizeof(TLMap));
     map->buckets = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_MAP, sizeof(TLMapEntry*) * capacity);
@@ -86,9 +88,8 @@ TLMap* tl_map_create(TLAllocator* allocator, const u32 capacity) {
 
 void tl_map_destroy(TLMap* map) {
     TL_PROFILER_PUSH_WITH("0x%p", map)
-
     if (map == NULL) {
-        TLWARN("Attempted to destroy NULL map")
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP
     }
 
@@ -111,11 +112,13 @@ void tl_map_destroy(TLMap* map) {
 
 TLList* tl_map_get(TLMap* map, const TLString* key) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", map, key)
-
     if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP_WITH(NULL)
     }
+
     if (key == NULL) {
+        TLERROR("Attempt to use a NULL TLString")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -140,9 +143,15 @@ TLList* tl_map_get(TLMap* map, const TLString* key) {
 
 TLList* tl_map_get_or_create(TLMap* map, const TLString* key) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", map, key)
+    if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
-    if (map == NULL) TLFATAL("map is NULL")
-    if (key == NULL) TLFATAL("key is NULL")
+    if (key == NULL) {
+        TLERROR("Attempt to use a NULL TLString")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     tl_mutex_lock(map->mutex);
 
@@ -181,9 +190,15 @@ TLList* tl_map_get_or_create(TLMap* map, const TLString* key) {
 
 void tl_map_put(TLMap* map, TLString* key, void* value) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", map, key, value)
+    if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
+        TL_PROFILER_POP
+    }
 
-    if (map == NULL) TLFATAL("map is NULL")
-    if (key == NULL) TLFATAL("key is NULL")
+    if (key == NULL) {
+        TLERROR("Attempt to use a NULL TLString")
+        TL_PROFILER_POP
+    }
 
     // Get or create list for this key
     TLList* list = tl_map_get_or_create(map, key);
@@ -201,11 +216,13 @@ void tl_map_put(TLMap* map, TLString* key, void* value) {
 
 b8 tl_map_contains(TLMap* map, const TLString* key) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", map, key)
-
     if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP_WITH(false)
     }
+
     if (key == NULL) {
+        TLERROR("Attempt to use a NULL TLString")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -228,9 +245,15 @@ b8 tl_map_contains(TLMap* map, const TLString* key) {
 
 TLList* tl_map_remove(TLMap* map, const TLString* key) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", map, key)
+    if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
-    if (map == NULL) TLFATAL("map is NULL")
-    if (key == NULL) TLFATAL("key is NULL")
+    if (key == NULL) {
+        TLERROR("Attempt to use a NULL TLString")
+        TL_PROFILER_POP_WITH(NULL)
+    }
 
     tl_mutex_lock(map->mutex);
 
@@ -274,8 +297,8 @@ TLList* tl_map_remove(TLMap* map, const TLString* key) {
 
 u32 tl_map_size(TLMap* map) {
     TL_PROFILER_PUSH_WITH("0x%p", map)
-
     if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -288,8 +311,8 @@ u32 tl_map_size(TLMap* map) {
 
 u32 tl_map_capacity(TLMap* map) {
     TL_PROFILER_PUSH_WITH("0x%p", map)
-
     if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -302,8 +325,8 @@ u32 tl_map_capacity(TLMap* map) {
 
 b8 tl_map_is_empty(TLMap* map) {
     TL_PROFILER_PUSH_WITH("0x%p", map)
-
     if (map == NULL) {
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP_WITH(true)
     }
 
@@ -316,9 +339,8 @@ b8 tl_map_is_empty(TLMap* map) {
 
 void tl_map_clear(TLMap* map) {
     TL_PROFILER_PUSH_WITH("0x%p", map)
-
     if (map == NULL) {
-        TLWARN("Attempted to clear NULL map")
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP
     }
 
@@ -346,9 +368,8 @@ void tl_map_clear(TLMap* map) {
 
 TLIterator* tl_map_keys(TLMap* map) {
     TL_PROFILER_PUSH_WITH("0x%p", map)
-
     if (map == NULL) {
-        TLWARN("Attempt to iterate over a NULL map")
+        TLERROR("Attempt to use a NULL TLMap")
         TL_PROFILER_POP_WITH(NULL)
     }
 
