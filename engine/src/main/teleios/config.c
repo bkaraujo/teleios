@@ -1,7 +1,6 @@
 #include "teleios/teleios.h"
 #include "container_types.inl"
 
-static TLAllocator* m_dynamic;
 static TLAllocator* m_allocator;
 static TLMap* m_properties;
 
@@ -10,7 +9,6 @@ static void tl_serializer_walk();
 b8 tl_config_initialize() {
     TL_PROFILER_PUSH
 
-    m_dynamic = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
     m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
     m_properties = tl_map_create(m_allocator, 32);
 
@@ -55,11 +53,6 @@ b8 tl_config_terminate(void) {
     if (m_properties != NULL) {
         tl_map_destroy(m_properties);
         m_properties = NULL;
-    }
-
-    if (m_dynamic != NULL) {
-        tl_memory_allocator_destroy(m_dynamic);
-        m_dynamic = NULL;
     }
 
     if (m_allocator != NULL) {
@@ -222,18 +215,17 @@ static void tl_serializer_walk() {
 
                 if (current_key != NULL) {
                     tl_string_builder_append(builder, current_key);
+                    current_key = NULL;  // Reset key after use
                 }
 
                 TLString* property = tl_string_builder_build(builder);
+                TLTRACE("property %s = %s", tl_string_cstr(property), (char*)token.data.scalar.value)
 
-                // Use m_allocator (global) for values so they persist after tl_serializer_walk() returns
-                TLString* value = tl_string_create(m_allocator, (char*)token.data.scalar.value);
-
-                // Use allocator (local) for temporary property key used in map lookup
-                TLTRACE("property %s = %s", tl_string_cstr(property), tl_string_cstr(value))
-                tl_map_put(m_properties, tl_string_create(m_properties->allocator, tl_string_cstr(property)), value);
-
-                current_key = NULL;  // Reset key after use
+                tl_map_put(
+                    m_properties,
+                    tl_string_create(m_properties->allocator, tl_string_cstr(property)),
+                    tl_string_create(m_properties->allocator, (char*)token.data.scalar.value)
+                );
             } break;
             // #########################################################################################################
             // YAML_BLOCK_END_TOKEN
