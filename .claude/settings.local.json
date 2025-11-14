@@ -23,7 +23,8 @@
       "Bash(test:*)",
       "Bash(cat:*)",
       "Bash(Select-String \"profiler|warning|error\")",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(timeout /t 2)"
     ],
     "deny": [],
     "ask": []

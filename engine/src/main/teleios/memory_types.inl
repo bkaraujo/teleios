@@ -2,6 +2,7 @@
 #define __TELEIOS_MEMORY_TYPES__
 
 #include "teleios/teleios.h"
+#include "teleios/profiler_types.inl"
 
 // Linear allocator structures
 typedef struct {
@@ -35,6 +36,9 @@ struct TLAllocator {
             u32 allocation_count;
         } dynamic;
     };
+#if defined(TELEIOS_BUILD_DEBUG)
+    TLStackTrace stack_trace;
+#endif
 };
 
 inline const char* tl_memory_type_name(const TLMemoryTag tag) {

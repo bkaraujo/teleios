@@ -48,6 +48,11 @@ TLAllocator* tl_memory_allocator_create(const u32 size, const TLAllocatorType ty
     TLAllocator* allocator = tl_malloc(sizeof(TLAllocator), "Failed to allocate TLAllocator");
     allocator->type = type;
 
+#if defined(TELEIOS_BUILD_DEBUG)
+    // Capture stack trace at creation time for debugging dangling allocators
+    tl_profiler_stacktrace_snapshot(&allocator->stack_trace);
+#endif
+
     if (type == TL_ALLOCATOR_LINEAR) {
         if (size == 0) TLFATAL("LINEAR allocator requires size > 0")
 
@@ -181,6 +186,12 @@ b8 tl_memory_terminate(void) {
         TLAllocator* allocator = m_allocators[m_allocators_count - 1];
         if (allocator != NULL) {
             TLWARN("Releasing dangling allocator 0x%p", allocator)
+
+#if defined(TELEIOS_BUILD_DEBUG)
+            // Print stack trace showing where this allocator was created
+            tl_profiler_stacktrace_print(&allocator->stack_trace);
+#endif
+
             tl_memory_allocator_destroy(allocator);
         }
 

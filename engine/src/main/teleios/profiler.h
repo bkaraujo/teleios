@@ -3,6 +3,7 @@
 
 #include "teleios/defines.h"
 
+
 /**
  * @brief Push new function frame to call stack and log entry
  */
@@ -12,6 +13,18 @@ void tl_profiler_frame_push(const char* filename, u32 lineno, const char* functi
  * @brief Pop current frame from call stack and log exit
  */
 void tl_profiler_frame_pop(void);
+
+/**
+ * @brief Capture current call stack
+ * @param trace Output stack trace structure
+ */
+void tl_profiler_stacktrace_snapshot(TLStackTrace* trace);
+
+/**
+ * @brief Print a captured stack trace to the logger
+ * @param trace Stack trace to print
+ */
+void tl_profiler_stacktrace_print(const TLStackTrace* trace);
 
 #if defined(TELEIOS_BUILD_DEBUG)
 #   define TL_PROFILER_PUSH { tl_profiler_frame_push(__FILE__, __LINE__, __func__, NULL); }
