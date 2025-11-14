@@ -1,14 +1,9 @@
 #include "teleios/teleios.h"
 
-static TLAllocator* m_allocator;
 static TLEventHandler m_handlers[TL_EVENT_MAXIMUM][U8_MAX] = { 0 };
 
 static const char* tl_event_name(const TLEventCodes code) {
     TL_PROFILER_PUSH_WITH("%d", code)
-
-    if (m_allocator == NULL) {
-        m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    }
 
     switch (code) {
         case TL_EVENT_WINDOW_CREATED        : TL_PROFILER_POP_WITH("TL_EVENT_WINDOW_CREATED")
@@ -23,7 +18,7 @@ static const char* tl_event_name(const TLEventCodes code) {
         case TL_EVENT_MAXIMUM               : TL_PROFILER_POP_WITH("TL_EVENT_MAXIMUM")
     }
 
-    const TLString* string = tl_number_i32_to_char(m_allocator, code, 10);
+    const TLString* string = tl_number_i32_to_char(g_allocator, code, 10);
     const char* cstr = tl_string_cstr(string);
 
     TL_PROFILER_POP_WITH(cstr);

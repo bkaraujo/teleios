@@ -9,18 +9,6 @@
 // Memory allocator for thread resources
 // ---------------------------------
 
-static TLAllocator* m_thread_allocator = NULL;
-
-static void tl_thread_ensure_allocator(void) {
-    if (m_thread_allocator == NULL) {
-        m_thread_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
-        if (!m_thread_allocator) {
-            TLFATAL("Failed to create DYNAMIC allocator for thread system");
-        }
-        TLINFO("Thread system DYNAMIC allocator initialized");
-    }
-}
-
 // ---------------------------------
 // Internal structures
 // ---------------------------------
@@ -61,9 +49,7 @@ TLThread* tl_thread_create(TLThreadFunc func, void* arg) {
         return NULL;
     }
 
-    tl_thread_ensure_allocator();
-
-    TLThread* thread = (TLThread*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLThread));
+    TLThread* thread = (TLThread*)tl_memory_alloc(g_allocator, TL_MEMORY_THREAD, sizeof(TLThread));
     thread->func = func;
     thread->arg = arg;
     thread->detached = false;
@@ -71,7 +57,7 @@ TLThread* tl_thread_create(TLThreadFunc func, void* arg) {
     i32 result = pthread_create(&thread->handle, NULL, thread_wrapper, thread);
     if (result != 0) {
         TLERROR("tl_thread_create: pthread_create failed with error %d", result);
-        tl_memory_free(m_thread_allocator, thread);
+        tl_memory_free(g_allocator, thread);
         return NULL;
     }
 
@@ -102,7 +88,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
     }
 
     TLDEBUG("Thread joined: ID=%llu", (u64)thread->handle);
-    tl_memory_free(m_thread_allocator, thread);
+    tl_memory_free(g_allocator, thread);
     return true;
 }
 
@@ -125,7 +111,7 @@ b8 tl_thread_detach(TLThread* thread) {
 
     thread->detached = true;
     TLDEBUG("Thread detached: ID=%llu", (u64)thread->handle);
-    tl_memory_free(m_thread_allocator, thread);
+    tl_memory_free(g_allocator, thread);
     return true;
 }
 
@@ -147,7 +133,7 @@ TLMutex* tl_mutex_create(TLAllocator* allocator) {
     i32 result = pthread_mutex_init(&mutex->mutex, NULL);
     if (result != 0) {
         TLERROR("tl_mutex_create: pthread_mutex_init failed with error %d", result);
-        tl_memory_free(m_thread_allocator, mutex);
+        tl_memory_free(g_allocator, mutex);
         return NULL;
     }
 
@@ -167,7 +153,7 @@ void tl_mutex_destroy(TLMutex* mutex) {
     }
 
     TLDEBUG("Mutex destroyed:0x%p", mutex);
-    tl_memory_free(m_thread_allocator, mutex);
+    tl_memory_free(g_allocator, mutex);
 }
 
 b8 tl_mutex_lock(TLMutex* mutex) {
@@ -228,7 +214,7 @@ TLCondition* tl_condition_create(TLAllocator* allocator) {
     i32 result = pthread_cond_init(&condition->cond, NULL);
     if (result != 0) {
         TLERROR("tl_condition_create: pthread_cond_init failed with error %d", result);
-        tl_memory_free(m_thread_allocator, condition);
+        tl_memory_free(g_allocator, condition);
         return NULL;
     }
 
@@ -248,7 +234,7 @@ void tl_condition_destroy(TLCondition* condition) {
     }
 
     TLDEBUG("Condition variable destroyed:0x%p", condition);
-    tl_memory_free(m_thread_allocator, condition);
+    tl_memory_free(g_allocator, condition);
 }
 
 b8 tl_condition_wait(TLCondition* condition, TLMutex* mutex) {
@@ -331,21 +317,4 @@ b8 tl_condition_broadcast(TLCondition* condition) {
     return true;
 }
 
-// ---------------------------------
-// Thread system cleanup (optional)
-// ---------------------------------
-
-/**
- * @brief Cleanup thread system and report memory leaks
- * @note Optional - called during application shutdown to report thread resource leaks
- * @note Not exposed in public API, can be called from platform.c shutdown
- */
-static void tl_thread_system_terminate(void) {
-    if (m_thread_allocator != NULL) {
-        TLINFO("Destroying thread system allocator and checking for leaks...");
-        tl_memory_allocator_destroy(m_thread_allocator);
-        m_thread_allocator = NULL;
-    }
-}
-
-#endif // TL_PLATFORM_LINUX || TL_PLATFORM_APPLE || TL_PLATFORM_UNIX
+#endif

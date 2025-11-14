@@ -22,6 +22,9 @@ typedef struct TLDynamicBlock {
     void* pointer;
     u32 size;
     struct TLDynamicBlock* next;
+#ifdef TELEIOS_BUILD_DEBUG
+    TLStackTrace stack_trace;
+#endif
 } TLDynamicBlock;
 
 struct TLAllocator {

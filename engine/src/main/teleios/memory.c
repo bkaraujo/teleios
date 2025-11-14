@@ -7,6 +7,8 @@ static u16 m_allocators_capacity = 0;
 static u16 m_allocators_count = 0;
 static TLAllocator** m_allocators = NULL;
 
+/* extern */ TLAllocator* g_allocator;
+
 void* tl_malloc(const u32 size, const char* error_message) {
     TL_PROFILER_PUSH_WITH("%d, %s", size, error_message)
     void * memory = malloc(size);
@@ -21,6 +23,8 @@ b8 tl_memory_initialize(void){
     m_allocators_capacity = 16;  // Initial capacity
     m_allocators_count = 0;
     m_allocators = tl_malloc(sizeof(TLAllocator*) * m_allocators_capacity, "Failed to allocate TLAllocator* array");
+
+    g_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
 
     TL_PROFILER_POP_WITH(true)
 }
@@ -177,6 +181,8 @@ void tl_memory_copy(void *target, const void *source, const u32 size){
 
 b8 tl_memory_terminate(void) {
     TL_PROFILER_PUSH
+
+    tl_memory_allocator_destroy(g_allocator);
 
     // Release all dangling allocators
     while (m_allocators_count > 0) {

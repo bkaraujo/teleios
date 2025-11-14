@@ -91,20 +91,13 @@ void tl_profiler_stacktrace_print(const TLStackTrace* trace) {
         const TLStackFrame* frame = &trace->frames[i];
 
         // Extract just the filename (not full path)
-        const char* filename = strrchr(frame->filename, '/');
-        if (filename == NULL) {
-            filename = strrchr(frame->filename, '\\');
-        }
+        const char* filename = strrchr(frame->filename, tl_filesystem_path_separator());
         filename = (filename == NULL) ? frame->filename : filename + 1;
 
         if (frame->arguments[0] != '\0') {
-            tl_logger_write(TL_LOG_LEVEL_WARN, __FILE__, __LINE__,
-                          "    #%u: %s:%u %s(%s)",
-                          i, filename, frame->lineno, frame->function, frame->arguments);
+            tl_logger_write(TL_LOG_LEVEL_WARN, __FILE__, __LINE__, "    #%02d: %20s:%04d %s(%s)", i, filename, frame->lineno, frame->function, frame->arguments);
         } else {
-            tl_logger_write(TL_LOG_LEVEL_WARN, __FILE__, __LINE__,
-                          "    #%u: %s:%u %s()",
-                          i, filename, frame->lineno, frame->function);
+            tl_logger_write(TL_LOG_LEVEL_WARN, __FILE__, __LINE__, "    #%02d: %20s:%04d %s", i, filename, frame->lineno, frame->function);
         }
     }
 }

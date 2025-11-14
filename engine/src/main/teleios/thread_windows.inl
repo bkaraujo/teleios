@@ -4,20 +4,6 @@
 #include <process.h>
 
 // ---------------------------------
-// Memory allocator for thread resources
-// ---------------------------------
-
-static TLAllocator* m_thread_allocator = NULL;
-
-static void tl_thread_ensure_allocator(void) {
-    TL_PROFILER_PUSH
-    if (m_thread_allocator != NULL) TL_PROFILER_POP
-    m_thread_allocator = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
-    TLTRACE("Thread system DYNAMIC allocator initialized");
-    TL_PROFILER_POP
-}
-
-// ---------------------------------
 // Internal structures
 // ---------------------------------
 
@@ -61,9 +47,7 @@ TLThread* tl_thread_create(const TLThreadFunc func, void* arg) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    tl_thread_ensure_allocator();
-
-    TLThread* thread = (TLThread*)tl_memory_alloc(m_thread_allocator, TL_MEMORY_THREAD, sizeof(TLThread));
+    TLThread* thread = (TLThread*)tl_memory_alloc(g_allocator, TL_MEMORY_THREAD, sizeof(TLThread));
 
     thread->func = func;
     thread->arg = arg;
@@ -81,7 +65,7 @@ TLThread* tl_thread_create(const TLThreadFunc func, void* arg) {
 
     if (!thread->handle) {
         TLERROR("tl_thread_create: CreateThread failed with error %lu", GetLastError());
-        tl_memory_free(m_thread_allocator, thread);
+        tl_memory_free(g_allocator, thread);
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -109,7 +93,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
 
     CloseHandle(thread->handle);
     TLTRACE("Thread joined: ID=%u", thread->thread_id);
-    tl_memory_free(m_thread_allocator, thread);
+    tl_memory_free(g_allocator, thread);
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -122,7 +106,7 @@ b8 tl_thread_detach(TLThread* thread) {
 
     TLTRACE("Thread detached: ID=%u", thread->thread_id);
     CloseHandle(thread->handle);
-    tl_memory_free(m_thread_allocator, thread);
+    tl_memory_free(g_allocator, thread);
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -289,23 +273,5 @@ b8 tl_condition_broadcast(TLCondition* condition) {
     TL_PROFILER_POP_WITH(true)
 }
 
-// ---------------------------------
-// Thread system cleanup (optional)
-// ---------------------------------
 
-/**
- * @brief Cleanup thread system and report memory leaks
- * @note Optional - called during application shutdown to report thread resource leaks
- * @note Not exposed in public API, can be called from platform.c shutdown
- */
-static void tl_thread_system_terminate(void) {
-    TL_PROFILER_PUSH
-    if (m_thread_allocator != NULL) {
-        TLINFO("Destroying thread system allocator and checking for leaks...");
-        tl_memory_allocator_destroy(m_thread_allocator);
-        m_thread_allocator = NULL;
-    }
-    TL_PROFILER_POP
-}
-
-#endif // TL_PLATFORM_WINDOWS
+#endif

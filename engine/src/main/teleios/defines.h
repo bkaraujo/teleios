@@ -368,4 +368,6 @@ typedef struct TLCondition TLCondition;
 typedef struct TLString TLString;
 
 typedef struct  TLStackTrace TLStackTrace;
+
+extern TLAllocator* g_allocator;
 #endif
