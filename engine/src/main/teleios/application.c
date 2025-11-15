@@ -43,8 +43,11 @@ b8 tl_application_run(void) {
 
 static void tl_application_loop() {
     TL_PROFILER_PUSH
-    const f64 STEP = 1000000.0 / 60.0;  // ~16666.67 µs
     const f64 FRAME_CAP = 250000.0;     // Cap at 250ms to prevent spiral of death
+
+    TLString* sStep = tl_config_get("engine.simulation.step");
+    const f32 fStep = tl_number_f32_from_string(sStep);
+    const f64 STEP = 1000000.0 / (fStep == 0 ? 10 : fStep);
 
     f64 accumulator = 0.0;
     u64 last_time = tl_time_epoch_micros();

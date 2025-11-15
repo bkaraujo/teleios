@@ -5,7 +5,7 @@ engine:
     vsync: false
     wireframe: false
   simulation:
-    step: 60
+    step: 20s
   renderer:
     modelMatrix: un_model
     viewProjectionMatrix: un_viewProjection
