@@ -63,7 +63,7 @@ struct TLList {
 struct TLMapEntry {
     TLString* key;          // String key (owned by this entry)
     TLList* value;          // List of void* (owned by this entry)
-    struct TLMapEntry* next; // Next entry in bucket (chaining for collision resolution)
+    TLMapEntry* next; // Next entry in bucket (chaining for collision resolution)
 };
 
 struct TLMap {
@@ -91,26 +91,11 @@ struct TLIterator {
     void*   (*next          )(TLIterator* iterator      );  // Get next item and advance
     void    (*rewind        )(TLIterator* iterator      );  // Reset to beginning
 
-    // State specific to container type
-    union {
-        struct {
-            TLListNode* current_node;  // Current node in list
-        } list;
+    // State specific to container type (allocated by container, freed by iterator)
+    void* state;
 
-        struct {
-            u32 bucket_index;          // Current bucket index
-            TLMapEntry* current_entry; // Current entry in bucket chain
-        } map;
-
-        struct {
-            u16 index;                 // Current index in circular buffer
-            u16 remaining;             // Number of items left to iterate
-        } queue;
-
-        struct {
-            u16 index;                 // Current index in pool
-        } pool;
-    } state;
+    // Allocator used to free the iterator and state
+    TLAllocator* allocator;
 };
 
 #endif

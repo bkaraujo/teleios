@@ -230,6 +230,10 @@ void tl_queue_clear(TLQueue* queue) {
 // ---------------------------------
 // Queue Iterator Implementation
 // ---------------------------------
+typedef struct {
+    u16 index;                 // Current index in circular buffer
+    u16 remaining;             // Number of items left to iterate
+} TLQueueIteratorState;
 
 static void tl_queue_iterator_check_modification(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
@@ -243,20 +247,22 @@ static void tl_queue_iterator_check_modification(const TLIterator* iterator) {
 
 static b8 tl_queue_iterator_has_next(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    const b8 has_next = (iterator->state.queue.remaining > 0);
+    const TLQueueIteratorState* state = (const TLQueueIteratorState*)iterator->state;
+    const b8 has_next = (state->remaining > 0);
     TL_PROFILER_POP_WITH(has_next)
 }
 
 static void* tl_queue_iterator_next(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    if (iterator->state.queue.remaining == 0) {
+    TLQueueIteratorState* state = (TLQueueIteratorState*)iterator->state;
+    if (state->remaining == 0) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
     const TLQueue* queue = (const TLQueue*)iterator->source;
-    void* item = queue->items[iterator->state.queue.index];
-    iterator->state.queue.index = (iterator->state.queue.index + 1) % queue->capacity;
-    iterator->state.queue.remaining--;
+    void* item = queue->items[state->index];
+    state->index = (state->index + 1) % queue->capacity;
+    state->remaining--;
 
     TL_PROFILER_POP_WITH(item)
 }
@@ -264,8 +270,9 @@ static void* tl_queue_iterator_next(TLIterator* iterator) {
 static void tl_queue_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
     const TLQueue* queue = (const TLQueue*)iterator->source;
-    iterator->state.queue.index = queue->tail;
-    iterator->state.queue.remaining = queue->count;
+    TLQueueIteratorState* state = (TLQueueIteratorState*)iterator->state;
+    state->index = queue->tail;
+    state->remaining = queue->count;
     TL_PROFILER_POP
 }
 
@@ -282,12 +289,19 @@ TLIterator* tl_queue_iterator(TLQueue* queue) {
     // Allocate iterator on queue's allocator
     TLIterator* iterator = tl_memory_alloc(queue->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
 
+    // Allocate state on queue's allocator
+    TLQueueIteratorState* state = tl_memory_alloc(queue->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLQueueIteratorState));
+
+    // Initialize state
+    state->index = queue->tail;
+    state->remaining = queue->count;
+
     // Initialize fail-fast iterator with data
     iterator->source = queue;
     iterator->expected_mod_count = queue->mod_count;
     iterator->size = queue->count;
-    iterator->state.queue.index = queue->tail;
-    iterator->state.queue.remaining = queue->count;
+    iterator->state = state;
+    iterator->allocator = queue->allocator;
 
     // Assign function pointers
     iterator->has_modified = tl_queue_iterator_check_modification;

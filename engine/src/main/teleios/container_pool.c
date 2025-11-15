@@ -230,6 +230,9 @@ void tl_pool_reset(TLObjectPool* pool) {
 // ---------------------------------
 // Pool Iterator Implementation
 // ---------------------------------
+typedef struct {
+    u16 index;                 // Current index in pool
+} TLPoolIteratorState;
 
 static void tl_pool_iterator_check_modification(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
@@ -244,9 +247,10 @@ static void tl_pool_iterator_check_modification(const TLIterator* iterator) {
 static b8 tl_pool_iterator_has_next(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
     const TLObjectPool* pool = (const TLObjectPool*)iterator->source;
+    const TLPoolIteratorState* state = (const TLPoolIteratorState*)iterator->state;
 
     // Search for next in-use object from current index
-    for (u16 i = iterator->state.pool.index; i < pool->capacity; ++i) {
+    for (u16 i = state->index; i < pool->capacity; ++i) {
         if (pool->in_use[i]) {
             TL_PROFILER_POP_WITH(true)
         }
@@ -258,16 +262,17 @@ static b8 tl_pool_iterator_has_next(const TLIterator* iterator) {
 static void* tl_pool_iterator_next(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
     TLObjectPool* pool = (TLObjectPool*)iterator->source;
+    TLPoolIteratorState* state = (TLPoolIteratorState*)iterator->state;
 
     // Find next in-use object starting from current index
-    while (iterator->state.pool.index < pool->capacity) {
-        if (pool->in_use[iterator->state.pool.index]) {
+    while (state->index < pool->capacity) {
+        if (pool->in_use[state->index]) {
             // Found in-use object
-            void* object = pool->memory + (iterator->state.pool.index * pool->object_size);
-            iterator->state.pool.index++;
+            void* object = pool->memory + (state->index * pool->object_size);
+            state->index++;
             TL_PROFILER_POP_WITH(object)
         }
-        iterator->state.pool.index++;
+        state->index++;
     }
 
     // No more objects
@@ -276,7 +281,8 @@ static void* tl_pool_iterator_next(TLIterator* iterator) {
 
 static void tl_pool_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    iterator->state.pool.index = 0;
+    TLPoolIteratorState* state = (TLPoolIteratorState*)iterator->state;
+    state->index = 0;
     TL_PROFILER_POP
 }
 
@@ -293,9 +299,11 @@ TLIterator* tl_pool_iterator(TLObjectPool* pool) {
     // Allocate iterator on pool's allocator
     TLIterator* iterator = tl_memory_alloc(pool->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
 
-    // Initialize fail-fast iterator with data
-    iterator->source = pool;
-    iterator->expected_mod_count = pool->mod_count;
+    // Allocate state on pool's allocator
+    TLPoolIteratorState* state = tl_memory_alloc(pool->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLPoolIteratorState));
+
+    // Initialize state
+    state->index = 0;
 
     // Count in-use objects for size
     u32 count = 0;
@@ -305,8 +313,12 @@ TLIterator* tl_pool_iterator(TLObjectPool* pool) {
         }
     }
 
+    // Initialize fail-fast iterator with data
+    iterator->source = pool;
+    iterator->expected_mod_count = pool->mod_count;
     iterator->size = count;
-    iterator->state.pool.index = 0;
+    iterator->state = state;
+    iterator->allocator = pool->allocator;
 
     // Assign function pointers
     iterator->has_modified = tl_pool_iterator_check_modification;

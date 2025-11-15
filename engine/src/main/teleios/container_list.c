@@ -45,6 +45,9 @@ void tl_list_destroy(TLList* list) {
 // ---------------------------------
 // List Iterator Implementation
 // ---------------------------------
+typedef struct {
+    TLListNode* current_node;  // Current node in list
+} TLListIteratorState;
 
 static void tl_list_iterator_check_modification(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
@@ -58,25 +61,28 @@ static void tl_list_iterator_check_modification(const TLIterator* iterator) {
 
 static b8 tl_list_iterator_has_next(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    const b8 has_next = (iterator->state.list.current_node != NULL);
+    const TLListIteratorState* state = (const TLListIteratorState*)iterator->state;
+    const b8 has_next = (state->current_node != NULL);
     TL_PROFILER_POP_WITH(has_next)
 }
 
 static void* tl_list_iterator_next(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    if (iterator->state.list.current_node == NULL) {
+    TLListIteratorState* state = (TLListIteratorState*)iterator->state;
+    if (state->current_node == NULL) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    void* data = iterator->state.list.current_node->data;
-    iterator->state.list.current_node = iterator->state.list.current_node->next;
+    void* data = state->current_node->data;
+    state->current_node = state->current_node->next;
     TL_PROFILER_POP_WITH(data)
 }
 
 static void tl_list_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
     const TLList* list = (const TLList*)iterator->source;
-    iterator->state.list.current_node = list->head;
+    TLListIteratorState* state = (TLListIteratorState*)iterator->state;
+    state->current_node = list->head;
     TL_PROFILER_POP
 }
 
@@ -93,11 +99,18 @@ TLIterator* tl_list_iterator (TLList* list) {
     // Allocate iterator on list's allocator
     TLIterator* iterator = tl_memory_alloc(list->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
 
+    // Allocate state on list's allocator
+    TLListIteratorState* state = tl_memory_alloc(list->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLListIteratorState));
+
+    // Initialize state
+    state->current_node = list->head;
+
     // Initialize fail-fast iterator with data
     iterator->source = list;
     iterator->expected_mod_count = list->mod_count;
     iterator->size = list->size;
-    iterator->state.list.current_node = list->head;
+    iterator->state = state;
+    iterator->allocator = list->allocator;
 
     // Assign function pointers
     iterator->has_modified = tl_list_iterator_check_modification;

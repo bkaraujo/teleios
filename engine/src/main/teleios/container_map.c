@@ -372,6 +372,10 @@ void tl_map_clear(TLMap* map) {
 // ---------------------------------
 // Map Iterator Implementation
 // ---------------------------------
+typedef struct {
+    u32 bucket_index;          // Current bucket index
+    TLMapEntry* current_entry; // Current entry in bucket chain
+} TLMapIteratorState;
 
 static void tl_map_iterator_check_modification(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
@@ -385,32 +389,34 @@ static void tl_map_iterator_check_modification(const TLIterator* iterator) {
 
 static b8 tl_map_iterator_has_next(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    const b8 has_next = (iterator->state.map.current_entry != NULL);
+    const TLMapIteratorState* state = (const TLMapIteratorState*)iterator->state;
+    const b8 has_next = (state->current_entry != NULL);
     TL_PROFILER_POP_WITH(has_next)
 }
 
 static void* tl_map_iterator_next(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
-    if (iterator->state.map.current_entry == NULL) {
+    TLMapIteratorState* state = (TLMapIteratorState*)iterator->state;
+    if (state->current_entry == NULL) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    void* key = (void*)iterator->state.map.current_entry->key;
+    void* key = (void*)state->current_entry->key;
 
     // Move to next entry in chain, or next non-empty bucket
-    iterator->state.map.current_entry = iterator->state.map.current_entry->next;
+    state->current_entry = state->current_entry->next;
 
-    if (iterator->state.map.current_entry == NULL) {
+    if (state->current_entry == NULL) {
         // Current bucket chain exhausted, find next non-empty bucket
         TLMap* map = (TLMap*)iterator->source;
-        iterator->state.map.bucket_index++;
+        state->bucket_index++;
 
-        while (iterator->state.map.bucket_index < map->capacity) {
-            if (map->buckets[iterator->state.map.bucket_index] != NULL) {
-                iterator->state.map.current_entry = map->buckets[iterator->state.map.bucket_index];
+        while (state->bucket_index < map->capacity) {
+            if (map->buckets[state->bucket_index] != NULL) {
+                state->current_entry = map->buckets[state->bucket_index];
                 break;
             }
-            iterator->state.map.bucket_index++;
+            state->bucket_index++;
         }
     }
 
@@ -420,15 +426,16 @@ static void* tl_map_iterator_next(TLIterator* iterator) {
 static void tl_map_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
     TLMap* map = (TLMap*)iterator->source;
+    TLMapIteratorState* state = (TLMapIteratorState*)iterator->state;
 
     // Find first non-empty bucket
-    iterator->state.map.bucket_index = 0;
-    iterator->state.map.current_entry = NULL;
+    state->bucket_index = 0;
+    state->current_entry = NULL;
 
     for (u32 i = 0; i < map->capacity; ++i) {
         if (map->buckets[i] != NULL) {
-            iterator->state.map.bucket_index = i;
-            iterator->state.map.current_entry = map->buckets[i];
+            state->bucket_index = i;
+            state->current_entry = map->buckets[i];
             break;
         }
     }
@@ -449,22 +456,27 @@ TLIterator* tl_map_keys(TLMap* map) {
     // Allocate iterator on map's allocator
     TLIterator* iterator = tl_memory_alloc(map->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
 
+    // Allocate state on map's allocator
+    TLMapIteratorState* state = tl_memory_alloc(map->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLMapIteratorState));
+
+    // Find first non-empty bucket
+    state->bucket_index = 0;
+    state->current_entry = NULL;
+
+    for (u32 i = 0; i < map->capacity; ++i) {
+        if (map->buckets[i] != NULL) {
+            state->bucket_index = i;
+            state->current_entry = map->buckets[i];
+            break;
+        }
+    }
+
     // Initialize fail-fast iterator with data
     iterator->source = map;
     iterator->expected_mod_count = map->mod_count;
     iterator->size = map->size;
-
-    // Find first non-empty bucket
-    iterator->state.map.bucket_index = 0;
-    iterator->state.map.current_entry = NULL;
-
-    for (u32 i = 0; i < map->capacity; ++i) {
-        if (map->buckets[i] != NULL) {
-            iterator->state.map.bucket_index = i;
-            iterator->state.map.current_entry = map->buckets[i];
-            break;
-        }
-    }
+    iterator->state = state;
+    iterator->allocator = map->allocator;
 
     // Assign function pointers
     iterator->has_modified = tl_map_iterator_check_modification;

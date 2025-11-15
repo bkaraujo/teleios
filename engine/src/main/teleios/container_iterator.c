@@ -13,8 +13,13 @@ void tl_iterator_destroy(TLIterator* iterator) {
         TL_PROFILER_POP
     }
 
-    // Iterators are allocated with the container's allocator
-    // No cleanup needed - just a placeholder for API consistency
+    // Free the state (allocated by container)
+    if (iterator->state != NULL) {
+        tl_memory_free(iterator->allocator, iterator->state);
+    }
+
+    // Free the iterator itself
+    tl_memory_free(iterator->allocator, iterator);
 
     TL_PROFILER_POP
 }
