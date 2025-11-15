@@ -150,15 +150,15 @@ static TLEventStatus tl_input_handle_cursor_exited(const TLEvent *event) {
 b8 tl_input_initialize(void) {
     TL_PROFILER_PUSH
 
-    tl_event_subscribe(TL_EVENT_INPUT_KEY_PRESSED, tl_input_handle_keyboard_pressed);
-    tl_event_subscribe(TL_EVENT_INPUT_KEY_RELEASED, tl_input_handle_keyboard_released);
+    tl_event_subscribe(TL_EVENT_INPUT_KEY_PRESSED       , tl_input_handle_keyboard_pressed);
+    tl_event_subscribe(TL_EVENT_INPUT_KEY_RELEASED      , tl_input_handle_keyboard_released);
 
-    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_MOVED, tl_input_handle_cursor_moved);
-    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_PRESSED, tl_input_handle_cursor_pressed);
-    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_RELEASED, tl_input_handle_cursor_released);
-    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_SCROLLED, tl_input_handle_cursor_scrolled);
-    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_ENTERED, tl_input_handle_cursor_entered);
-    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_EXITED, tl_input_handle_cursor_exited);
+    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_MOVED      , tl_input_handle_cursor_moved);
+    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_PRESSED    , tl_input_handle_cursor_pressed);
+    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_RELEASED   , tl_input_handle_cursor_released);
+    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_SCROLLED   , tl_input_handle_cursor_scrolled);
+    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_ENTERED    , tl_input_handle_cursor_entered);
+    tl_event_subscribe(TL_EVENT_INPUT_CURSOR_EXITED     , tl_input_handle_cursor_exited);
 
     TL_PROFILER_POP_WITH(true)
 }
