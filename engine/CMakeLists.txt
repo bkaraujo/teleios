@@ -142,6 +142,8 @@ set(ENGINE_SOURCES
     src/main/teleios/strings.c
         src/main/teleios/config.c
         src/main/teleios/config.h
+        src/main/teleios/input.c
+        src/main/teleios/input.h
 )
 
 # Collect engine header files

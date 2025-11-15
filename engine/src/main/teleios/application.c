@@ -80,6 +80,7 @@ static void tl_application_loop() {
 
         tl_renderer_frame_end();    // Submit rendering work to graphics thread
         glfwPollEvents();           // Poll events on main thread (GLFW requirement)
+        tl_input_update();          // Store input current/previous state
 
         frame_count++;
         if (fps_timer >= ONE_SECOND_MICROS) {
