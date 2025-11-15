@@ -11,12 +11,12 @@ TLQueue* tl_queue_create(TLAllocator* allocator, const u16 capacity) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", allocator, capacity)
 
     if (allocator == NULL) {
-        TLERROR("Attempt to use a NULL TLAllocator")
+        TLERROR("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (capacity == 0) {
-        TLERROR("Attempt to use a capacity of 0")
+        TLERROR("Attempted to use a capacity of 0")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -40,7 +40,7 @@ TLQueue* tl_queue_create(TLAllocator* allocator, const u16 capacity) {
 void tl_queue_destroy(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -60,7 +60,7 @@ void tl_queue_destroy(TLQueue* queue) {
 void tl_queue_offer(TLQueue* queue, void* payload) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", queue, payload)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -86,7 +86,7 @@ void tl_queue_offer(TLQueue* queue, void* payload) {
 void tl_queue_push(TLQueue* queue, void* payload) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", queue, payload)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -112,7 +112,7 @@ void tl_queue_push(TLQueue* queue, void* payload) {
 void* tl_queue_pop(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -137,7 +137,7 @@ void* tl_queue_pop(TLQueue* queue) {
 void* tl_queue_peek(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -160,7 +160,7 @@ void* tl_queue_peek(TLQueue* queue) {
 u16 tl_queue_size(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -174,7 +174,7 @@ u16 tl_queue_size(const TLQueue* queue) {
 u16 tl_queue_capacity(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(0)
     }
     TL_PROFILER_POP_WITH(queue->capacity)
@@ -183,7 +183,7 @@ u16 tl_queue_capacity(const TLQueue* queue) {
 b8 tl_queue_is_empty(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(true)
     }
 
@@ -196,7 +196,7 @@ b8 tl_queue_is_empty(const TLQueue* queue) {
 b8 tl_queue_is_full(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -210,7 +210,7 @@ b8 tl_queue_is_full(const TLQueue* queue) {
 void tl_queue_clear(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -276,10 +276,31 @@ static void tl_queue_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_POP
 }
 
+static void tl_queue_iterator_resync(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    TLQueue* queue = (TLQueue*)iterator->source;
+
+    // Lock queue to capture current state
+    tl_mutex_lock(queue->mutex);
+
+    // Update iterator with current container state
+    iterator->expected_mod_count = queue->mod_count;
+    iterator->size = queue->count;
+
+    // Rewind to beginning
+    TLQueueIteratorState* state = (TLQueueIteratorState*)iterator->state;
+    state->index = queue->tail;
+    state->remaining = queue->count;
+
+    tl_mutex_unlock(queue->mutex);
+
+    TL_PROFILER_POP
+}
+
 TLIterator* tl_queue_iterator(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
     if (queue == NULL) {
-        TLERROR("Attempt to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -308,6 +329,7 @@ TLIterator* tl_queue_iterator(TLQueue* queue) {
     iterator->has_next = tl_queue_iterator_has_next;
     iterator->next = tl_queue_iterator_next;
     iterator->rewind = tl_queue_iterator_rewind;
+    iterator->resync = tl_queue_iterator_resync;
 
     tl_mutex_unlock(queue->mutex);
 

@@ -93,6 +93,26 @@ void tl_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_POP
 }
 
+void tl_iterator_resync(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+
+    if (iterator == NULL) {
+        TLWARN("Attempted to resync NULL iterator")
+        TL_PROFILER_POP
+    }
+
+    // Delegate to container-specific implementation
+    // This will acquire the container's mutex and update:
+    // - expected_mod_count
+    // - size
+    // - state (rewind to beginning)
+    if (iterator->resync) {
+        iterator->resync(iterator);
+    }
+
+    TL_PROFILER_POP
+}
+
 u32 tl_iterator_size(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
 

@@ -1,30 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell -File \".\\engine\\build.ps1\" -Clean)",
-      "Bash(powershell -File \".\\sandbox\\build.ps1\" -Clean)",
-      "Bash(Select-Object -Last 100)",
-      "Bash(cmake --version:*)",
+      "Bash(cmake:*)",
       "Bash(powershell:*)",
       "Bash(dir:*)",
       "Bash(find:*)",
-      "Bash(Select-Object -First 50)",
-      "Bash(if not exist build mkdir build)",
+      "Bash(Select-Object:*)",
       "Bash(cmake:*)",
-      "Bash(timeout /t 10)",
+      "Bash(timeout:*)",
       "Bash(engine.exe:*)",
-      "Bash(build/bin/Debug/engine.exe:*)",
       "Bash(taskkill:*)",
-      "Bash(nul)",
-      "Bash(.buildbinDebugengine.exe)",
-      "Bash(timeout /t 3)",
-      "Bash(copy sandboxapplication.yml buildbinDebugapplication.yml)",
       "Bash(./engine.exe:*)",
       "Bash(test:*)",
       "Bash(cat:*)",
-      "Bash(Select-String \"profiler|warning|error\")",
-      "Bash(findstr:*)",
-      "Bash(timeout /t 2)"
+      "Bash(Select-String:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

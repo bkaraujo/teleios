@@ -1,5 +1,4 @@
 #include "teleios/teleios.h"
-#include "container_types.inl"
 
 static TLAllocator* m_allocator;
 static TLMap* m_properties;
@@ -8,13 +7,9 @@ static void tl_serializer_walk();
 
 b8 tl_config_initialize() {
     TL_PROFILER_PUSH
-
     m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
     m_properties = tl_map_create(m_allocator, 32);
-
     tl_serializer_walk();
-    // tl_config_print_all();
-
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -82,19 +77,16 @@ typedef struct {
     u32 sequence;
 } TLTuple;
 
-// Helper: Build path from segments without creating iterator snapshot (OPTIMIZATION #1)
-static void build_path_from_segments(TLStringBuilder* builder, const TLList* segments) {
-    // Direct iteration over list nodes (no snapshot allocation)
-    if (segments == NULL || segments->head == NULL) return;
+// Helper: Build path from segments using cached iterator (OPTIMIZATION #1)
+// Uses tl_iterator_resync() to avoid creating new iterators on each call
+static void build_path_from_segments(TLStringBuilder* builder, TLIterator* cached_iter) {
+    if (cached_iter == NULL) return;
 
-    // Access internal list structure directly for performance
-    // TLListNode structure: { void* data, void* prev, void* next }
-    void* node = segments->head;
-    while (node != NULL) {
-        const TLString* segment = *((void**)node);  // data is first field
+    tl_iterator_resync(cached_iter);
+    while (tl_iterator_has_next(cached_iter)) {
+        const TLString* segment = (TLString*)tl_iterator_next(cached_iter);
         tl_string_builder_append(builder, segment);
         tl_string_builder_append_cstr(builder, ".");
-        node = *((void**)((char*)node + sizeof(void*) * 2));  // next is third field (skip data + prev)
     }
 }
 
@@ -114,6 +106,9 @@ static void tl_serializer_walk() {
     yaml_token_t token;
     TLString* current_key = NULL;  // Stores current KEY token before value/nested block
     TLStringBuilder* builder = tl_string_builder_create(allocator, 512);
+
+    // OPTIMIZATION #1: Cached iterator for path_segments (reused with resync)
+    TLIterator* path_iter = tl_list_iterator(path_segments);
 
     // OPTIMIZATION #3: Cache current path to avoid rebuilding
     TLStringBuilder* path_cache = tl_string_builder_create(allocator, 256);
@@ -143,9 +138,9 @@ static void tl_serializer_walk() {
                 TLTuple *tuple = tl_memory_alloc(allocator, TL_MEMORY_SERIALIZER, sizeof(TLTuple));
                 tuple->sequence = 0;
 
-                // OPTIMIZATION #1: Build tuple name using direct iteration (no snapshot)
+                // OPTIMIZATION #1: Build tuple name using cached iterator with resync
                 tl_string_builder_clear(builder);
-                build_path_from_segments(builder, path_segments);
+                build_path_from_segments(builder, path_iter);
                 tuple->name = tl_string_builder_build(builder);
 
                 // OPTIMIZATION #2: Store in hash map for O(1) lookup
@@ -169,9 +164,9 @@ static void tl_serializer_walk() {
             // YAML_BLOCK_ENTRY_TOKEN
             // #########################################################################################################
             case YAML_BLOCK_ENTRY_TOKEN: {
-                // OPTIMIZATION #1: Build current path using direct iteration (no snapshot)
+                // OPTIMIZATION #1: Build current path using cached iterator with resync
                 tl_string_builder_clear(builder);
-                build_path_from_segments(builder, path_segments);
+                build_path_from_segments(builder, path_iter);
                 TLString* current_path = tl_string_builder_build(builder);
 
                 // OPTIMIZATION #2: O(1) hash map lookup instead of O(n) linear search
@@ -207,11 +202,10 @@ static void tl_serializer_walk() {
             // YAML_SCALAR_TOKEN
             // #########################################################################################################
             case YAML_SCALAR_TOKEN: {
-                // OPTIMIZATION #1: Use direct iteration (no iterator snapshot)
+                // OPTIMIZATION #1: Use cached iterator with resync
                 // OPTIMIZATION #3: Cache is maintained but we rebuild each time
-                // (still faster than creating iterators)
                 tl_string_builder_clear(builder);
-                build_path_from_segments(builder, path_segments);
+                build_path_from_segments(builder, path_iter);
 
                 if (current_key != NULL) {
                     tl_string_builder_append(builder, current_key);
@@ -223,8 +217,8 @@ static void tl_serializer_walk() {
 
                 tl_map_put(
                     m_properties,
-                    tl_string_create(m_properties->allocator, tl_string_cstr(property)),
-                    tl_string_create(m_properties->allocator, (char*)token.data.scalar.value)
+                    tl_string_create(m_allocator, tl_string_cstr(property)),
+                    tl_string_create(m_allocator, (char*)token.data.scalar.value)
                 );
             } break;
             // #########################################################################################################
@@ -232,14 +226,14 @@ static void tl_serializer_walk() {
             // #########################################################################################################
             case YAML_BLOCK_END_TOKEN: {
                 // Pop last segment from path
-                if (path_segments->head != NULL) {  // OPTIMIZATION: Direct check instead of tl_list_size()
+                if (!tl_list_is_empty(path_segments)) {
                     tl_list_pop_back(path_segments);
 
                     // OPTIMIZATION #3: Rebuild cache after pop (cheaper than tracking segment lengths)
                     if (path_depth > 0) {
                         path_depth--;
                         tl_string_builder_clear(path_cache);
-                        build_path_from_segments(path_cache, path_segments);
+                        build_path_from_segments(path_cache, path_iter);
                     }
                 }
             } break;
@@ -252,6 +246,7 @@ static void tl_serializer_walk() {
 
     yaml_token_delete(&token);
     yaml_parser_delete(&parser);
+    tl_iterator_destroy(path_iter);  // Cleanup cached iterator
     tl_list_destroy(path_segments);
     tl_map_destroy(sequences);  // Changed from tl_list_destroy
     tl_string_builder_destroy(builder);

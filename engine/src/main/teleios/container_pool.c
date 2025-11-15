@@ -11,17 +11,17 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
     TL_PROFILER_PUSH_WITH("0x%p, %u, %u", allocator, object_size, capacity)
 
     if (allocator == NULL) {
-        TLERROR("Attempt to use a NULL TLAllocator")
+        TLERROR("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (object_size == 0) {
-        TLERROR("Attempt to use a object_size 0")
+        TLERROR("Attempted to use a object_size 0")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (capacity == 0) {
-        TLERROR("Attempt to use a capacity 0")
+        TLERROR("Attempted to use a capacity 0")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -52,7 +52,7 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
 void tl_pool_destroy(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
@@ -77,7 +77,7 @@ void tl_pool_destroy(TLObjectPool* pool) {
 void* tl_pool_acquire(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -111,12 +111,12 @@ void* tl_pool_acquire(TLObjectPool* pool) {
 void tl_pool_release(TLObjectPool* pool, void* object) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", pool, object)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
     if (object == NULL) {
-        TLERROR("Attempt to use a NULL object")
+        TLERROR("Attempted to use a NULL object")
         TL_PROFILER_POP
     }
 
@@ -160,7 +160,7 @@ void tl_pool_release(TLObjectPool* pool, void* object) {
 u16 tl_pool_available(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -181,7 +181,7 @@ u16 tl_pool_available(const TLObjectPool* pool) {
 u16 tl_pool_in_use(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -202,7 +202,7 @@ u16 tl_pool_in_use(const TLObjectPool* pool) {
 u16 tl_pool_capacity(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(0)
     }
     TL_PROFILER_POP_WITH(pool->capacity);
@@ -211,7 +211,7 @@ u16 tl_pool_capacity(const TLObjectPool* pool) {
 void tl_pool_reset(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
@@ -286,10 +286,38 @@ static void tl_pool_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_POP
 }
 
+static void tl_pool_iterator_resync(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    TLObjectPool* pool = (TLObjectPool*)iterator->source;
+
+    // Lock pool to capture current state
+    tl_mutex_lock(pool->mutex);
+
+    // Update iterator with current container state
+    iterator->expected_mod_count = pool->mod_count;
+
+    // Count in-use objects for size
+    u32 count = 0;
+    for (u16 i = 0; i < pool->capacity; ++i) {
+        if (pool->in_use[i]) {
+            count++;
+        }
+    }
+    iterator->size = count;
+
+    // Rewind to beginning
+    TLPoolIteratorState* state = (TLPoolIteratorState*)iterator->state;
+    state->index = 0;
+
+    tl_mutex_unlock(pool->mutex);
+
+    TL_PROFILER_POP
+}
+
 TLIterator* tl_pool_iterator(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
     if (pool == NULL) {
-        TLERROR("Attempt to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -325,6 +353,7 @@ TLIterator* tl_pool_iterator(TLObjectPool* pool) {
     iterator->has_next = tl_pool_iterator_has_next;
     iterator->next = tl_pool_iterator_next;
     iterator->rewind = tl_pool_iterator_rewind;
+    iterator->resync = tl_pool_iterator_resync;
 
     tl_mutex_unlock(pool->mutex);
 

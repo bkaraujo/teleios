@@ -127,7 +127,7 @@ void tl_thread_sleep(const u32 milliseconds) {
 TLMutex* tl_mutex_create(TLAllocator* allocator) {
     TL_PROFILER_PUSH_WITH("0x%p", allocator)
     if (allocator == NULL) {
-        TLWARN("Attempt to use a NULL TLAllocator")
+        TLWARN("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -191,7 +191,7 @@ b8 tl_mutex_unlock(TLMutex* mutex) {
 TLCondition* tl_condition_create(TLAllocator* allocator) {
     TL_PROFILER_PUSH_WITH("0x%p", allocator)
     if (allocator == NULL) {
-        TLWARN("Attempt to use a NULL TLAllocator")
+        TLWARN("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 

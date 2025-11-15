@@ -1399,6 +1399,49 @@ void* tl_iterator_next(TLIterator* iterator);
 void tl_iterator_rewind(TLIterator* iterator);
 
 /**
+ * @brief Resynchronize iterator with current container state
+ *
+ * Re-captures the container's modification count, size, and rewinds to the beginning.
+ * This allows reusing a cached iterator even after the container has been modified.
+ *
+ * @param iterator Iterator to resynchronize
+ *
+ * @note Thread-safe - acquires container's mutex during resync
+ * @note Updates expected_mod_count to current container mod_count
+ * @note Updates size to current container size
+ * @note Resets iteration position to beginning
+ * @note Use this for iterator caching optimization in hot paths
+ *
+ * @see tl_iterator_rewind
+ * @see tl_list_iterator
+ * @see tl_map_keys
+ * @see tl_queue_iterator
+ * @see tl_pool_iterator
+ *
+ * @code
+ * // Cache iterator for reuse (optimization)
+ * TLIterator* cached_iter = tl_list_iterator(list);
+ *
+ * // Use multiple times
+ * for (int i = 0; i < 100; ++i) {
+ *     // List may have been modified
+ *     tl_list_push_back(list, new_item);
+ *
+ *     // Resync before reuse (updates mod_count and rewinds)
+ *     tl_iterator_resync(cached_iter);
+ *
+ *     while (tl_iterator_has_next(cached_iter)) {
+ *         void* item = tl_iterator_next(cached_iter);
+ *         process(item);
+ *     }
+ * }
+ *
+ * tl_iterator_destroy(cached_iter);
+ * @endcode
+ */
+void tl_iterator_resync(TLIterator* iterator);
+
+/**
  * @brief Get total number of items in iterator
  *
  * Returns the number of items in the container at iterator creation time.

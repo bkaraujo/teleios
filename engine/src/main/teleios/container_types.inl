@@ -90,6 +90,7 @@ struct TLIterator {
     b8      (*has_next      )(const TLIterator* iterator);  // Check if more items available
     void*   (*next          )(TLIterator* iterator      );  // Get next item and advance
     void    (*rewind        )(TLIterator* iterator      );  // Reset to beginning
+    void    (*resync        )(TLIterator* iterator      );  // Resynchronize with container state
 
     // State specific to container type (allocated by container, freed by iterator)
     void* state;

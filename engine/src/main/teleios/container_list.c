@@ -9,7 +9,7 @@
 TLList* tl_list_create(TLAllocator* allocator) {
     TL_PROFILER_PUSH_WITH("0x%p", allocator)
     if (allocator == NULL) {
-        TLERROR("Attempt to use a NULL TLAllocator")
+        TLERROR("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -26,7 +26,7 @@ TLList* tl_list_create(TLAllocator* allocator) {
 void tl_list_destroy(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -86,10 +86,30 @@ static void tl_list_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_POP
 }
 
+static void tl_list_iterator_resync(TLIterator* iterator) {
+    TL_PROFILER_PUSH_WITH("0x%p", iterator)
+    TLList* list = (TLList*)iterator->source;
+
+    // Lock list to capture current state
+    tl_mutex_lock(list->mutex);
+
+    // Update iterator with current container state
+    iterator->expected_mod_count = list->mod_count;
+    iterator->size = list->size;
+
+    // Rewind to beginning
+    TLListIteratorState* state = (TLListIteratorState*)iterator->state;
+    state->current_node = list->head;
+
+    tl_mutex_unlock(list->mutex);
+
+    TL_PROFILER_POP
+}
+
 TLIterator* tl_list_iterator (TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -117,6 +137,7 @@ TLIterator* tl_list_iterator (TLList* list) {
     iterator->has_next = tl_list_iterator_has_next;
     iterator->next = tl_list_iterator_next;
     iterator->rewind = tl_list_iterator_rewind;
+    iterator->resync = tl_list_iterator_resync;
 
     tl_mutex_unlock(list->mutex);
 
@@ -147,7 +168,7 @@ static void tl_list_free_node(TLAllocator* allocator, TLListNode* node) {
 void tl_list_push_front(TLList* list, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", list, data)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -175,7 +196,7 @@ void tl_list_push_front(TLList* list, void* data) {
 void tl_list_push_back(TLList* list, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", list, data)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -203,7 +224,7 @@ void tl_list_push_back(TLList* list, void* data) {
 void tl_list_insert_after(TLList* list, TLListNode* node, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", list, node, data)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -238,7 +259,7 @@ void tl_list_insert_after(TLList* list, TLListNode* node, void* data) {
 void tl_list_insert_before(TLList* list, TLListNode* node, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", list, node, data)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -277,7 +298,7 @@ void tl_list_insert_before(TLList* list, TLListNode* node, void* data) {
 void* tl_list_pop_front(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -312,7 +333,7 @@ void* tl_list_pop_front(TLList* list) {
 void* tl_list_pop_back(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -342,12 +363,12 @@ void* tl_list_remove(TLList* list, TLListNode* node) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", list, node)
 
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (node == NULL) {
-        TLERROR("Attempt to use a NULL TLListNode")
+        TLERROR("Attempted to use a NULL TLListNode")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -387,7 +408,7 @@ void* tl_list_remove(TLList* list, TLListNode* node) {
 void* tl_list_front(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -401,7 +422,7 @@ void* tl_list_front(TLList* list) {
 void* tl_list_back(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -419,7 +440,7 @@ void* tl_list_back(TLList* list) {
 u32 tl_list_size(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -433,7 +454,7 @@ u32 tl_list_size(TLList* list) {
 b8 tl_list_is_empty(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP_WITH(true)
     }
 
@@ -447,7 +468,7 @@ b8 tl_list_is_empty(TLList* list) {
 void tl_list_clear(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLERROR("Attempt to use a NULL TLList")
+        TLERROR("Attempted to use a NULL TLList")
         TL_PROFILER_POP
     }
 
