@@ -183,15 +183,15 @@ static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key,
     }
 
     TLEvent event = { 0 };
-    event.u32[0] = (u32)key;
+    event.i32[0] = (i32)key;
     tl_event_submit(type, &event);
 }
 
 static void tl_window_callback_input_cursor_position(GLFWwindow* window, const double xpos, const double ypos) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
-    event.u32[0] = (u32) xpos;
-    event.u32[1] = (u32) ypos;
+    event.f32[0] = xpos;
+    event.f32[1] = ypos;
 
     tl_event_submit(TL_EVENT_INPUT_CURSOR_MOVED, &event);
 }
@@ -205,7 +205,7 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int
     else                        { type = TL_EVENT_INPUT_CURSOR_RELEASED; }
 
     TLEvent event = { 0 };
-    event.u32[0] = (u32)button;
+    event.i32[0] = button;
 
     tl_event_submit(type, &event);
 }
@@ -213,8 +213,8 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int
 static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const double xoffset, const double yoffset) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
-    event.u8[0] =  xoffset > 0 ? 1 : xoffset < 0 ? -1 : 0;
-    event.u8[1] = yoffset > 0 ? 1 : yoffset < 0 ? -1 : 0;
+    event.i8[0] =  xoffset > 0 ? 1 : (i8)(xoffset < 0 ? -1 : 0);
+    event.i8[1] = yoffset > 0 ? 1 : (i8)(yoffset < 0 ? -1 : 0);
 
     tl_event_submit(TL_EVENT_INPUT_CURSOR_SCROLLED, &event);
 }

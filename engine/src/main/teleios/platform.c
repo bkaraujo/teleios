@@ -81,9 +81,14 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
+    if (!tl_input_initialize()) {
+        TLERROR("Input system failed to initialize")
+        TL_PROFILER_POP_WITH(false)
+    }
+
     // Initialize graphics system
     if (!tl_graphics_initialize()) {
-        TLERROR("Graphics failed to initialize")
+        TLERROR("Graphics system failed to initialize")
         TL_PROFILER_POP_WITH(false)
     }
 

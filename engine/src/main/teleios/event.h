@@ -41,11 +41,17 @@ typedef enum {
     TL_EVENT_WINDOW_FOCUS_GAINED,   ///< Window gained input focus (became active)
     TL_EVENT_WINDOW_FOCUS_LOST,     ///< Window lost input focus (no longer active)
 
+    /** event.i32[0] */
     TL_EVENT_INPUT_KEY_PRESSED,     ///< Keyboard key pressed
+    /** event.i32[0] */
     TL_EVENT_INPUT_KEY_RELEASED,    ///< Keyboard key released
+    /** event.i32[0] */
     TL_EVENT_INPUT_CURSOR_PRESSED,  ///< Mouse button pressed
+    /** event.i32[0] */
     TL_EVENT_INPUT_CURSOR_RELEASED, ///< Mouse button released
+    /** event.f32[0], event.f32[1] */
     TL_EVENT_INPUT_CURSOR_MOVED,    ///< Mouse cursor position changed
+    /** event.i8[0], event.i8[1] */
     TL_EVENT_INPUT_CURSOR_SCROLLED, ///< Mouse wheel scrolled
     TL_EVENT_INPUT_CURSOR_ENTERED,  ///< Mouse cursor entered window
     TL_EVENT_INPUT_CURSOR_EXITED,   ///< Mouse cursor exited window
