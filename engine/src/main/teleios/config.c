@@ -170,7 +170,7 @@ TLLogLevel tl_config_get_log_level(const char* property) {
     TLString* upper = tl_string_to_upper(desired);
     tl_string_destroy(desired);
 
-    for (size_t i = 0; i < sizeof(logLevelTable)/sizeof(logLevelTable[0]); i++) {
+    for (u8 i = 0; i < sizeof(logLevelTable)/sizeof(logLevelTable[0]); i++) {
         if (tl_string_cstr_ends_with(logLevelTable[i].name, upper)) {
             tl_string_destroy(upper);
             TL_PROFILER_POP_WITH(logLevelTable[i].value);
@@ -199,7 +199,7 @@ TLDisplayResolution tl_config_get_display_resolution(const char* property) {
     TLString* upper = tl_string_to_upper(desired);
     tl_string_destroy(desired);
 
-    for (size_t i = 0; i < sizeof(resolutionTable)/sizeof(resolutionTable[0]); i++) {
+    for (u8 i = 0; i < sizeof(resolutionTable)/sizeof(resolutionTable[0]); i++) {
         if (tl_string_cstr_ends_with(resolutionTable[i].name, upper)) {
             tl_string_destroy(upper);
             TL_PROFILER_POP_WITH(resolutionTable[i].value);
