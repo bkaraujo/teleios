@@ -1,8 +1,8 @@
 #ifndef __TELEIOS_GRAPHICS_THREAD__
 #define __TELEIOS_GRAPHICS_THREAD__
 
+#include "teleios/graphics/types.inl"
 #include "teleios/teleios.h"
-#include "teleios/graphics_types.inl"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

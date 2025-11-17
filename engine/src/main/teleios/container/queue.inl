@@ -1,7 +1,9 @@
-#include "memory_types.inl"
-#include "teleios/teleios.h"
-#include "teleios/container_types.inl"
+#ifndef __TELEIOS_CONTAINER_QUEUE__
+#define __TELEIOS_CONTAINER_QUEUE__
 
+#include "teleios/memory/types.inl"
+#include "teleios/container/types.inl"
+#include "teleios/teleios.h"
 
 // ---------------------------------
 // Queue Lifecycle
@@ -335,3 +337,4 @@ TLIterator* tl_queue_iterator(TLQueue* queue) {
 
     TL_PROFILER_POP_WITH(iterator)
 }
+#endif

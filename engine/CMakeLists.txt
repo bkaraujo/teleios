@@ -133,11 +133,7 @@ set(ENGINE_SOURCES
     src/main/teleios/graphics.c
     src/main/teleios/event.c
     src/main/teleios/number.c
-    src/main/teleios/container_queue.c
-    src/main/teleios/container_pool.c
-    src/main/teleios/container_list.c
-    src/main/teleios/container_map.c
-    src/main/teleios/container_iterator.c
+    src/main/teleios/container.c
     src/main/teleios/renderer.c
     src/main/teleios/strings.c
     src/main/teleios/config.c

@@ -1,8 +1,6 @@
 #include "teleios/teleios.h"
 #include <ctype.h>
 
-#include "memory_types.inl"
-
 struct TLString {
     char* data;              ///< Null-terminated character array
     u32 length;              ///< Cached string length (excluding null terminator)

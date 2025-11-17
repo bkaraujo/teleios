@@ -1,6 +1,9 @@
+#ifndef __TELEIOS_CONTAINER_ITERATOR__
+#define __TELEIOS_CONTAINER_ITERATOR__
+
+#include "teleios/memory/types.inl"
+#include "teleios/container/types.inl"
 #include "teleios/teleios.h"
-#include "teleios/memory_types.inl"
-#include "teleios/container_types.inl"
 
 // ---------------------------------
 // Iterator Lifecycle
@@ -123,3 +126,4 @@ u32 tl_iterator_size(const TLIterator* iterator) {
 
     TL_PROFILER_POP_WITH(iterator->size)
 }
+#endif

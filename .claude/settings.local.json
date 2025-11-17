@@ -14,7 +14,9 @@
       "Bash(test:*)",
       "Bash(cat:*)",
       "Bash(Select-String:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(move:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []

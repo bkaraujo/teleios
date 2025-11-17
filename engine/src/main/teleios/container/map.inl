@@ -1,7 +1,9 @@
+#ifndef __TELEIOS_CONTAINER_MAP__
+#define __TELEIOS_CONTAINER_MAP__
+
+#include "teleios/memory/types.inl"
+#include "teleios/container/types.inl"
 #include "teleios/teleios.h"
-#include "teleios/memory_types.inl"
-#include "teleios/container_types.inl"
-#include "teleios/strings.h"
 
 // ---------------------------------
 // Internal Helper Functions
@@ -518,4 +520,4 @@ TLIterator* tl_map_keys(TLMap* map) {
 
     TL_PROFILER_POP_WITH(iterator)
 }
-
+#endif

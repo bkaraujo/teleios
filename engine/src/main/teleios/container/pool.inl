@@ -1,7 +1,9 @@
-#include "memory_types.inl"
-#include "teleios/teleios.h"
-#include "teleios/container_types.inl"
+#ifndef __TELEIOS_CONTAINER_POOL__
+#define __TELEIOS_CONTAINER_POOL__
 
+#include "teleios/memory/types.inl"
+#include "teleios/container/types.inl"
+#include "teleios/teleios.h"
 
 // ---------------------------------
 // Object Pool Lifecycle
@@ -359,3 +361,4 @@ TLIterator* tl_pool_iterator(TLObjectPool* pool) {
 
     TL_PROFILER_POP_WITH(iterator)
 }
+#endif

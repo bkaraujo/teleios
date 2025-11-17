@@ -1,9 +1,9 @@
 #include "teleios/teleios.h"
-#include "teleios/graphics_types.inl"
-#include "teleios/container_types.inl"
+#include "teleios/graphics/types.inl"
+#include "teleios/container/types.inl"
 
-#include "teleios/graphics_queue.inl"
-#include "teleios/graphics_thread.inl"
+#include "teleios/graphics/queue.inl"
+#include "teleios/graphics/thread.inl"
 
 // ---------------------------------
 // Event Handlers

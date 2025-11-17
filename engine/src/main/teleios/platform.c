@@ -1,8 +1,8 @@
 #include "teleios/teleios.h"
-#include "teleios/platform_types.inl"
-#include "teleios/platform_windows.inl"
-#include "teleios/platform_linux.inl"
-#include "teleios/platform_glfw.inl"
+#include "teleios/platform/types.inl"
+#include "teleios/platform/windows.inl"
+#include "teleios/platform/linux.inl"
+#include "teleios/platform/glfw.inl"
 #include <GLFW/glfw3.h>
 
 /**

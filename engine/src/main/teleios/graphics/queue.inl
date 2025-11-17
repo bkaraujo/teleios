@@ -1,9 +1,9 @@
 #ifndef __TELEIOS_GRAPHICS_QUEUE__
 #define __TELEIOS_GRAPHICS_QUEUE__
 
-#include "memory_dynamic.inl"
+#include "teleios/graphics/types.inl"
+#include "teleios/memory/dynamic.inl"
 #include "teleios/teleios.h"
-#include "teleios/graphics_types.inl"
 
 // Forward declarations from graphics.c
 extern TLAllocator* m_allocator;

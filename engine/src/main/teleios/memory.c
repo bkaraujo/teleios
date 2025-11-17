@@ -1,7 +1,7 @@
 #include "teleios/teleios.h"
-#include "teleios/memory_types.inl"
-#include "teleios/memory_linear.inl"
-#include "teleios/memory_dynamic.inl"
+#include "teleios/memory/types.inl"
+#include "teleios/memory/linear.inl"
+#include "teleios/memory/dynamic.inl"
 
 static u16 m_allocators_capacity = 0;
 static u16 m_allocators_count = 0;

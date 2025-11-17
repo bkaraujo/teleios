@@ -1,6 +1,9 @@
+#ifndef __TELEIOS_CONTAINER_LIST__
+#define __TELEIOS_CONTAINER_LIST__
+
+#include "teleios/memory/types.inl"
+#include "teleios/container/types.inl"
 #include "teleios/teleios.h"
-#include "teleios/memory_types.inl"
-#include "teleios/container_types.inl"
 
 // ---------------------------------
 // List Lifecycle
@@ -490,3 +493,4 @@ void tl_list_clear(TLList* list) {
 
     TL_PROFILER_POP
 }
+#endif
