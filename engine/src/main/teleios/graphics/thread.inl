@@ -27,7 +27,13 @@ static void* tl_graphics_worker(void* _) {
     TLDEBUG("CGLM %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
 
     // Disable VSync for immediate buffer swaps
-    glfwSwapInterval(0);
+    const b8 vsync = tl_config_get_b8("teleios.graphics.vsync");
+    glfwSwapInterval(vsync ? 1 : 0);
+
+    const b8 wireframe = tl_config_get_b8("teleios.graphics.wireframe");
+    if (wireframe)  { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
+    else            { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
+
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
 
     // Main worker loop - process tasks from queue until shutdown signal

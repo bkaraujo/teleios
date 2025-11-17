@@ -5,7 +5,7 @@ teleios:
     vsync: false
     wireframe: false
   simulation:
-    step: 20s
+    step: 20
   renderer:
     modelMatrix: un_model
     viewProjectionMatrix: un_viewProjection
