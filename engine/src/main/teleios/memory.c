@@ -179,6 +179,17 @@ void tl_memory_copy(void *target, const void *source, const u32 size){
     TL_PROFILER_POP
 }
 
+void tl_memory_move(void *target, const void *source, const u32 size){
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p, %u", target, source, size)
+
+    if (size == 0) TLFATAL("size is 0")
+    if (source == NULL) TLFATAL("source is NULL")
+    if (target == NULL) TLFATAL("target is NULL")
+
+    memmove(target, source, size);
+    TL_PROFILER_POP
+}
+
 b8 tl_memory_terminate(void) {
     TL_PROFILER_PUSH
 

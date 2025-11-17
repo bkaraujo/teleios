@@ -14,6 +14,7 @@
  */
 
 // Include all container implementations
+#include "teleios/container/array.inl"
 #include "teleios/container/queue.inl"
 #include "teleios/container/pool.inl"
 #include "teleios/container/list.inl"

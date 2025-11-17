@@ -13,6 +13,7 @@ typedef enum {
     TL_MEMORY_BLOCK,                    ///< Generic/untagged memory blocks
     TL_MEMORY_GRAPHICS,                 ///< Graphics subsystem (textures, shaders, etc)
     TL_MEMORY_SERIALIZER,               ///< Serialization buffers (YAML, JSON parsing)
+    TL_MEMORY_CONTAINER_ARRAY,          ///< Dynamic array container allocations
     TL_MEMORY_CONTAINER_QUEUE,          ///< Queue container allocations
     TL_MEMORY_CONTAINER_POOL,           ///< Object pool allocations
     TL_MEMORY_CONTAINER_STACK,          ///< Stack container allocations
@@ -258,11 +259,12 @@ void tl_memory_set(void *target, i32 value, u32 size);
  * @param source Source memory pointer
  * @param size Number of bytes to copy
  *
- * @note Behavior is undefined if regions overlap. Use memmove() semantics
- *       not available; ensure source and destination don't overlap.
+ * @note Behavior is undefined if regions overlap. Use tl_memory_move() for
+ *       overlapping regions.
  * @note If either pointer is NULL or size is 0, behavior is undefined.
  *
  * @see tl_memory_set
+ * @see tl_memory_move
  *
  * @code
  * struct Data src = {...};
@@ -278,5 +280,33 @@ void tl_memory_set(void *target, i32 value, u32 size);
  * @endcode
  */
 void tl_memory_copy(void *target, const void *source, u32 size);
+
+/**
+ * @brief Move memory from source to destination (handles overlapping regions)
+ *
+ * Copies bytes from source to destination. Similar to memmove(), safe for
+ * overlapping memory regions. Use this when source and destination may overlap.
+ *
+ * @param target Destination memory pointer
+ * @param source Source memory pointer
+ * @param size Number of bytes to move
+ *
+ * @note Safe for overlapping regions (e.g., shifting array elements)
+ * @note If either pointer is NULL or size is 0, behavior is undefined.
+ *
+ * @see tl_memory_copy
+ *
+ * @code
+ * // Shift array elements to the right
+ * int array[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+ * tl_memory_move(&array[2], &array[1], sizeof(int) * 8);
+ * // Result: {1, 2, 2, 3, 4, 5, 6, 7, 8, 9}
+ *
+ * // Shift array elements to the left
+ * tl_memory_move(&array[0], &array[1], sizeof(int) * 9);
+ * // Result: {2, 3, 4, 5, 6, 7, 8, 9, 10, 10}
+ * @endcode
+ */
+void tl_memory_move(void *target, const void *source, u32 size);
 
 #endif

@@ -4,8 +4,354 @@
 #include "teleios/defines.h"
 
 // =================================
-// Array API
+// DYNAMIC ARRAY API
 // =================================
+
+/**
+ * @brief Create a new dynamic array with specified item size and initial capacity
+ *
+ * Allocates and initializes a dynamic array that stores elements of fixed size.
+ * The array automatically grows when capacity is exceeded.
+ *
+ * @param allocator Memory allocator to use (must be valid and remain alive)
+ * @param stride Size in bytes of each element
+ * @param initial_capacity Initial number of elements to allocate space for
+ * @return Pointer to new array, or NULL on allocation failure
+ *
+ * @note The allocator must remain valid for the array's entire lifetime
+ * @note Array memory is tagged as TL_MEMORY_CONTAINER_ARRAY
+ * @note Thread-safe - uses internal mutex for synchronization
+ * @note Capacity is 0, defaults to 8
+ * @note Elements are stored in contiguous memory for cache efficiency
+ *
+ * @see tl_array_destroy
+ *
+ * @code
+ * // Array of integers
+ * TLAllocator* heap = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
+ * TLArray* numbers = tl_array_create(heap, sizeof(i32), 16);
+ *
+ * i32 value = 42;
+ * tl_array_push(numbers, &value);
+ * @endcode
+ */
+TLArray* tl_array_create(TLAllocator* allocator, u32 stride, u32 initial_capacity);
+
+/**
+ * @brief Destroy an array and free its memory
+ *
+ * Deallocates the array structure and internal storage.
+ *
+ * @param array Array to destroy (may be NULL)
+ *
+ * @note Safe to call with NULL (no-op)
+ * @note Does not call destructors on elements - only frees memory
+ * @note After destruction, using the array is undefined behavior
+ *
+ * @see tl_array_create
+ */
+void tl_array_destroy(TLArray* array);
+
+/**
+ * @brief Add an element to the end of the array
+ *
+ * Copies the element to the end of the array. Automatically grows capacity if needed.
+ *
+ * @param array Array to add to
+ * @param item Pointer to element to copy (size must match stride)
+ * @return true on success, false on allocation failure
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Element is copied (not referenced)
+ * @note Amortized O(1) time complexity
+ * @note May trigger reallocation (capacity doubles)
+ *
+ * @see tl_array_pop
+ * @see tl_array_insert
+ *
+ * @code
+ * i32 value = 42;
+ * if (!tl_array_push(array, &value)) {
+ *     TLERROR("Failed to push element");
+ * }
+ * @endcode
+ */
+b8 tl_array_push(TLArray* array, const void* item);
+
+/**
+ * @brief Remove and optionally retrieve the last element
+ *
+ * Removes the last element from the array and optionally copies it to out_item.
+ *
+ * @param array Array to remove from
+ * @param out_item Pointer to receive removed element (may be NULL)
+ * @return true on success, false if array is empty
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note O(1) time complexity
+ * @note If out_item is NULL, element is discarded
+ *
+ * @see tl_array_push
+ * @see tl_array_remove
+ *
+ * @code
+ * i32 value;
+ * if (tl_array_pop(array, &value)) {
+ *     TLINFO("Popped value: %d", value);
+ * } else {
+ *     TLINFO("Array is empty");
+ * }
+ * @endcode
+ */
+b8 tl_array_pop(TLArray* array, void* out_item);
+
+/**
+ * @brief Get a pointer to an element at the specified index
+ *
+ * Returns a direct pointer to the element at the given index.
+ *
+ * @param array Array to query
+ * @param index Index of element (0-based)
+ * @return Pointer to element, or NULL if index is out of bounds
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note O(1) time complexity
+ * @note Returned pointer is valid until array is modified
+ * @note Modifying through pointer is safe but not thread-safe
+ *
+ * @see tl_array_set
+ *
+ * @code
+ * i32* ptr = (i32*)tl_array_get(array, 5);
+ * if (ptr != NULL) {
+ *     TLINFO("Element at index 5: %d", *ptr);
+ * }
+ * @endcode
+ */
+void* tl_array_get(TLArray* array, u32 index);
+
+/**
+ * @brief Set an element at the specified index
+ *
+ * Copies the provided element to the specified index.
+ *
+ * @param array Array to modify
+ * @param index Index to set (0-based, must be < count)
+ * @param item Pointer to element to copy
+ * @return true on success, false if index is out of bounds
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note O(1) time complexity
+ * @note Index must be less than current count
+ *
+ * @see tl_array_get
+ * @see tl_array_insert
+ *
+ * @code
+ * i32 new_value = 99;
+ * if (!tl_array_set(array, 5, &new_value)) {
+ *     TLERROR("Index out of bounds");
+ * }
+ * @endcode
+ */
+b8 tl_array_set(TLArray* array, u32 index, const void* item);
+
+/**
+ * @brief Insert an element at the specified index
+ *
+ * Inserts the element at the given index, shifting subsequent elements forward.
+ *
+ * @param array Array to modify
+ * @param index Index to insert at (0-based, may equal count for append)
+ * @param item Pointer to element to copy
+ * @return true on success, false on allocation failure or invalid index
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note O(n) time complexity (due to shifting)
+ * @note Index may equal count (equivalent to push)
+ * @note May trigger reallocation
+ *
+ * @see tl_array_remove
+ * @see tl_array_push
+ *
+ * @code
+ * i32 value = 42;
+ * if (!tl_array_insert(array, 3, &value)) {
+ *     TLERROR("Failed to insert element");
+ * }
+ * @endcode
+ */
+b8 tl_array_insert(TLArray* array, u32 index, const void* item);
+
+/**
+ * @brief Remove an element at the specified index
+ *
+ * Removes the element at the given index, shifting subsequent elements backward.
+ *
+ * @param array Array to modify
+ * @param index Index to remove (0-based, must be < count)
+ * @param out_item Pointer to receive removed element (may be NULL)
+ * @return true on success, false if index is out of bounds
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note O(n) time complexity (due to shifting)
+ * @note If out_item is NULL, element is discarded
+ *
+ * @see tl_array_insert
+ * @see tl_array_pop
+ *
+ * @code
+ * i32 removed;
+ * if (tl_array_remove(array, 3, &removed)) {
+ *     TLINFO("Removed value: %d", removed);
+ * }
+ * @endcode
+ */
+b8 tl_array_remove(TLArray* array, u32 index, void* out_item);
+
+/**
+ * @brief Get current number of elements in array
+ *
+ * Returns how many elements are currently stored in the array.
+ *
+ * @param array Array to query
+ * @return Number of elements (0 if array is NULL)
+ *
+ * @note Thread-safe - uses internal mutex
+ *
+ * @see tl_array_capacity
+ * @see tl_array_is_empty
+ */
+u32 tl_array_size(const TLArray* array);
+
+/**
+ * @brief Get current capacity of array
+ *
+ * Returns the number of elements that can be stored before reallocation is needed.
+ *
+ * @param array Array to query
+ * @return Current capacity (0 if array is NULL)
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Capacity >= size always
+ *
+ * @see tl_array_size
+ * @see tl_array_reserve
+ */
+u32 tl_array_capacity(const TLArray* array);
+
+/**
+ * @brief Check if array is empty
+ *
+ * Returns true if the array contains no elements.
+ *
+ * @param array Array to check
+ * @return true if array is empty or NULL, false otherwise
+ *
+ * @see tl_array_size
+ */
+b8 tl_array_is_empty(const TLArray* array);
+
+/**
+ * @brief Remove all elements from array
+ *
+ * Clears all elements but retains allocated capacity.
+ *
+ * @param array Array to clear
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Does not free memory - use tl_array_shrink_to_fit() after if needed
+ * @note O(1) time complexity
+ *
+ * @see tl_array_shrink_to_fit
+ */
+void tl_array_clear(TLArray* array);
+
+/**
+ * @brief Reserve capacity for at least the specified number of elements
+ *
+ * Ensures the array has capacity for at least the given number of elements.
+ * Does not reduce capacity if current capacity is already sufficient.
+ *
+ * @param array Array to modify
+ * @param capacity Minimum capacity to reserve
+ * @return true on success, false on allocation failure
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Use before bulk inserts to avoid multiple reallocations
+ * @note Does not change count
+ *
+ * @see tl_array_capacity
+ * @see tl_array_shrink_to_fit
+ *
+ * @code
+ * // Reserve space before bulk insert
+ * tl_array_reserve(array, 1000);
+ * for (int i = 0; i < 1000; i++) {
+ *     tl_array_push(array, &i);  // No reallocation needed
+ * }
+ * @endcode
+ */
+b8 tl_array_reserve(TLArray* array, u32 capacity);
+
+/**
+ * @brief Reduce capacity to match current size
+ *
+ * Reallocates the array to use only the memory needed for current elements.
+ *
+ * @param array Array to shrink
+ *
+ * @note Thread-safe - uses internal mutex
+ * @note Frees unused memory
+ * @note May keep minimum capacity of 8
+ * @note Use after removing many elements to reclaim memory
+ *
+ * @see tl_array_reserve
+ *
+ * @code
+ * // After removing many elements
+ * while (condition) {
+ *     tl_array_pop(array, NULL);
+ * }
+ * tl_array_shrink_to_fit(array);  // Free unused memory
+ * @endcode
+ */
+void tl_array_shrink_to_fit(TLArray* array);
+
+/**
+ * @brief Create an iterator for the array
+ *
+ * Creates a fail-fast iterator that traverses the array from index 0 to size-1.
+ * The iterator creates a snapshot of the array's modification count at creation time.
+ *
+ * @param array Array to iterate over
+ * @return Pointer to new iterator, or NULL on allocation failure
+ *
+ * @note Thread-safe - captures array state atomically
+ * @note Iterator becomes invalid if array is modified after creation
+ * @note Concurrent modification will trigger FATAL error
+ * @note Must call tl_iterator_destroy() when done
+ * @note Use tl_iterator_resync() to update iterator after modifications
+ *
+ * @see tl_iterator_has_next
+ * @see tl_iterator_next
+ * @see tl_iterator_rewind
+ * @see tl_iterator_resync
+ * @see tl_iterator_destroy
+ *
+ * @code
+ * TLArray* array = tl_array_create(allocator, sizeof(i32), 10);
+ * // ... add elements ...
+ *
+ * TLIterator* iter = tl_array_iterator(array);
+ * while (tl_iterator_has_next(iter)) {
+ *     i32* value = (i32*)tl_iterator_next(iter);
+ *     TLINFO("Value: %d", *value);
+ * }
+ * tl_iterator_destroy(iter);
+ * @endcode
+ */
+TLIterator* tl_array_iterator(TLArray* array);
 
 // =================================
 // QUEUE API

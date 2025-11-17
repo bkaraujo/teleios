@@ -4,13 +4,13 @@
 #include "teleios/defines.h"
 
 struct TLArray {
-    void* items;            // Array of void pointers (payloads)
+    void* items;            // Contiguous memory block for items
     u32 count;              // Current number of items
-    u64 stride;             // Concrete item length
+    u32 capacity;           // Maximum number of items before reallocation
+    u32 stride;             // Size in bytes of each item
+    u32 mod_count;          // Modification counter for fail-fast iteration
 
     TLMutex* mutex;         // Thread-safety
-    TLCondition* not_empty; // Signals when items are available
-    TLCondition* not_full;  // Signals when space is available
 
     TLAllocator* allocator; // Memory allocator for cleanup
 };

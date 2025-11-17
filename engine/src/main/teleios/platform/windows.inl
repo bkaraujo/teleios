@@ -66,7 +66,7 @@ static i8 tl_winapi_filesystem_path_separator(void) {
     return '\\';
 }
 
-static const char* tl_winapi_filesystem_get_current_directory() {
+static const char* tl_winapi_filesystem_get_current_directory(void) {
     return _getcwd(NULL, 0);
 }
 
