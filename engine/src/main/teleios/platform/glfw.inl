@@ -162,8 +162,8 @@ static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key,
 static void tl_window_callback_input_cursor_position(GLFWwindow* window, const double xpos, const double ypos) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
-    event.f32[0] = xpos;
-    event.f32[1] = ypos;
+    event.f32[0] = (f32) xpos;
+    event.f32[1] = (f32) ypos;
 
     tl_event_submit(TL_EVENT_INPUT_CURSOR_MOVED, &event);
 }

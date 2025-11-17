@@ -118,214 +118,98 @@ u32 tl_number_next_power_of_2(u32 n) {
 }
 
 // ---------------------------------
-// String to Number Conversions
+// Helper Functions
+// ---------------------------------
+
+static u64 tl_number_unsigned_from_str(TLString* str, const u64 maximum, const char* type_name) {
+    TL_PROFILER_PUSH_WITH("0x%p, %llu, %s", str, maximum, type_name)
+
+    if (str == NULL || tl_string_is_empty(str)) {
+        TLWARN("Cannot convert NULL or empty string to %s", type_name);
+        TL_PROFILER_POP_WITH(0)
+    }
+
+    const char* cstr = tl_string_cstr(str);
+    char* endptr;
+    const u64 value = strtoull(cstr, &endptr, 10);
+
+    if (endptr == cstr) {
+        TLWARN("No valid digits found in string: %s", cstr);
+        TL_PROFILER_POP_WITH(0)
+    }
+
+    if (value > maximum) {
+        TLWARN("Value %llu exceeds %s range (max %llu)", value, type_name, maximum);
+        TL_PROFILER_POP_WITH(maximum)
+    }
+
+    TL_PROFILER_POP_WITH(value)
+}
+
+static i64 tl_number_signed_from_str(TLString* str, const i64 minimum, const i64 maximum, const char* type_name) {
+    TL_PROFILER_PUSH_WITH("0x%p, %lld, %lld, %s", str, minimum, maximum, type_name)
+
+    if (str == NULL || tl_string_is_empty(str)) {
+        TLWARN("Cannot convert NULL or empty string to %s", type_name);
+        TL_PROFILER_POP_WITH(0)
+    }
+
+    const char* cstr = tl_string_cstr(str);
+    char* endptr;
+    const i64 value = strtoll(cstr, &endptr, 10);
+
+    if (endptr == cstr) {
+        TLWARN("No valid digits found in string: %s", cstr);
+        TL_PROFILER_POP_WITH(0)
+    }
+
+    if (value < minimum) {
+        TLWARN("Value %lld below %s range (min %lld)", value, type_name, minimum);
+        TL_PROFILER_POP_WITH(minimum)
+    }
+
+    if (value > maximum) {
+        TLWARN("Value %lld exceeds %s range (max %lld)", value, type_name, maximum);
+        TL_PROFILER_POP_WITH(maximum)
+    }
+
+    TL_PROFILER_POP_WITH(value)
+}
+
+// ---------------------------------
+// Number from String Conversions
 // ---------------------------------
 
 u8 tl_number_u8_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to u8");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const unsigned long value = strtoul(cstr, &endptr, 10);
-
-    // Check for conversion errors
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    // Check for overflow
-    if (value > UINT8_MAX) {
-        TLWARN("Value %lu exceeds u8 range (max %u)", value, UINT8_MAX);
-        TL_PROFILER_POP_WITH(UINT8_MAX)
-    }
-
-    TL_PROFILER_POP_WITH((u8)value)
+    return (u8)tl_number_unsigned_from_str(str, UINT8_MAX, "u8");
 }
 
 u16 tl_number_u16_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to u16");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const unsigned long value = strtoul(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    if (value > UINT16_MAX) {
-        TLWARN("Value %lu exceeds u16 range (max %u)", value, UINT16_MAX);
-        TL_PROFILER_POP_WITH(UINT16_MAX)
-    }
-
-    TL_PROFILER_POP_WITH((u16)value)
+    return (u16)tl_number_unsigned_from_str(str, UINT16_MAX, "u16");
 }
 
 u32 tl_number_u32_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to u32");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const unsigned long long value = strtoull(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    if (value > UINT32_MAX) {
-        TLWARN("Value %llu exceeds u32 range (max %u)", value, UINT32_MAX);
-        TL_PROFILER_POP_WITH(UINT32_MAX)
-    }
-
-    TL_PROFILER_POP_WITH((u32)value)
+    return (u32)tl_number_unsigned_from_str(str, UINT32_MAX, "u32");
 }
 
 u64 tl_number_u64_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to u64");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const unsigned long long value = strtoull(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    TL_PROFILER_POP_WITH((u64)value)
+    return tl_number_unsigned_from_str(str, UINT64_MAX, "u64");
 }
 
 i8 tl_number_i8_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to i8");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const long value = strtol(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    if (value < INT8_MIN) {
-        TLWARN("Value %ld below i8 range (min %d)", value, INT8_MIN);
-        TL_PROFILER_POP_WITH(INT8_MIN)
-    }
-
-    if (value > INT8_MAX) {
-        TLWARN("Value %ld exceeds i8 range (max %d)", value, INT8_MAX);
-        TL_PROFILER_POP_WITH(INT8_MAX)
-    }
-
-    TL_PROFILER_POP_WITH((i8)value)
+    return (i8)tl_number_signed_from_str(str, INT8_MIN, INT8_MAX, "i8");
 }
 
 i16 tl_number_i16_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to i16");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const long value = strtol(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    if (value < INT16_MIN) {
-        TLWARN("Value %ld below i16 range (min %d)", value, INT16_MIN);
-        TL_PROFILER_POP_WITH(INT16_MIN)
-    }
-
-    if (value > INT16_MAX) {
-        TLWARN("Value %ld exceeds i16 range (max %d)", value, INT16_MAX);
-        TL_PROFILER_POP_WITH(INT16_MAX)
-    }
-
-    TL_PROFILER_POP_WITH((i16)value)
+    return (i16)tl_number_signed_from_str(str, INT16_MIN, INT16_MAX, "i16");
 }
 
 i32 tl_number_i32_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to i32");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const long long value = strtoll(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    if (value < INT32_MIN) {
-        TLWARN("Value %lld below i32 range (min %d)", value, INT32_MIN);
-        TL_PROFILER_POP_WITH(INT32_MIN)
-    }
-
-    if (value > INT32_MAX) {
-        TLWARN("Value %lld exceeds i32 range (max %d)", value, INT32_MAX);
-        TL_PROFILER_POP_WITH(INT32_MAX)
-    }
-
-    TL_PROFILER_POP_WITH((i32)value)
+    return (i32)tl_number_signed_from_str(str, INT32_MIN, INT32_MAX, "i32");
 }
 
 i64 tl_number_i64_from_string(TLString* str) {
-    TL_PROFILER_PUSH_WITH("0x%p", str)
-
-    if (str == NULL || tl_string_is_empty(str)) {
-        TLWARN("Cannot convert NULL or empty string to i64");
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    const char* cstr = tl_string_cstr(str);
-    char* endptr;
-    const long long value = strtoll(cstr, &endptr, 10);
-
-    if (endptr == cstr) {
-        TLWARN("No valid digits found in string: %s", cstr);
-        TL_PROFILER_POP_WITH(0)
-    }
-
-    TL_PROFILER_POP_WITH((i64)value)
+    return tl_number_signed_from_str(str, INT64_MIN, INT64_MAX, "i64");
 }
 
 f32 tl_number_f32_from_string(TLString* str) {
@@ -366,4 +250,49 @@ f64 tl_number_f64_from_string(TLString* str) {
     }
 
     TL_PROFILER_POP_WITH(value)
+}
+
+
+// ---------------------------------
+// String to Number Conversions (Aliases)
+// ---------------------------------
+
+u8 tl_number_string_to_u8(TLString* str) {
+    return tl_number_u8_from_string(str);
+}
+
+u16 tl_number_string_to_u16(TLString* str) {
+    return tl_number_u16_from_string(str);
+}
+
+u32 tl_number_string_to_u32(TLString* str) {
+    return tl_number_u32_from_string(str);
+}
+
+u64 tl_number_string_to_u64(TLString* str) {
+    return tl_number_u64_from_string(str);
+}
+
+i8 tl_number_string_to_i8(TLString* str) {
+    return tl_number_i8_from_string(str);
+}
+
+i16 tl_number_string_to_i16(TLString* str) {
+    return tl_number_i16_from_string(str);
+}
+
+i32 tl_number_string_to_i32(TLString* str) {
+    return tl_number_i32_from_string(str);
+}
+
+i64 tl_number_string_to_i64(TLString* str) {
+    return tl_number_i64_from_string(str);
+}
+
+f32 tl_number_string_to_f32(const TLString* str) {
+    return tl_number_f32_from_string((TLString*)str);
+}
+
+f64 tl_number_string_to_f64(const TLString* str) {
+    return tl_number_f64_from_string((TLString*)str);
 }

@@ -1,6 +1,6 @@
-engine:
+teleios:
   logging:
-    level: verbose
+    level: debug
   graphics:
     vsync: false
     wireframe: false

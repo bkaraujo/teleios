@@ -349,6 +349,8 @@ typedef struct {
   u8 second;                  ///< Second (0-59)
 } TLDateTime;
 
+typedef struct TLArray TLArray;
+
 /**
  * @brief Opaque queue data structure handle
  *

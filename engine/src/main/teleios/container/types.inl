@@ -3,6 +3,18 @@
 
 #include "teleios/defines.h"
 
+struct TLArray {
+    void* items;            // Array of void pointers (payloads)
+    u32 count;              // Current number of items
+    u64 stride;             // Concrete item length
+
+    TLMutex* mutex;         // Thread-safety
+    TLCondition* not_empty; // Signals when items are available
+    TLCondition* not_full;  // Signals when space is available
+
+    TLAllocator* allocator; // Memory allocator for cleanup
+};
+
 // ---------------------------------
 // Queue Implementation (Circular Buffer)
 // ---------------------------------
