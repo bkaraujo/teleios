@@ -16,7 +16,11 @@
       "Bash(Select-String:*)",
       "Bash(findstr:*)",
       "Bash(move:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(gcc:*)",
+      "Bash(test_number_digits.exe)",
+      "Bash(cl test_number_digits.c /Fe:test_number_digits.exe)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

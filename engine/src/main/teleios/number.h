@@ -3,12 +3,25 @@
 
 #include "teleios/defines.h"
 
-u8 tl_number_i32_digits(i32 number);
+// Digit counting
+u8 tl_number_signed_digits(i64 number);
+u8 tl_number_unsigned_digits(u64 number);
 
+// Number to string conversion
+TLString* tl_number_i8_to_char(TLAllocator* allocator, i8 value, u8 base);
+TLString* tl_number_i16_to_char(TLAllocator* allocator, i16 value, u8 base);
 TLString* tl_number_i32_to_char(TLAllocator* allocator, i32 value, u8 base);
+TLString* tl_number_i64_to_char(TLAllocator* allocator, i64 value, u8 base);
 
+TLString* tl_number_u8_to_char(TLAllocator* allocator, u8 value, u8 base);
+TLString* tl_number_u16_to_char(TLAllocator* allocator, u16 value, u8 base);
+TLString* tl_number_u32_to_char(TLAllocator* allocator, u32 value, u8 base);
+TLString* tl_number_u64_to_char(TLAllocator* allocator, u64 value, u8 base);
+
+// Utility
 u32 tl_number_next_power_of_2(u32 n);
 
+// String to number conversion
 u8 tl_number_u8_from_string(TLString* str);
 u16 tl_number_u16_from_string(TLString* str);
 u32 tl_number_u32_from_string(TLString* str);
