@@ -4,7 +4,6 @@
 int main(const int argc, const char* argv[]) {
     (void)argc;  // Unused parameter
     (void)argv;  // Unused parameter
-    tl_logger_set_level(TL_LOG_LEVEL_DEBUG);
 
     if (!tl_platform_initialize()) TLFATAL("Platform failed to initialize")
     if (!tl_application_initialize()) {

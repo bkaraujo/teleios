@@ -4,27 +4,6 @@
 #include "teleios/defines.h"
 
 /**
- * @brief Log severity levels
- *
- * Ordered from least to most severe. The logger only outputs messages
- * at or above the configured level. Lower enum values = lower severity.
- *
- * VERBOSE, TRACE, and DEBUG levels are automatically compiled out in
- * Release builds for zero runtime overhead.
- *
- * @see tl_logger_loglevel
- */
-typedef enum {
-    TL_LOG_LEVEL_VERBOSE = 0,   ///< Very detailed diagnostic information (Debug-only)
-    TL_LOG_LEVEL_TRACE   = 1,   ///< Function entry/exit tracing (Debug-only)
-    TL_LOG_LEVEL_DEBUG   = 2,   ///< General debugging messages (Debug-only)
-    TL_LOG_LEVEL_INFO    = 3,   ///< Informational messages about normal operation
-    TL_LOG_LEVEL_WARN    = 4,   ///< Warnings about potentially problematic conditions
-    TL_LOG_LEVEL_ERROR   = 5,   ///< Error conditions that indicate failures
-    TL_LOG_LEVEL_FATAL   = 6    ///< Fatal errors that terminate execution
-} TLLogLevel;
-
-/**
  * @brief Set the global logging level threshold
  *
  * Only log messages with severity >= this level will be output. This allows

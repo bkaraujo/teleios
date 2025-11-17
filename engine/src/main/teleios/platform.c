@@ -68,6 +68,8 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
+    tl_logger_set_level(tl_config_get_log_level("teleios.logging.level"));
+
     // Initialize GLFW
     TLDEBUG("GLFW %s", glfwGetVersionString())
     if (!glfwInit()) {

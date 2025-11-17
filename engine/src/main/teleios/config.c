@@ -13,6 +13,18 @@ b8 tl_config_initialize() {
     TL_PROFILER_POP_WITH(true)
 }
 
+TLList* tl_config_list(TLString* property) {
+    TL_PROFILER_PUSH_WITH("0x%p", property)
+    if (property == NULL) {
+        TLWARN("Attempting to list a NULL property");
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    TLDEBUG("Querying properties %s", property);
+    TLList* result = tl_map_get(m_properties, property);
+    TL_PROFILER_POP_WITH(result)
+}
+
 void* tl_config_get(const char* property) {
     TL_PROFILER_PUSH_WITH("0x%p", property)
     if (property == NULL) {
@@ -26,20 +38,68 @@ void* tl_config_get(const char* property) {
     tl_string_destroy(key);
 
     void* value = tl_list_front(list);
-
     TL_PROFILER_POP_WITH(value)
 }
 
-TLList* tl_config_list(TLString* property) {
-    TL_PROFILER_PUSH_WITH("0x%p", property)
-    if (property == NULL) {
-        TLWARN("Attempting to list a NULL property");
-        TL_PROFILER_POP_WITH(NULL)
+typedef struct {
+    const char *name;
+    TLLogLevel value;
+} TLLogLevelMap;
+
+TLLogLevel tl_config_get_log_level(const char* property) {
+    TL_PROFILER_PUSH_WITH("%s", property)
+
+    static const TLLogLevelMap logLevelTable[] = {
+            { "TL_LOG_LEVEL_VERBOSE",  TL_LOG_LEVEL_VERBOSE },
+            { "TL_LOG_LEVEL_TRACE",  TL_LOG_LEVEL_TRACE },
+            { "TL_LOG_LEVEL_DEBUG", TL_LOG_LEVEL_DEBUG },
+            { "TL_LOG_LEVEL_INFO", TL_LOG_LEVEL_INFO },
+            { "TL_LOG_LEVEL_WARN", TL_LOG_LEVEL_WARN },
+            { "TL_LOG_LEVEL_ERROR", TL_LOG_LEVEL_ERROR },
+            { "TL_LOG_LEVEL_FATAL", TL_LOG_LEVEL_FATAL }
+    };
+
+    TLString* desired = tl_config_get(property);
+    TLString* upper = tl_string_to_upper(desired);
+    tl_string_destroy(desired);
+
+    for (size_t i = 0; i < sizeof(logLevelTable)/sizeof(logLevelTable[0]); i++) {
+        if (tl_string_cstr_ends_with(logLevelTable[i].name, upper)) {
+            tl_string_destroy(upper);
+            TL_PROFILER_POP_WITH(logLevelTable[i].value);
+        }
     }
 
-    TLDEBUG("Querying properties %s", property);
-    TLList* result = tl_map_get(m_properties, property);
-    TL_PROFILER_POP_WITH(result)
+    TL_PROFILER_POP_WITH(TL_LOG_LEVEL_INFO);
+}
+
+typedef struct {
+    const char *name;
+    TLDisplayResolution value;
+} TLResolutionMap;
+
+TLDisplayResolution tl_config_get_display_resolution(const char* property) {
+    TL_PROFILER_PUSH_WITH("%s", property)
+
+    static const TLResolutionMap resolutionTable[] = {
+            { "TL_DISPLAY_RESOLUTION_SD",  TL_DISPLAY_RESOLUTION_SD },
+            { "TL_DISPLAY_RESOLUTION_HD",  TL_DISPLAY_RESOLUTION_HD },
+            { "TL_DISPLAY_RESOLUTION_FHD", TL_DISPLAY_RESOLUTION_FHD },
+            { "TL_DISPLAY_RESOLUTION_UHD", TL_DISPLAY_RESOLUTION_UHD }
+    };
+
+    TLString* desired = tl_config_get(property);
+    TLString* upper = tl_string_to_upper(desired);
+    tl_string_destroy(desired);
+
+    for (size_t i = 0; i < sizeof(resolutionTable)/sizeof(resolutionTable[0]); i++) {
+        if (tl_string_cstr_ends_with(resolutionTable[i].name, upper)) {
+            tl_string_destroy(upper);
+            TL_PROFILER_POP_WITH(resolutionTable[i].value);
+        }
+    }
+
+    TL_PROFILER_POP_WITH(TL_DISPLAY_RESOLUTION_SD);
 }
 
 b8 tl_config_terminate(void) {

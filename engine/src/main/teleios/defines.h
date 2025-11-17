@@ -287,6 +287,35 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #include <cglm/types-struct.h>
 
 /**
+ * @brief Log severity levels
+ *
+ * Ordered from least to most severe. The logger only outputs messages
+ * at or above the configured level. Lower enum values = lower severity.
+ *
+ * VERBOSE, TRACE, and DEBUG levels are automatically compiled out in
+ * Release builds for zero runtime overhead.
+ *
+ * @see tl_logger_loglevel
+ */
+typedef enum {
+    TL_LOG_LEVEL_VERBOSE = 0,   ///< Very detailed diagnostic information (Debug-only)
+    TL_LOG_LEVEL_TRACE   = 1,   ///< Function entry/exit tracing (Debug-only)
+    TL_LOG_LEVEL_DEBUG   = 2,   ///< General debugging messages (Debug-only)
+    TL_LOG_LEVEL_INFO    = 3,   ///< Informational messages about normal operation
+    TL_LOG_LEVEL_WARN    = 4,   ///< Warnings about potentially problematic conditions
+    TL_LOG_LEVEL_ERROR   = 5,   ///< Error conditions that indicate failures
+    TL_LOG_LEVEL_FATAL   = 6    ///< Fatal errors that terminate execution
+} TLLogLevel;
+
+typedef enum {
+    TL_DISPLAY_RESOLUTION_SD  = 480,
+    TL_DISPLAY_RESOLUTION_HD  = 720,
+    TL_DISPLAY_RESOLUTION_FHD = 1080,
+    TL_DISPLAY_RESOLUTION_QHD = 1440,
+    TL_DISPLAY_RESOLUTION_UHD = 2160
+} TLDisplayResolution;
+
+/**
  * @brief Opaque allocator handle
  *
  * Represents a memory allocator instance. The actual structure is defined

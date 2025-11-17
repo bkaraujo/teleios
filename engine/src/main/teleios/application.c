@@ -45,7 +45,7 @@ static void tl_application_loop() {
     TL_PROFILER_PUSH
     const f64 FRAME_CAP = 250000.0;     // Cap at 250ms to prevent spiral of death
 
-    TLString* sStep = tl_config_get("engine.simulation.step");
+    TLString* sStep = tl_config_get("teleios.simulation.step");
     const f32 fStep = tl_number_f32_from_string(sStep);
     const f64 STEP = 1000000.0 / (fStep == 0 ? 10 : fStep);
 

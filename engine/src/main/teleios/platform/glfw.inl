@@ -37,19 +37,6 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* window, int butto
 static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, double xoffset, double yoffset);
 static void tl_window_callback_input_cursor_entered(GLFWwindow* window, int entered);
 
-typedef enum {
-    TL_DISPLAY_RESOLUTION_SD  = 480,
-    TL_DISPLAY_RESOLUTION_HD  = 720,
-    TL_DISPLAY_RESOLUTION_FHD = 1080,
-    TL_DISPLAY_RESOLUTION_QHD = 1440,
-    TL_DISPLAY_RESOLUTION_UHD = 2160
-} TLDisplayResolution;
-
-typedef struct {
-    const char *name;
-    TLDisplayResolution value;
-} ResolutionMap;
-
 static b8 tl_window_create(void) {
     TL_PROFILER_PUSH
         
@@ -74,25 +61,10 @@ static b8 tl_window_create(void) {
     // Create the platform surface
     // --------------------------------------------------------------------------------------
 
-    static const ResolutionMap resolutionTable[] = {
-        { "TL_DISPLAY_RESOLUTION_SD",  TL_DISPLAY_RESOLUTION_SD },
-        { "TL_DISPLAY_RESOLUTION_HD",  TL_DISPLAY_RESOLUTION_HD },
-        { "TL_DISPLAY_RESOLUTION_FHD", TL_DISPLAY_RESOLUTION_FHD },
-        { "TL_DISPLAY_RESOLUTION_UHD", TL_DISPLAY_RESOLUTION_UHD }
-    };
-
-    TLDisplayResolution resolution = TL_DISPLAY_RESOLUTION_SD;
-    const TLString* sResolution = tl_config_get("engine.window.size");
-    for (size_t i = 0; i < sizeof(resolutionTable)/sizeof(resolutionTable[0]); i++) {
-        if (tl_string_cstr_ends_with(resolutionTable[i].name, sResolution)) {
-            resolution = resolutionTable[i].value;
-            break;
-        }
-    }
-
+    const TLDisplayResolution resolution = tl_config_get_display_resolution("teleios.window.size");
     m_window_size.x = (resolution * 16) / 9;
     m_window_size.y = resolution;
-    m_window_title = tl_config_get("engine.window.title");
+    m_window_title = tl_config_get("teleios.window.title");
 
     m_window = glfwCreateWindow(m_window_size.x, m_window_size.y, tl_string_cstr(m_window_title), NULL, NULL);
     if (TL_UNLIKELY(m_window == NULL)) {
