@@ -15,9 +15,9 @@
 static void* tl_graphics_worker(void* _) {
     (void) _;  // Unused parameter
     TL_PROFILER_PUSH
-    TLDEBUG("Graphics thread initializing")
-
-    // Acquire OpenGL context on this thread
+    // #########################################
+    // Initialize OpenGL context
+    // #########################################
     glfwMakeContextCurrent(tl_window_handler());
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         TLFATAL("GLAD failed to initialize on graphics thread")
@@ -25,8 +25,9 @@ static void* tl_graphics_worker(void* _) {
 
     TLDEBUG("OpenGL %s", glGetString(GL_VERSION))
     TLDEBUG("CGLM %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
-
-    // Disable VSync for immediate buffer swaps
+    // #########################################
+    // Process global application.yaml options
+    // #########################################
     const b8 vsync = tl_config_get_b8("teleios.graphics.vsync");
     glfwSwapInterval(vsync ? 1 : 0);
 
@@ -35,8 +36,9 @@ static void* tl_graphics_worker(void* _) {
     else            { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
 
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
-
-    // Main worker loop - process tasks from queue until shutdown signal
+    // #########################################
+    // Main worker loop
+    // #########################################
     for ( ; ; ) {
 
         // Check shutdown flag before blocking on queue
