@@ -283,6 +283,24 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define TL_MEGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL)
 /** @brief Convert amount to bytes using decimal giga (1000^3 bytes) */
 #define TL_GIGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
+// ---------------------------------
+// Varargs helper macros
+// ---------------------------------
+
+/**
+ * @brief Count the number of variadic arguments (max 16)
+ *
+ * This macro uses preprocessor techniques to count arguments at compile time.
+ * Supports 1-16 arguments. Returns 0 for empty __VA_ARGS__.
+ *
+ * @note Implementation uses a shifting technique with sentinel values
+ *
+ * Example:
+ * TL_COUNT_ARGS(a, b, c) -> 3
+ * TL_COUNT_ARGS(x) -> 1
+ */
+#define TL_COUNT_ARGS(...) TL_COUNT_ARGS_IMPL(__VA_ARGS__, 16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
+#define TL_COUNT_ARGS_IMPL(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,N,...) N
 
 #include <cglm/types-struct.h>
 
@@ -399,6 +417,42 @@ typedef struct TLCondition TLCondition;
 typedef struct TLString TLString;
 
 typedef struct  TLStackTrace TLStackTrace;
+
+typedef struct TLShader TLShader;
+
+typedef struct {
+    u32 type;       // OpenGL specfic shader type
+    TLString* path; // Path of the glsl file, relative to PWD's asset folder
+} TLShaderSource;
+
+typedef enum {
+    TL_BUFFER_UBYTE1, TL_BUFFER_UBYTE2, TL_BUFFER_UBYTE3, TL_BUFFER_UBYTE4,
+    TL_BUFFER_USHORT1, TL_BUFFER_USHORT2, TL_BUFFER_USHORT3, TL_BUFFER_USHORT4,
+    TL_BUFFER_UINT1, TL_BUFFER_UINT2, TL_BUFFER_UINT3, TL_BUFFER_UINT4,
+    TL_BUFFER_ULONG1, TL_BUFFER_ULONG2, TL_BUFFER_ULONG3, TL_BUFFER_ULONG4,
+
+    TL_BUFFER_BYTE1, TL_BUFFER_BYTE2, TL_BUFFER_BYTE3, TL_BUFFER_BYTE4,
+    TL_BUFFER_SHORT1, TL_BUFFER_SHORT2, TL_BUFFER_SHORT3, TL_BUFFER_SHORT4,
+    TL_BUFFER_INT1, TL_BUFFER_INT2, TL_BUFFER_INT3, TL_BUFFER_INT4,
+    TL_BUFFER_LONG1, TL_BUFFER_LONG2, TL_BUFFER_LONG3, TL_BUFFER_LONG4,
+
+    TL_BUFFER_FLOAT1, TL_BUFFER_FLOAT2, TL_BUFFER_FLOAT3, TL_BUFFER_FLOAT4,
+    TL_BUFFER_DOUBLE1, TL_BUFFER_DOUBLE2, TL_BUFFER_DOUBLE3, TL_BUFFER_DOUBLE4
+} TLBufferType;
+
+typedef struct {
+    TLBufferType type;  // Uniform data type
+    union {
+        u64 u64[4];
+        i64 i64[4];
+        f64 f64[4];
+    } value;            // Uniform actual data
+} TLShaderUniform;
+
+typedef struct {
+    TLShaderUniform* uniforms;
+    u8 uniforms_count;
+} TLShaderUniforms;
 
 extern TLAllocator* g_allocator;
 #endif

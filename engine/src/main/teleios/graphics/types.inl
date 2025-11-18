@@ -1,7 +1,7 @@
 #ifndef __TELEIOS_GRAPHICS_TYPES__
 #define __TELEIOS_GRAPHICS_TYPES__
 
-#include "teleios/teleios.h"
+#include "teleios/defines.h"
 
 // ---------------------------------
 // Job Type Definitions
@@ -17,10 +17,11 @@ typedef struct {
 
     union {
         void* (*func_no_args)(void);
-        void* (*func_with_args)(void*);
+        void* (*func_with_args)(void**);  // Changed to accept void** (array of pointers)
     };
 
-    void* args;                         // NULL if NO_ARGS
+    void** args;                        // Array of void* arguments (NULL if NO_ARGS)
+    u32 args_count;                     // Number of arguments in the array
     void* result;                       // Result of the processing
 
     b8 is_sync;                         // Synchronization for sync jobs
@@ -32,5 +33,9 @@ typedef struct {
 static TLQueue* m_queue;
 static TLObjectPool* m_task_pool;
 static b8 m_shutdown;                   // Shutdown flag for worker thread
+
+struct TLShader {
+    u64 handle;
+};
 
 #endif

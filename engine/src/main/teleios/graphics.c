@@ -1,9 +1,18 @@
 #include "teleios/teleios.h"
+
 #include "teleios/graphics/types.inl"
 #include "teleios/container/types.inl"
 
+static TLAllocator* m_allocator = NULL;  // Graphics allocator
+
+static u64 m_thread_id = 0;
+static b8 tl_graphics_is_thread(void) {
+    return tl_thread_id() == m_thread_id;
+}
+
 #include "teleios/graphics/queue.inl"
 #include "teleios/graphics/thread.inl"
+#include "teleios/graphics/shader.inl"
 
 // ---------------------------------
 // Event Handlers
@@ -21,7 +30,6 @@ static TLEventStatus tl_graphics_handle_window_closed(const TLEvent* event) {
 
 #define TL_GRAPHICS_QUEUE_CAPACITY 512
 
-TLAllocator* m_allocator = NULL;  // Accessible from graphics_queue.inl
 static TLThread* m_worker_thread = NULL;
 
 b8 tl_graphics_initialize(void) {

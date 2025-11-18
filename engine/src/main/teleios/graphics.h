@@ -69,6 +69,10 @@ b8 tl_graphics_initialize(void);
  */
 b8 tl_graphics_terminate(void);
 
+// ---------------------------------------------------
+// Graphics Task API
+// ---------------------------------------------------
+
 /**
  * @brief Submit graphics work synchronously (no parameters)
  *
@@ -148,109 +152,162 @@ void* tl_graphics_submit_sync(void* (*func)(void));
 void* tl_graphics_submit_async(void* (*func)(void));
 
 /**
- * @brief Submit graphics work synchronously with parameters
+ * @brief Submit graphics work synchronously with variadic arguments
  *
- * Submits a graphics job with arbitrary data to the worker thread and blocks
- * until completion. Returns the value returned by the job function.
+ * Submits a graphics job with multiple arguments to the worker thread and blocks
+ * until completion. Arguments are automatically packed into an array and passed
+ * to the function. Returns the value returned by the job function.
  *
  * Use for setup operations with specific parameters:
  * - Loading textures with filenames
  * - Creating resources with configuration
  * - Parameterized initialization
  *
- * @param func Function pointer to execute (void* (*)(void*))
- * @param args Pointer to argument data (can be stack or heap allocated)
+ * @param func Function pointer to execute (void* (*)(void**))
+ * @param ... Variable arguments to pass to the function (max 16 args)
  * @return Value returned by the job function
  *
  * @note Blocks until job completes
  * @note Safe to use stack-allocated arguments (function blocks until return)
  * @note Function is called on the graphics thread
+ * @note Arguments are passed as void** array to the function
  * @note Argument validity is guaranteed until function returns
+ * @note Maximum 16 arguments supported
  *
  * @see tl_graphics_submit_sync
  * @see tl_graphics_submit_async_args
  *
  * @code
- * struct TextureLoadArgs {
- *     const char* filename;
- *     GLuint* out_texture;
- * };
+ * static void* load_texture_job(void** args) {
+ *     const char* filename = (const char*)args[0];
+ *     GLuint* out_texture = (GLuint*)args[1];
  *
- * static void* load_texture_job(void* args) {
- *     TextureLoadArgs* arg = (TextureLoadArgs*)args;
  *     int width, height, channels;
- *     unsigned char* data = stbi_load(arg->filename, &width, &height, &channels, 4);
+ *     unsigned char* data = stbi_load(filename, &width, &height, &channels, 4);
  *
- *     glGenTextures(1, arg->out_texture);
- *     glBindTexture(GL_TEXTURE_2D, *arg->out_texture);
+ *     glGenTextures(1, out_texture);
+ *     glBindTexture(GL_TEXTURE_2D, *out_texture);
  *     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
  *
  *     stbi_image_free(data);
  *     return NULL;
  * }
  *
- * // Load texture with parameters
+ * // Load texture with varargs
  * GLuint wall_texture;
- * TextureLoadArgs args = { "wall.png", &wall_texture };
- * tl_graphics_submit_sync_args(load_texture_job, &args);
- *
+ * tl_graphics_submit_sync_args(load_texture_job, "wall.png", &wall_texture);
  * // wall_texture now contains the loaded texture handle
  * @endcode
  */
-void* tl_graphics_submit_sync_args(void* (*func)(void*), void* args);
+#define tl_graphics_submit_sync_args(func, ...) _tl_graphics_submit_sync_args(func, TL_COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+void* _tl_graphics_submit_sync_args(void* (*func)(void**), u32 count, ...);
 
 /**
- * @brief Submit graphics work asynchronously with parameters
+ * @brief Submit graphics work asynchronously with variadic arguments
  *
- * Submits a graphics job with arbitrary data to the worker thread and returns
- * immediately. Does not wait for job completion.
+ * Submits a graphics job with multiple arguments to the worker thread and returns
+ * immediately. Arguments are automatically packed into a heap-allocated array.
+ * Does not wait for job completion.
  *
  * Use for recurring operations with specific parameters:
  * - Rendering with configuration
  * - Animation updates with parameters
  * - Dynamic resource binding
  *
- * @param func Function pointer to execute (void* (*)(void*))
- * @param args Pointer to argument data (should be heap-allocated)
- * @return Value returned by the job function (if any)
+ * @param func Function pointer to execute (void* (*)(void**))
+ * @param ... Variable arguments to pass to the function (max 16 args)
+ * @return NULL (async jobs don't return values)
  *
  * @note Returns immediately; job executes asynchronously
- * @note Arguments MUST remain valid until job execution completes
- * @note Use heap-allocated memory for arguments
- * @note Job function should free arguments when done
+ * @note Arguments are automatically heap-allocated and freed after job completes
+ * @note Passed arguments are COPIED to heap (pointers themselves, not pointed-to data)
+ * @note If arguments point to data, ensure that data remains valid or is heap-allocated
  * @note Function is called on the graphics thread
+ * @note Maximum 16 arguments supported
  *
- * @warning Arguments must be heap-allocated or static. Stack-allocated
- *          arguments will be invalid when job executes.
+ * @warning If you pass pointers to stack data, ensure the data outlives the job
+ *          or allocate the data on the heap before passing the pointer
  *
  * @see tl_graphics_submit_async
  * @see tl_graphics_submit_sync_args
  *
  * @code
- * struct RenderMeshArgs {
- *     GLuint vao;
- *     u32 vertex_count;
- * };
+ * static void* render_mesh_job(void** args) {
+ *     GLuint vao = (GLuint)(uintptr_t)args[0];
+ *     u32 vertex_count = (u32)(uintptr_t)args[1];
  *
- * static void* render_mesh_job(void* args) {
- *     RenderMeshArgs* arg = (RenderMeshArgs*)args;
+ *     glBindVertexArray(vao);
+ *     glDrawArrays(GL_TRIANGLES, 0, vertex_count);
  *
- *     glBindVertexArray(arg->vao);
- *     glDrawArrays(GL_TRIANGLES, 0, arg->vertex_count);
- *
- *     free(arg);  // Job must free args
  *     return NULL;
  * }
  *
- * // Heap-allocate arguments for async job
- * RenderMeshArgs* args = malloc(sizeof(RenderMeshArgs));
- * args->vao = mesh.vao;
- * args->vertex_count = mesh.vertex_count;
- *
- * tl_graphics_submit_async_args(render_mesh_job, args);
- * // Job will free args when it executes
+ * // Arguments are automatically managed
+ * tl_graphics_submit_async_args(render_mesh_job, (void*)(uintptr_t)mesh.vao, (void*)(uintptr_t)mesh.vertex_count);
  * @endcode
  */
-void* tl_graphics_submit_async_args(void* (*func)(void*), void* args);
+#define tl_graphics_submit_async_args(func, ...) _tl_graphics_submit_async_args(func, TL_COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+void* _tl_graphics_submit_async_args(void* (*func)(void**), u32 count, ...);
+
+// ---------------------------------------------------
+// Graphics Shader API
+// ---------------------------------------------------
+
+/**
+ *  @brief Creates a a new Shared
+ *
+ *  @param allocator The memory allocator
+ *  @param ... Variable arguments to pass to the function (max 16 args)
+ *
+ *  @note  THe variadic parameters expected are the desired TLShaderSources
+ */
+#define tl_shader_create(allocator, ...) _tl_shader_create(allocator, TL_COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+TLShader* _tl_shader_create(TLAllocator* allocator, u32 count, ...);
+
+/**
+ * @brief Destroy the shader both in the CPU and GPU
+ * @param shader
+ */
+void tl_shader_destroy(TLShader* shader);
+
+/**
+ * @brief Bind the shader for the next draw call
+ * @param shader The shader that will be destroyed
+ */
+void tl_shader_bind(TLShader* shader);
+
+/**
+ * @brief Upload to the GPU some arbitrary shader data
+ *
+ * @code
+ * TLUniform u1 = {
+ *  .type = TL_BUFFER_FLOAT2;
+ *  .value.f32[0] = 0.27;
+ *  .value.f32[1] = 0.18;
+ * }
+ *
+ * TLUniform u2 = {
+ *  .type = TL_BUFFER_FLOAT1;
+ *  .value.f32[0] = 0.27;
+ * }
+ *
+ * if (!tl_shader_submit(shader, u1, u2)) {
+ *  TLFATAL("Failed to submit uniform")
+ * }
+ *
+ * @param shader The shader that will receive the data
+ */
+#define tl_shader_submit(shader, ...) _tl_shader_submit(shader, TL_COUNT_ARGS(__VA_ARGS__), __VA_ARGS__)
+b8 _tl_shader_submit(TLShader* shader, u8 count, ...);
+
+// ---------------------------------------------------
+// Graphics Texture API
+// ---------------------------------------------------
+
+// ---------------------------------------------------
+// Graphics FrameBuffer API
+// ---------------------------------------------------
+
+
 
 #endif

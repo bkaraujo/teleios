@@ -15,6 +15,9 @@
 static void* tl_graphics_worker(void* _) {
     (void) _;  // Unused parameter
     TL_PROFILER_PUSH
+
+    m_thread_id = tl_thread_id();
+
     // #########################################
     // Initialize OpenGL context
     // #########################################
@@ -66,7 +69,13 @@ static void* tl_graphics_worker(void* _) {
             tl_condition_signal(task->completion_condition);
             tl_mutex_unlock(task->completion_mutex);
             // Note: Sync jobs are released back to pool by the submitting thread
+            // Note: Args for sync jobs are stack-allocated by caller, no need to free
         } else {
+            // Async jobs: free heap-allocated args array if present
+            if (task->args != NULL) {
+                tl_memory_free(m_allocator, task->args);
+                task->args = NULL;
+            }
             // Async jobs: release back to pool for reuse
             tl_pool_release(m_task_pool, task);
         }

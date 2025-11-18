@@ -3,3 +3,4 @@ build/
 dist/*.exe
 dist/*.dll
 cmake-build-msvc-debug
+.venv

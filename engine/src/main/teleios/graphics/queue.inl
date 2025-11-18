@@ -5,9 +5,6 @@
 #include "teleios/memory/dynamic.inl"
 #include "teleios/teleios.h"
 
-// Forward declarations from graphics.c
-extern TLAllocator* m_allocator;
-
 // ---------------------------------
 // Graphics Submit - Internal Implementation
 // ---------------------------------
@@ -61,14 +58,15 @@ void* tl_graphics_submit_sync(void* (*func)(void)) {
     job->type = TL_GRAPHICS_JOB_NO_ARGS;
     job->func_no_args = func;
     job->args = NULL;
+    job->args_count = 0;
     job->is_sync = true;
 
     void* result = tl_graphics_submit(job);
     TL_PROFILER_POP_WITH(result)
 }
 
-void* tl_graphics_submit_sync_args(void* (*func)(void*), void* args) {
-    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", func, args)
+void* _tl_graphics_submit_sync_args(void* (*func)(void**), u32 count, ...) {
+    TL_PROFILER_PUSH_WITH("0x%p, count=%u", func, count)
 
     // Acquire task from pool
     TLGraphicTask* job = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
@@ -76,10 +74,25 @@ void* tl_graphics_submit_sync_args(void* (*func)(void*), void* args) {
         TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
     }
 
+    // Stack-allocate argument array (safe because sync call blocks until completion)
+    void* arg_array[16];  // Max 16 arguments
+    if (count > 16) {
+        TLFATAL("Too many arguments for graphics job (max 16, got %u)", count)
+    }
+
+    // Pack varargs into array
+    va_list args;
+    va_start(args, count);
+    for (u32 i = 0; i < count; i++) {
+        arg_array[i] = va_arg(args, void*);
+    }
+    va_end(args);
+
     // Initialize task
     job->type = TL_GRAPHICS_JOB_WITH_ARGS;
     job->func_with_args = func;
-    job->args = args;
+    job->args = arg_array;
+    job->args_count = count;
     job->is_sync = true;
 
     void* result = tl_graphics_submit(job);
@@ -99,14 +112,15 @@ void* tl_graphics_submit_async(void* (*func)(void)) {
     job->type = TL_GRAPHICS_JOB_NO_ARGS;
     job->func_no_args = func;
     job->args = NULL;
+    job->args_count = 0;
     job->is_sync = false;
 
     void* result = tl_graphics_submit(job);
     TL_PROFILER_POP_WITH(result)
 }
 
-void* tl_graphics_submit_async_args(void* (*func)(void*), void* args) {
-    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", func, args)
+void* _tl_graphics_submit_async_args(void* (*func)(void**), u32 count, ...) {
+    TL_PROFILER_PUSH_WITH("0x%p, count=%u", func, count)
 
     // Acquire task from pool
     TLGraphicTask* job = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
@@ -114,10 +128,29 @@ void* tl_graphics_submit_async_args(void* (*func)(void*), void* args) {
         TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
     }
 
+    // Heap-allocate argument array (required because async call returns immediately)
+    if (count > 16) {
+        TLFATAL("Too many arguments for graphics job (max 16, got %u)", count)
+    }
+
+    void** arg_array = (void**)tl_memory_alloc(m_allocator, TL_MEMORY_GRAPHICS, sizeof(void*) * count);
+    if (!arg_array) {
+        TLFATAL("Failed to allocate argument array for async graphics job")
+    }
+
+    // Pack varargs into heap-allocated array
+    va_list args;
+    va_start(args, count);
+    for (u32 i = 0; i < count; i++) {
+        arg_array[i] = va_arg(args, void*);
+    }
+    va_end(args);
+
     // Initialize task
     job->type = TL_GRAPHICS_JOB_WITH_ARGS;
     job->func_with_args = func;
-    job->args = args;
+    job->args = arg_array;
+    job->args_count = count;
     job->is_sync = false;
 
     void* result = tl_graphics_submit(job);
