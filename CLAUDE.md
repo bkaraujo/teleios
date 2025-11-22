@@ -179,12 +179,14 @@ Defined in `teleios/defines.h`:
 - Handler return: `TL_EVENT_CONSUMED` stops propagation, `TL_EVENT_AVAILABLE` continues
 
 ### Container
-- **Queue**: Ring buffer, fixed capacity, NOT thread-safe (external locking required)
-- **Pool**: Pre-allocated objects, bitmap tracking, thread-safe
-- **List**: Double linked list, O(1) insert/remove, thread-safe
-- **Map**: Hash map (TLString -> TLList*), FNV-1a hash, auto-resize at 75% load, thread-safe
+- **All containers** have optional thread-safety via `thread_safe` parameter in create functions
+- **Array**: Dynamic array of void* pointers, optional thread-safety
+- **Queue**: Ring buffer, fixed capacity, optional thread-safety
+- **Pool**: Pre-allocated objects, bitmap tracking, optional thread-safety
+- **List**: Double linked list, O(1) insert/remove, optional thread-safety
+- **Map**: Hash map (TLString -> TLList*), FNV-1a hash, auto-resize at 75% load, optional thread-safety
 - **Iterator**: Fail-fast, snapshot-based, lock-free after creation
-- **Structure**: `container.c` includes all `container/*.inl` files
+- **Structure**: Each container uses dispatcher pattern: `<type>.inl` → `<type>_safe.inl`/`<type>_unsafe.inl`
 
 ### Strings
 - Immutable `TLString` with cached length
@@ -362,25 +364,30 @@ while (running) {
 ### Using Containers
 
 ```c
-// Queue (thread-unsafe - use external locking)
-TLQueue* queue = tl_queue_create(allocator, 256);
+// Queue (thread_safe=true for multi-threaded access)
+TLQueue* queue = tl_queue_create(allocator, 256, true);
 tl_queue_push(queue, my_data);
 void* data = tl_queue_pop(queue);
 
-// Object Pool (thread-safe)
-TLObjectPool* pool = tl_pool_create(allocator, sizeof(MyStruct), 100);
+// Object Pool (thread_safe=true for multi-threaded access)
+TLObjectPool* pool = tl_pool_create(allocator, sizeof(MyStruct), 100, true);
 MyStruct* obj = tl_pool_acquire(pool);
 // ... use object
 tl_pool_release(pool, obj);
 
-// List (thread-safe)
-TLList* list = tl_list_create(allocator);
+// List (thread_safe=false for single-threaded use)
+TLList* list = tl_list_create(allocator, false);
 tl_list_push_back(list, my_data);
 TLIterator* it = tl_list_iterator(list);
 while (tl_iterator_has_next(it)) {
     void* data = tl_iterator_next(it);
 }
 tl_iterator_destroy(it);
+
+// Map (thread_safe=true for multi-threaded access)
+TLMap* map = tl_map_create(allocator, 16, true);
+tl_map_put(map, tl_string_create(allocator, "key"), value);
+TLList* values = tl_map_get(map, key);
 ```
 
 ## Development Workflow

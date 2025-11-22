@@ -48,6 +48,7 @@ struct TLObjectPool {
     u32 mod_count;          // Modification counter for fail-fast iteration
     TLMutex* mutex;         // Thread-safety for acquire/release operations
     TLAllocator* allocator; // Memory allocator for cleanup
+    b8 thread_safe;
 };
 
 // ---------------------------------
@@ -67,6 +68,7 @@ struct TLList {
     u32 mod_count;          // Modification counter for fail-fast iteration
     TLMutex* mutex;         // Thread-safety
     TLAllocator* allocator; // Memory allocator for cleanup
+    b8 thread_safe;
 };
 
 // ---------------------------------
@@ -87,6 +89,7 @@ struct TLMap {
     f32 load_factor;        // Maximum load factor before resize
     TLMutex* mutex;         // Thread-safety
     TLAllocator* allocator; // Memory allocator for cleanup
+    b8 thread_safe;
 };
 
 // ---------------------------------

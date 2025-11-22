@@ -48,7 +48,7 @@ b8 tl_graphics_initialize(void) {
     m_queue = tl_queue_create(m_allocator, TL_GRAPHICS_QUEUE_CAPACITY, true);
 
     // Create object pool for graphics tasks
-    m_task_pool = tl_pool_create(m_allocator, sizeof(TLGraphicTask), TL_GRAPHICS_QUEUE_CAPACITY);
+    m_task_pool = tl_pool_create(m_allocator, sizeof(TLGraphicTask), TL_GRAPHICS_QUEUE_CAPACITY, true);
     if (!m_task_pool) {
         TLFATAL("Failed to create graphics task pool")
     }

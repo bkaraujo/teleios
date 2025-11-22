@@ -8,7 +8,7 @@ static void tl_serializer_walk();
 b8 tl_config_initialize() {
     TL_PROFILER_PUSH
     m_allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    m_properties = tl_map_create(m_allocator, 32);
+    m_properties = tl_map_create(m_allocator, 32, false);
     tl_serializer_walk();
 
     tl_logger_set_level(tl_config_get_log_level("teleios.logging.level"));
@@ -267,8 +267,8 @@ static void tl_serializer_walk() {
     yaml_parser_set_input_file(&parser, file);
 
     TLAllocator *allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    TLMap *sequences = tl_map_create(allocator, 8);  // OPTIMIZATION #2: Hash map for O(1) sequence lookup
-    TLList *path_segments = tl_list_create(allocator);  // Stack of TLString* representing current path
+    TLMap *sequences = tl_map_create(allocator, 8, false);  // OPTIMIZATION #2: Hash map for O(1) sequence lookup
+    TLList *path_segments = tl_list_create(allocator, false);  // Stack of TLString* representing current path
 
     yaml_token_t token;
     TLString* current_key = NULL;  // Stores current KEY token before value/nested block

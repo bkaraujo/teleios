@@ -632,7 +632,7 @@ TLIterator* tl_queue_iterator(TLQueue* queue);
  * }
  * @endcode
  */
-TLObjectPool* tl_pool_create(TLAllocator* allocator, u32 object_size, u16 capacity);
+TLObjectPool* tl_pool_create(TLAllocator* allocator, u32 object_size, u16 capacity, b8 thread_safe);
 
 /**
  * @brief Destroy an object pool and free all memory
@@ -866,7 +866,7 @@ TLIterator* tl_pool_iterator(TLObjectPool* pool);
  * }
  * @endcode
  */
-TLList* tl_list_create(TLAllocator* allocator);
+TLList* tl_list_create(TLAllocator* allocator, b8 thread_safe);
 
 /**
  * @brief Destroy a list and free all nodes
@@ -1274,7 +1274,7 @@ void tl_list_clear(TLList* list);
  * }
  * @endcode
  */
-TLMap* tl_map_create(TLAllocator* allocator, u32 capacity);
+TLMap* tl_map_create(TLAllocator* allocator, u32 capacity, b8 thread_safe);
 
 /**
  * @brief Destroy a map and free all keys and values
