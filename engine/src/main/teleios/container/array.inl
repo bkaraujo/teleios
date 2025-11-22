@@ -3,21 +3,18 @@
 
 #include "teleios/teleios.h"
 #include "teleios/container/types.inl"
+#include "teleios/container/array_safe.inl"
+#include "teleios/container/array_unsafe.inl"
 
 // ---------------------------------
 // TLArray Implementation
 // ---------------------------------
 
-TLArray* tl_array_create(TLAllocator* allocator, const u32 stride, u32 initial_capacity) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u, %u", allocator, stride, initial_capacity)
+TLArray* tl_array_create(TLAllocator* allocator, u32 initial_capacity, const b8 thread_safe) {
+    TL_PROFILER_PUSH_WITH("0x%p, %u, %u", allocator, initial_capacity, thread_safe)
 
     if (allocator == NULL) {
         TLERROR("Cannot create array with NULL allocator");
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
-    if (stride == 0) {
-        TLERROR("Cannot create array with stride 0");
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -32,14 +29,14 @@ TLArray* tl_array_create(TLAllocator* allocator, const u32 stride, u32 initial_c
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    array->stride = stride;
-    array->count = 0;
     array->capacity = initial_capacity;
+    array->count = 0;
     array->mod_count = 0;
     array->allocator = allocator;
+    array->thread_safe = thread_safe;
 
-    // Allocate contiguous memory block
-    array->items = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ARRAY, stride * initial_capacity);
+    // Allocate array of void pointers
+    array->items = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_ARRAY, sizeof(void*) * initial_capacity);
     if (array->items == NULL) {
         TLERROR("Failed to allocate array items memory");
         tl_memory_free(allocator, array);
@@ -47,15 +44,17 @@ TLArray* tl_array_create(TLAllocator* allocator, const u32 stride, u32 initial_c
     }
 
     // Initialize thread-safety primitives
-    array->mutex = tl_mutex_create(allocator);
-    if (array->mutex == NULL) {
-        TLERROR("Failed to create array mutex");
-        tl_memory_free(allocator, array->items);
-        tl_memory_free(allocator, array);
-        TL_PROFILER_POP_WITH(NULL)
+    if (thread_safe) {
+        array->mutex = tl_mutex_create(allocator);
+        if (array->mutex == NULL) {
+            TLERROR("Failed to create array mutex");
+            tl_memory_free(allocator, array->items);
+            tl_memory_free(allocator, array);
+            TL_PROFILER_POP_WITH(NULL)
+        }
     }
 
-    TLTRACE("Array created: stride=%u, capacity=%u", stride, initial_capacity);
+    TLTRACE("Array created: capacity=%u, thread_safe=%d", initial_capacity, thread_safe);
     TL_PROFILER_POP_WITH(array)
 }
 
@@ -80,298 +79,156 @@ void tl_array_destroy(TLArray* array) {
     TL_PROFILER_POP
 }
 
-static b8 tl_array_ensure_capacity(TLArray* array, const u32 required_capacity) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u", array, required_capacity)
-    if (required_capacity <= array->capacity) {
-        return true;
-    }
 
-    TLDEBUG("Resizing array from %u to %u capacity", array->capacity, required_capacity);
+// ---------------------------------
+// TLArray Dispatchers
+// ---------------------------------
 
-    // Reallocate items
-    void* new_items = tl_memory_alloc(array->allocator, TL_MEMORY_CONTAINER_ARRAY, array->stride * required_capacity);
-    if (new_items == NULL) {
-        TLERROR("Failed to reallocate array items");
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    // Copy existing data
-    if (array->count > 0) {
-        tl_memory_copy(new_items, array->items, array->stride * array->count);
-    }
-
-    // Free old memory
-    tl_memory_free(array->allocator, array->items);
-
-    array->items = new_items;
-    array->capacity = required_capacity;
-
-    TL_PROFILER_POP_WITH(true)
-}
-
-b8 tl_array_push(TLArray* array, const void* item) {
+b8 tl_array_push(TLArray* array, void* item) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", array, item)
 
-    if (array == NULL || item == NULL) {
-        TLWARN("Cannot push to NULL array or NULL item");
+    if (array == NULL) {
+        TLWARN("Attempted to push into a NULL TLArray")
         TL_PROFILER_POP_WITH(false)
     }
 
-    tl_mutex_lock(array->mutex);
-
-    // Ensure capacity
-    if (!tl_array_ensure_capacity(array, (u32)((f32)array->count * 1.75f) + 1)) {
-        tl_mutex_unlock(array->mutex);
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    // Copy item to end of array
-    u8* dest = (u8*)array->items + (array->stride * array->count);
-    tl_memory_copy(dest, item, array->stride);
-    array->count++;
-    array->mod_count++;
-
-    tl_mutex_unlock(array->mutex);
-    TL_PROFILER_POP_WITH(true)
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_push(array, item));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_push(array, item));
 }
 
-b8 tl_array_pop(TLArray* array, void* out_item) {
-    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", array, out_item)
+void* tl_array_pop(TLArray* array) {
+    TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
-        TLWARN("Cannot pop from NULL array");
-        TL_PROFILER_POP_WITH(false)
+        TLWARN("Attempted to pop from a NULL TLArray")
+        TL_PROFILER_POP_WITH(NULL)
     }
-
-    tl_mutex_lock(array->mutex);
 
     if (array->count == 0) {
-        tl_mutex_unlock(array->mutex);
-        TL_PROFILER_POP_WITH(false)
+        TL_PROFILER_POP_WITH(NULL)
     }
 
-    // Copy last item to out_item if provided
-    if (out_item != NULL) {
-        const u8* src = (const u8*)array->items + (array->stride * (array->count - 1));
-        tl_memory_copy(out_item, src, array->stride);
-    }
-
-    array->count--;
-    array->mod_count++;
-
-    tl_mutex_unlock(array->mutex);
-    TL_PROFILER_POP_WITH(true)
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_pop(array));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_pop(array));
 }
 
 void* tl_array_get(TLArray* array, const u32 index) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
 
     if (array == NULL) {
-        TLWARN("Cannot get from NULL array");
+        TLWARN("Attempted to get from a NULL TLArray")
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    tl_mutex_lock(array->mutex);
-
     if (index >= array->count) {
-        tl_mutex_unlock(array->mutex);
-        TLWARN("Array index %u out of bounds (count=%u)", index, array->count);
+        TLWARN("Array index %u out of bounds (count=%u)", index, array->count)
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    u8* item = (u8*)array->items + (array->stride * index);
-    tl_mutex_unlock(array->mutex);
-
-    TL_PROFILER_POP_WITH(item)
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_get(array, index));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_get(array, index));
 }
 
-b8 tl_array_set(TLArray* array, const u32 index, const void* item) {
+b8 tl_array_set(TLArray* array, const u32 index, void* item) {
     TL_PROFILER_PUSH_WITH("0x%p, %u, 0x%p", array, index, item)
-
-    if (array == NULL || item == NULL) {
-        TLWARN("Cannot set in NULL array or NULL item");
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    tl_mutex_lock(array->mutex);
-
-    if (index >= array->count) {
-        tl_mutex_unlock(array->mutex);
-        TLWARN("Array index %u out of bounds (count=%u)", index, array->count);
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    u8* dest = (u8*)array->items + (array->stride * index);
-    tl_memory_copy(dest, item, array->stride);
-    array->mod_count++;
-
-    tl_mutex_unlock(array->mutex);
-    TL_PROFILER_POP_WITH(true)
-}
-
-b8 tl_array_insert(TLArray* array, const u32 index, const void* item) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u, 0x%p", array, index, item)
-
-    if (array == NULL || item == NULL) {
-        TLWARN("Cannot insert into NULL array or NULL item");
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    tl_mutex_lock(array->mutex);
-
-    if (index > array->count) {
-        tl_mutex_unlock(array->mutex);
-        TLWARN("Array index %u out of bounds for insert (count=%u)", index, array->count);
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    // Ensure capacity
-    if (!tl_array_ensure_capacity(array, (u32)((f32)array->count * 1.75f) + 1)) {
-        tl_mutex_unlock(array->mutex);
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    // Shift elements to make room
-    if (index < array->count) {
-        u8* src = (u8*)array->items + (array->stride * index);
-        u8* dest = src + array->stride;
-        const u32 bytes_to_move = array->stride * (array->count - index);
-        tl_memory_move(dest, src, bytes_to_move);
-    }
-
-    // Copy new item
-    u8* dest = (u8*)array->items + (array->stride * index);
-    tl_memory_copy(dest, item, array->stride);
-    array->count++;
-    array->mod_count++;
-
-    tl_mutex_unlock(array->mutex);
-    TL_PROFILER_POP_WITH(true)
-}
-
-b8 tl_array_remove(TLArray* array, const u32 index, void* out_item) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u, 0x%p", array, index, out_item)
 
     if (array == NULL) {
-        TLWARN("Cannot remove from NULL array");
+        TLWARN("Attempted to set on a NULL TLArray")
         TL_PROFILER_POP_WITH(false)
     }
-
-    tl_mutex_lock(array->mutex);
 
     if (index >= array->count) {
-        tl_mutex_unlock(array->mutex);
-        TLWARN("Array index %u out of bounds (count=%u)", index, array->count);
+        TLWARN("Array index %u out of bounds (count=%u)", index, array->count)
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Copy item if requested
-    if (out_item != NULL) {
-        const u8* src = (const u8*)array->items + (array->stride * index);
-        tl_memory_copy(out_item, src, array->stride);
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_set(array, index, item));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_set(array, index, item));
+}
+
+b8 tl_array_insert(TLArray* array, const u32 index, void* item) {
+    TL_PROFILER_PUSH_WITH("0x%p, %u, 0x%p", array, index, item)
+
+    if (array == NULL) {
+        TLWARN("Attempted to insert into a NULL TLArray")
+        TL_PROFILER_POP_WITH(false)
     }
 
-    // Shift elements to fill gap
-    if (index < array->count - 1) {
-        u8* dest = (u8*)array->items + (array->stride * index);
-        u8* src = dest + array->stride;
-        u32 bytes_to_move = array->stride * (array->count - index - 1);
-        tl_memory_move(dest, src, bytes_to_move);
+    if (index > array->count) {
+        TLWARN("Array index %u out of bounds for insert (count=%u)", index, array->count)
+        TL_PROFILER_POP_WITH(false)
     }
 
-    array->count--;
-    array->mod_count++;
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_insert(array, index, item));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_insert(array, index, item));
+}
 
-    tl_mutex_unlock(array->mutex);
-    TL_PROFILER_POP_WITH(true)
+void* tl_array_remove(TLArray* array, const u32 index) {
+    TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
+
+    if (array == NULL) {
+        TLWARN("Attempted to remove from a NULL TLArray")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    if (index >= array->count) {
+        TLWARN("Array index %u out of bounds (count=%u)", index, array->count)
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_remove(array, index));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_remove(array, index));
 }
 
 u32 tl_array_size(const TLArray* array) {
-    if (array == NULL) return 0;
+    TL_PROFILER_PUSH_WITH("0x%p", array)
 
-    tl_mutex_lock(array->mutex);
-    const u32 size = array->count;
-    tl_mutex_unlock(array->mutex);
+    if (array == NULL) {
+        TLWARN("Attempted to get size of a NULL TLArray")
+        TL_PROFILER_POP_WITH(0)
+    }
 
-    return size;
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_size(array));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_size(array));
 }
 
 u32 tl_array_capacity(const TLArray* array) {
-    if (array == NULL) return 0;
+    TL_PROFILER_PUSH_WITH("0x%p", array)
 
-    tl_mutex_lock(array->mutex);
-    const u32 capacity = array->capacity;
-    tl_mutex_unlock(array->mutex);
+    if (array == NULL) {
+        TLWARN("Attempted to get capacity of a NULL TLArray")
+        TL_PROFILER_POP_WITH(0)
+    }
 
-    return capacity;
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_capacity(array));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_capacity(array));
 }
 
 b8 tl_array_is_empty(const TLArray* array) {
-    return tl_array_size(array) == 0;
+    TL_PROFILER_PUSH_WITH("0x%p", array)
+
+    if (array == NULL) {
+        TLWARN("Attempted to check if NULL TLArray is empty")
+        TL_PROFILER_POP_WITH(true)
+    }
+
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_is_empty(array));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_is_empty(array));
 }
 
 void tl_array_clear(TLArray* array) {
     TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
+        TLWARN("Attempted to clear a NULL TLArray")
         TL_PROFILER_POP
     }
 
-    tl_mutex_lock(array->mutex);
-    array->count = 0;
-    array->mod_count++;
-    tl_mutex_unlock(array->mutex);
-
-    TL_PROFILER_POP
-}
-
-b8 tl_array_reserve(TLArray* array, const u32 capacity) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u", array, capacity)
-
-    if (array == NULL) {
-        TLWARN("Cannot reserve capacity for NULL array");
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    tl_mutex_lock(array->mutex);
-    const b8 result = tl_array_ensure_capacity(array, capacity);
-    tl_mutex_unlock(array->mutex);
-
-    TL_PROFILER_POP_WITH(result)
-}
-
-void tl_array_shrink_to_fit(TLArray* array) {
-    TL_PROFILER_PUSH_WITH("0x%p", array)
-
-    if (array == NULL || array->count == array->capacity) {
+    if (array->thread_safe) {
+        tl_array_safe_clear(array);
         TL_PROFILER_POP
     }
-
-    tl_mutex_lock(array->mutex);
-
-    if (array->count == 0) {
-        // Keep minimum capacity of 8
-        array->capacity = 8;
-    } else {
-        array->capacity = array->count;
-    }
-
-    const u32 new_capacity = array->capacity;
-
-    // Reallocate to exact size
-    void* new_items = tl_memory_alloc(array->allocator, TL_MEMORY_CONTAINER_ARRAY, array->stride * new_capacity);
-    if (new_items != NULL) {
-        if (array->count > 0) {
-            tl_memory_copy(new_items, array->items, array->stride * array->count);
-        }
-        tl_memory_free(array->allocator, array->items);
-        array->items = new_items;
-        TLDEBUG("Array shrunk to capacity %u", array->capacity);
-    } else {
-        TLWARN("Failed to shrink array");
-    }
-
-    tl_mutex_unlock(array->mutex);
+    tl_array_unsafe_clear(array);
     TL_PROFILER_POP
 }
 
@@ -388,9 +245,9 @@ static void tl_array_iterator_check_modification(const TLIterator* iterator) {
 
     const TLArray* array = (const TLArray*)iterator->source;
 
-    tl_mutex_lock(array->mutex);
+    if (array->thread_safe) tl_mutex_lock(array->mutex);
     const u32 current_mod_count = array->mod_count;
-    tl_mutex_unlock(array->mutex);
+    if (array->thread_safe) tl_mutex_unlock(array->mutex);
 
     if (current_mod_count != iterator->expected_mod_count) {
         TLFATAL("Concurrent modification detected during iteration (expected=%u, actual=%u)",
@@ -421,10 +278,10 @@ static void* tl_array_iterator_next(TLIterator* iterator) {
 
     const TLArray* array = (const TLArray*)iterator->source;
 
-    // Return pointer to item at current index
-    tl_mutex_lock(array->mutex);
-    u8* item = (u8*)array->items + (array->stride * state->current_index);
-    tl_mutex_unlock(array->mutex);
+    // Return pointer at current index
+    if (array->thread_safe) tl_mutex_lock(array->mutex);
+    void* item = array->items[state->current_index];
+    if (array->thread_safe) tl_mutex_unlock(array->mutex);
 
     state->current_index++;
 
@@ -445,10 +302,10 @@ static void tl_array_iterator_resync(TLIterator* iterator) {
 
     const TLArray* array = (const TLArray*)iterator->source;
 
-    tl_mutex_lock(array->mutex);
+    if (array->thread_safe) tl_mutex_lock(array->mutex);
     iterator->expected_mod_count = array->mod_count;
     iterator->size = array->count;
-    tl_mutex_unlock(array->mutex);
+    if (array->thread_safe) tl_mutex_unlock(array->mutex);
 
     // Rewind to beginning
     tl_array_iterator_rewind(iterator);
@@ -465,7 +322,7 @@ TLIterator* tl_array_iterator(TLArray* array) {
     }
 
     // Lock array to capture current state
-    tl_mutex_lock(array->mutex);
+    if (array->thread_safe) tl_mutex_lock(array->mutex);
 
     // Allocate iterator on array's allocator
     TLIterator* iterator = tl_memory_alloc(array->allocator, TL_MEMORY_CONTAINER_ITERATOR, sizeof(TLIterator));
@@ -490,7 +347,7 @@ TLIterator* tl_array_iterator(TLArray* array) {
     iterator->rewind = tl_array_iterator_rewind;
     iterator->resync = tl_array_iterator_resync;
 
-    tl_mutex_unlock(array->mutex);
+    if (array->thread_safe) tl_mutex_unlock(array->mutex);
 
     TL_PROFILER_POP_WITH(iterator)
 }
