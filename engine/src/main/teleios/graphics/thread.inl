@@ -3,6 +3,7 @@
 
 #include "teleios/graphics/types.inl"
 #include "teleios/teleios.h"
+#include "teleios/graphics/queue.inl"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -53,32 +54,7 @@ static void* tl_graphics_worker(void* _) {
         // Pop task from queue (blocks if empty)
         TLGraphicTask* task = (TLGraphicTask*)tl_queue_pop(m_queue);
         if (task == NULL) { continue; }
-
-        // Execute the task based on type
-        if (task->type == TL_GRAPHICS_JOB_NO_ARGS) {
-            task->result = task->func_no_args();
-        } else {
-            task->result = task->func_with_args(task->args);
-        }
-
-        // Handle completion signaling for sync jobs
-        if (task->is_sync) {
-            // Lock mutex, set completed flag, signal waiting thread
-            tl_mutex_lock(task->completion_mutex);
-            task->completed = true;
-            tl_condition_signal(task->completion_condition);
-            tl_mutex_unlock(task->completion_mutex);
-            // Note: Sync jobs are released back to pool by the submitting thread
-            // Note: Args for sync jobs are stack-allocated by caller, no need to free
-        } else {
-            // Async jobs: free heap-allocated args array if present
-            if (task->args != NULL) {
-                tl_memory_free(m_allocator, task->args);
-                task->args = NULL;
-            }
-            // Async jobs: release back to pool for reuse
-            tl_pool_release(m_task_pool, task);
-        }
+        tl_graphics_execute(task);
     }
 
     // Release OpenGL context before exiting

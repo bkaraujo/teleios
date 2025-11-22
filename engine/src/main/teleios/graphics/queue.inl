@@ -9,8 +9,41 @@
 // Graphics Submit - Internal Implementation
 // ---------------------------------
 
+static void tl_graphics_execute(TLGraphicTask* task) {
+    // Execute the task based on type
+    if (task->type == TL_GRAPHICS_JOB_NO_ARGS) {
+        task->result = task->func_no_args();
+    } else {
+        task->result = task->func_with_args(task->args);
+    }
+
+    // Handle completion signaling for sync jobs
+    if (task->is_sync) {
+        // Lock mutex, set completed flag, signal waiting thread
+        tl_mutex_lock(task->completion_mutex);
+        task->completed = true;
+        tl_condition_signal(task->completion_condition);
+        tl_mutex_unlock(task->completion_mutex);
+        // Note: Sync jobs are released back to pool by the submitting thread
+        // Note: Args for sync jobs are stack-allocated by caller, no need to free
+    } else {
+        // Async jobs: free heap-allocated args array if present
+        if (task->args != NULL) {
+            tl_memory_free(m_allocator, task->args);
+            task->args = NULL;
+        }
+        // Async jobs: release back to pool for reuse
+        tl_pool_release(m_task_pool, task);
+    }
+}
+
 static void* tl_graphics_submit(TLGraphicTask* task) {
     TL_PROFILER_PUSH_WITH("0x%p, is_sync=%d", task, task->is_sync)
+
+    if (tl_graphics_is_thread()) {
+        tl_graphics_execute(task);
+        return task->result;
+    }
 
     task->completed = false;
     task->result = NULL;
@@ -49,19 +82,19 @@ void* tl_graphics_submit_sync(void* (*func)(void)) {
     TL_PROFILER_PUSH_WITH("0x%p", func)
 
     // Acquire task from pool
-    TLGraphicTask* job = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!job) {
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
+    if (!task) {
         TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
     }
 
     // Initialize task
-    job->type = TL_GRAPHICS_JOB_NO_ARGS;
-    job->func_no_args = func;
-    job->args = NULL;
-    job->args_count = 0;
-    job->is_sync = true;
+    task->type = TL_GRAPHICS_JOB_NO_ARGS;
+    task->func_no_args = func;
+    task->args = NULL;
+    task->args_count = 0;
+    task->is_sync = true;
 
-    void* result = tl_graphics_submit(job);
+    void* result = tl_graphics_submit(task);
     TL_PROFILER_POP_WITH(result)
 }
 
@@ -69,8 +102,8 @@ void* _tl_graphics_submit_sync_args(void* (*func)(void**), u32 count, ...) {
     TL_PROFILER_PUSH_WITH("0x%p, count=%u", func, count)
 
     // Acquire task from pool
-    TLGraphicTask* job = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!job) {
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
+    if (!task) {
         TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
     }
 
@@ -89,13 +122,13 @@ void* _tl_graphics_submit_sync_args(void* (*func)(void**), u32 count, ...) {
     va_end(args);
 
     // Initialize task
-    job->type = TL_GRAPHICS_JOB_WITH_ARGS;
-    job->func_with_args = func;
-    job->args = arg_array;
-    job->args_count = count;
-    job->is_sync = true;
+    task->type = TL_GRAPHICS_JOB_WITH_ARGS;
+    task->func_with_args = func;
+    task->args = arg_array;
+    task->args_count = count;
+    task->is_sync = true;
 
-    void* result = tl_graphics_submit(job);
+    void* result = tl_graphics_submit(task);
     TL_PROFILER_POP_WITH(result)
 }
 
@@ -103,19 +136,19 @@ void* tl_graphics_submit_async(void* (*func)(void)) {
     TL_PROFILER_PUSH_WITH("0x%p", func)
 
     // Acquire task from pool
-    TLGraphicTask* job = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!job) {
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
+    if (!task) {
         TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
     }
 
     // Initialize task
-    job->type = TL_GRAPHICS_JOB_NO_ARGS;
-    job->func_no_args = func;
-    job->args = NULL;
-    job->args_count = 0;
-    job->is_sync = false;
+    task->type = TL_GRAPHICS_JOB_NO_ARGS;
+    task->func_no_args = func;
+    task->args = NULL;
+    task->args_count = 0;
+    task->is_sync = false;
 
-    void* result = tl_graphics_submit(job);
+    void* result = tl_graphics_submit(task);
     TL_PROFILER_POP_WITH(result)
 }
 
@@ -123,8 +156,8 @@ void* _tl_graphics_submit_async_args(void* (*func)(void**), u32 count, ...) {
     TL_PROFILER_PUSH_WITH("0x%p, count=%u", func, count)
 
     // Acquire task from pool
-    TLGraphicTask* job = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!job) {
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
+    if (!task) {
         TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
     }
 
@@ -147,13 +180,13 @@ void* _tl_graphics_submit_async_args(void* (*func)(void**), u32 count, ...) {
     va_end(args);
 
     // Initialize task
-    job->type = TL_GRAPHICS_JOB_WITH_ARGS;
-    job->func_with_args = func;
-    job->args = arg_array;
-    job->args_count = count;
-    job->is_sync = false;
+    task->type = TL_GRAPHICS_JOB_WITH_ARGS;
+    task->func_with_args = func;
+    task->args = arg_array;
+    task->args_count = count;
+    task->is_sync = false;
 
-    void* result = tl_graphics_submit(job);
+    void* result = tl_graphics_submit(task);
     TL_PROFILER_POP_WITH(result)
 }
 
