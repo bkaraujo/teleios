@@ -1,5 +1,5 @@
 #include "teleios/teleios.h"
-#include "teleios/profiler_types.inl"
+#include "profiler/types.inl"
 
 // Thread-local profiler state
 static TL_THREADLOCAL u16 tl_profiler_frame_index = U16_MAX;

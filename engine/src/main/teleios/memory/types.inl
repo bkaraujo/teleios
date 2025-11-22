@@ -2,7 +2,7 @@
 #define __TELEIOS_MEMORY_TYPES__
 
 #include "teleios/teleios.h"
-#include "teleios/profiler_types.inl"
+#include "teleios/profiler/types.inl"
 
 // Linear allocator structures
 typedef struct {
