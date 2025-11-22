@@ -309,6 +309,7 @@ TLIterator* tl_array_iterator(TLArray* array);
  *
  * @param allocator Memory allocator to use (must be valid and remain alive)
  * @param capacity Maximum number of items the queue can hold
+ * @param thread_safe Whether to use mutex for thread-safe operations
  * @return Pointer to new queue, or NULL on allocation failure
  *
  * @note The allocator must remain valid for the queue's entire lifetime
@@ -320,7 +321,7 @@ TLIterator* tl_array_iterator(TLArray* array);
  *
  * @code
  * TLAllocator* heap = tl_memory_allocator_create(0, TL_ALLOCATOR_DYNAMIC);
- * TLQueue* queue = tl_queue_create(heap, 256);
+ * TLQueue* queue = tl_queue_create(heap, 256, true);
  *
  * if (queue == NULL) {
  *     TLERROR("Queue creation failed");
@@ -328,7 +329,7 @@ TLIterator* tl_array_iterator(TLArray* array);
  * }
  * @endcode
  */
-TLQueue* tl_queue_create(TLAllocator* allocator, u16 capacity);
+TLQueue* tl_queue_create(TLAllocator* allocator, u16 capacity, b8 thread_safe);
 
 /**
  * @brief Destroy a queue and free its memory
@@ -345,7 +346,7 @@ TLQueue* tl_queue_create(TLAllocator* allocator, u16 capacity);
  * @see tl_queue_create
  *
  * @code
- * TLQueue* queue = tl_queue_create(heap, 100);
+ * TLQueue* queue = tl_queue_create(heap, 100, true);
  *
  * // ... use queue ...
  *

@@ -32,6 +32,7 @@ struct TLQueue {
     TLCondition* not_full;  // Signals when space is available
 
     TLAllocator* allocator; // Memory allocator for cleanup
+    b8 thread_safe;
 };
 
 // ---------------------------------
