@@ -11,24 +11,23 @@ typedef struct {
 } TLMemory;
 
 typedef struct {
+    char* payload;          // The memory block
     u32 size;               // The actual memory size
     u32 index;              // Available memory start position
-    char* payload;          // The memory block
 } TLMemoryPage;
 
 // Dynamic allocator structures
 typedef struct TLDynamicBlock {
-    TLMemoryTag tag;
     void* pointer;
-    u32 size;
     struct TLDynamicBlock* next;
+    u32 size;
+    TLMemoryTag tag;
 #ifdef TELEIOS_BUILD_DEBUG
     TLStackTrace stack_trace;
 #endif
 } TLDynamicBlock;
 
 struct TLAllocator {
-    TLAllocatorType type;
     union {
         struct {
             TLMemoryPage* page;
@@ -39,6 +38,7 @@ struct TLAllocator {
             u32 allocation_count;
         } dynamic;
     };
+    TLAllocatorType type;
 #if defined(TELEIOS_BUILD_DEBUG)
     TLStackTrace stack_trace;
 #endif

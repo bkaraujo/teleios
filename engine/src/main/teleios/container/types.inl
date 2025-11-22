@@ -5,13 +5,11 @@
 
 struct TLArray {
     void** items;           // Array of void pointers (no ownership)
+    TLMutex* mutex;         // Thread-safety
+    TLAllocator* allocator; // Memory allocator for cleanup
     u32 count;              // Current number of items
     u32 capacity;           // Maximum number of items before reallocation
     u32 mod_count;          // Modification counter for fail-fast iteration
-
-    TLMutex* mutex;         // Thread-safety
-
-    TLAllocator* allocator; // Memory allocator for cleanup
     b8 thread_safe;
 };
 
@@ -21,17 +19,15 @@ struct TLArray {
 
 struct TLQueue {
     void** items;           // Array of void pointers (payloads)
+    TLMutex* mutex;         // Thread-safety
+    TLCondition* not_empty; // Signals when items are available
+    TLCondition* not_full;  // Signals when space is available
+    TLAllocator* allocator; // Memory allocator for cleanup
+    u32 mod_count;          // Modification counter for fail-fast iteration
     u16 capacity;           // Maximum number of items
     u16 head;               // Next slot for insertion
     u16 tail;               // Next slot for removal
     u16 count;              // Current number of items
-    u32 mod_count;          // Modification counter for fail-fast iteration
-
-    TLMutex* mutex;         // Thread-safety
-    TLCondition* not_empty; // Signals when items are available
-    TLCondition* not_full;  // Signals when space is available
-
-    TLAllocator* allocator; // Memory allocator for cleanup
     b8 thread_safe;
 };
 
@@ -42,12 +38,12 @@ struct TLQueue {
 struct TLObjectPool {
     u8* memory;             // Contiguous memory block for all objects
     b8* in_use;             // Bitmap: true if object is acquired
-    u32 object_size;        // Size of each object in bytes
-    u16 capacity;           // Total number of objects
-    u16 next_free;          // Hint: next potentially free object
-    u32 mod_count;          // Modification counter for fail-fast iteration
     TLMutex* mutex;         // Thread-safety for acquire/release operations
     TLAllocator* allocator; // Memory allocator for cleanup
+    u32 object_size;        // Size of each object in bytes
+    u32 mod_count;          // Modification counter for fail-fast iteration
+    u16 capacity;           // Total number of objects
+    u16 next_free;          // Hint: next potentially free object
     b8 thread_safe;
 };
 
@@ -64,10 +60,10 @@ struct TLListNode {
 struct TLList {
     TLListNode* head;       // First node in list
     TLListNode* tail;       // Last node in list
-    u32 size;               // Current number of nodes
-    u32 mod_count;          // Modification counter for fail-fast iteration
     TLMutex* mutex;         // Thread-safety
     TLAllocator* allocator; // Memory allocator for cleanup
+    u32 size;               // Current number of nodes
+    u32 mod_count;          // Modification counter for fail-fast iteration
     b8 thread_safe;
 };
 
@@ -83,12 +79,12 @@ struct TLMapEntry {
 
 struct TLMap {
     TLMapEntry** buckets;   // Array of bucket pointers (separate chaining)
+    TLMutex* mutex;         // Thread-safety
+    TLAllocator* allocator; // Memory allocator for cleanup
     u32 capacity;           // Number of buckets
     u32 size;               // Number of key-value pairs
     u32 mod_count;          // Modification counter for fail-fast iteration
     f32 load_factor;        // Maximum load factor before resize
-    TLMutex* mutex;         // Thread-safety
-    TLAllocator* allocator; // Memory allocator for cleanup
     b8 thread_safe;
 };
 

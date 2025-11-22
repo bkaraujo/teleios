@@ -15,8 +15,8 @@
 typedef struct  {
     const char* filename;
     const char* function;
-    char arguments[TL_PROFILER_FRAME_ARGUMENTS_SIZE];
     u32 lineno;
+    char arguments[TL_PROFILER_FRAME_ARGUMENTS_SIZE];
 } TLStackFrame;
 
 struct  TLStackTrace {
