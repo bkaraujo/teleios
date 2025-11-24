@@ -308,6 +308,60 @@ b8 _tl_shader_submit(TLShader* shader, u8 count, ...);
 // Graphics FrameBuffer API
 // ---------------------------------------------------
 
+// ---------------------------------------------------
+// Command Buffer API (Triple Buffering)
+// ---------------------------------------------------
 
+/**
+ * @brief Begin recording commands to a command buffer
+ *
+ * Acquires a free command buffer from the triple buffer pool and begins
+ * recording. All subsequent graphics submissions will be recorded to this
+ * buffer until tl_cmdbuffer_end() is called.
+ *
+ * This function may block if no buffers are available (all 3 are pending
+ * or executing). In practice with triple buffering, a buffer should always
+ * be available.
+ *
+ * @note Must be called from main thread before any graphics work submission
+ * @note Call tl_cmdbuffer_end() when done recording frame commands
+ *
+ * @see tl_cmdbuffer_end
+ * @see tl_cmdbuffer_sync
+ */
+void tl_cmdbuffer_begin(void);
+
+/**
+ * @brief End recording and submit command buffer for execution
+ *
+ * Finalizes the current command buffer and submits it to the graphics thread
+ * for execution. Returns immediately without waiting for execution to complete.
+ *
+ * This enables pipelining: main thread can start recording frame N+1 while
+ * graphics thread executes frame N.
+ *
+ * @note Must be called after tl_cmdbuffer_begin()
+ * @note Does not block - returns immediately
+ * @note Graphics thread will process the buffer asynchronously
+ *
+ * @see tl_cmdbuffer_begin
+ * @see tl_cmdbuffer_sync
+ */
+void tl_cmdbuffer_end(void);
+
+/**
+ * @brief Wait for all pending command buffers to complete
+ *
+ * Blocks until all submitted command buffers have finished executing.
+ * Use sparingly - typically only needed at frame boundaries when you need
+ * to ensure the GPU has caught up.
+ *
+ * @note Blocks until graphics thread finishes all pending buffers
+ * @note Call at start of frame to ensure previous frame completed
+ *
+ * @see tl_cmdbuffer_begin
+ * @see tl_cmdbuffer_end
+ */
+void tl_cmdbuffer_sync(void);
 
 #endif

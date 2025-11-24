@@ -36,4 +36,44 @@ struct TLShader {
     u64 handle;
 };
 
+// ---------------------------------
+// Command Buffer Definitions
+// ---------------------------------
+
+typedef enum {
+    TL_CMDBUFFER_FREE,       // Available for recording
+    TL_CMDBUFFER_RECORDING,  // Main thread is writing commands
+    TL_CMDBUFFER_PENDING,    // Submitted, waiting for graphics thread
+    TL_CMDBUFFER_EXECUTING   // Graphics thread is processing
+} TLCommandBufferState;
+
+typedef struct {
+    union {
+        void* (*func_no_args)(void);
+        void* (*func_with_args)(void**);
+    };
+    void** args;
+    u32 args_count;
+    TLGraphicsJobType type;
+} TLCommand;
+
+#define TL_CMDBUFFER_CAPACITY 256
+
+typedef struct {
+    TLCommand commands[TL_CMDBUFFER_CAPACITY];
+    u32 count;
+    TLCommandBufferState state;
+} TLCommandBuffer;
+
+#define TL_CMDBUFFER_POOL_SIZE 3
+
+typedef struct {
+    TLCommandBuffer buffers[TL_CMDBUFFER_POOL_SIZE];
+    TLMutex* mutex;
+    TLCondition* buffer_available;  // Signaled when a buffer becomes FREE
+    TLCondition* buffer_pending;    // Signaled when a buffer becomes PENDING
+    TLAllocator* allocator;
+    u8 recording_index;             // Index of buffer being recorded (or 0xFF if none)
+} TLCommandBufferPool;
+
 #endif

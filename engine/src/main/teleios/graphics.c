@@ -10,6 +10,7 @@ static b8 tl_graphics_is_thread(void) {
     return tl_thread_id() == m_thread_id;
 }
 
+#include "teleios/graphics/cmdbuffer.inl"
 #include "teleios/graphics/queue.inl"
 #include "teleios/graphics/thread.inl"
 #include "teleios/graphics/shader.inl"
@@ -69,6 +70,9 @@ b8 tl_graphics_initialize(void) {
 
     TLDEBUG("Graphics task pool initialized: %u tasks pre-allocated", TL_GRAPHICS_QUEUE_CAPACITY)
 
+    // Initialize command buffer pool for triple buffering
+    tl_cmdbuffer_pool_init();
+
     m_worker_thread = tl_thread_create(tl_graphics_worker, NULL);
     if (!m_worker_thread) {
         TLFATAL("Failed to create graphics worker thread")
@@ -87,6 +91,9 @@ b8 tl_graphics_terminate(void) {
     // Wait for worker thread to finish
     tl_thread_join(m_worker_thread, NULL);
     m_worker_thread = NULL;
+
+    // Destroy command buffer pool
+    tl_cmdbuffer_pool_destroy();
 
     // Destroy pre-allocated synchronization primitives in task pool
     if (m_task_pool) {

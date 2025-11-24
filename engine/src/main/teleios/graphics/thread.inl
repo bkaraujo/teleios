@@ -41,20 +41,34 @@ static void* tl_graphics_worker(void* _) {
 
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
     // #########################################
-    // Main worker loop
+    // Main worker loop (Command Buffer Mode)
     // #########################################
+    TLDEBUG("Graphics worker entering main loop")
     for ( ; ; ) {
 
-        // Check shutdown flag before blocking on queue
+        // Check shutdown flag before processing
         if (m_shutdown) {
             TLDEBUG("Graphics worker received shutdown signal")
             break;
         }
 
-        // Pop task from queue (blocks if empty)
+        // Try to get a pending command buffer (non-blocking)
+        TLCommandBuffer* cmdbuffer = tl_cmdbuffer_acquire_pending();
+        if (cmdbuffer != NULL) {
+            tl_cmdbuffer_execute(cmdbuffer);
+            tl_cmdbuffer_release(cmdbuffer);
+            continue;
+        }
+
+        // No command buffer, check for sync jobs in the queue (non-blocking)
         TLGraphicTask* task = (TLGraphicTask*)tl_queue_pop(m_queue);
-        if (task == NULL) { continue; }
-        tl_graphics_execute(task);
+        if (task != NULL) {
+            tl_graphics_execute(task);
+            continue;
+        }
+
+        // Nothing to do, wait for work (with timeout to check shutdown)
+        tl_cmdbuffer_wait_for_work();
     }
 
     // Release OpenGL context before exiting

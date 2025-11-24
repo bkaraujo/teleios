@@ -30,11 +30,6 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
     }
 
     TLObjectPool* pool = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_POOL, sizeof(TLObjectPool));
-    if (pool == NULL) {
-        TLERROR("Failed to allocate TLObjectPool structure")
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
     pool->memory = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_POOL, object_size * capacity);
     pool->in_use = tl_memory_alloc(allocator, TL_MEMORY_CONTAINER_POOL, sizeof(b8) * capacity);
     pool->object_size = object_size;
@@ -81,6 +76,7 @@ void tl_pool_destroy(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
+        TLWARN("Attempted to destroy a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
