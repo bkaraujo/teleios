@@ -671,6 +671,7 @@ void tl_pool_destroy(TLObjectPool* pool);
  * @note Thread-safe - can be called concurrently from multiple threads
  * @note Acquired objects must be released with tl_pool_release()
  *
+ * @see tl_pool_acquire_wait
  * @see tl_pool_release
  * @see tl_pool_available
  *
@@ -690,6 +691,46 @@ void tl_pool_destroy(TLObjectPool* pool);
  * @endcode
  */
 void* tl_pool_acquire(TLObjectPool* pool);
+
+/**
+ * @brief Acquire an object from the pool, blocking if empty
+ *
+ * Returns a pointer to an available object from the pool. If no objects
+ * are available, blocks until one is released back to the pool.
+ *
+ * @param pool Pool to acquire from (must be thread-safe)
+ * @return Pointer to acquired object (never NULL)
+ *
+ * @note Blocks indefinitely if pool is exhausted until an object is released
+ * @note Pool MUST be created with thread_safe=true
+ * @note Returned object retains its previous data - caller should initialize
+ * @note Thread-safe - uses internal condition variable for synchronization
+ * @note Acquired objects must be released with tl_pool_release()
+ *
+ * @see tl_pool_acquire
+ * @see tl_pool_release
+ * @see tl_pool_available
+ *
+ * @code
+ * // Producer-consumer pattern
+ * void* consumer_thread(void* arg) {
+ *     TLObjectPool* pool = (TLObjectPool*)arg;
+ *
+ *     while (running) {
+ *         // Blocks until an object is available
+ *         MyObject* obj = (MyObject*)tl_pool_acquire_wait(pool);
+ *
+ *         // Process the object
+ *         process(obj);
+ *
+ *         // Release back to pool
+ *         tl_pool_release(pool, obj);
+ *     }
+ *     return NULL;
+ * }
+ * @endcode
+ */
+void* tl_pool_acquire_wait(TLObjectPool* pool);
 
 /**
  * @brief Release an object back to the pool

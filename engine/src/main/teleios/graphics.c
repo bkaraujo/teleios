@@ -55,11 +55,7 @@ b8 tl_graphics_initialize(void) {
 
     // Pre-allocate mutex and condition variable for each task in the pool
     for (u16 i = 0; i < TL_GRAPHICS_QUEUE_CAPACITY; ++i) {
-        TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-        if (!task) {
-            TLFATAL("Failed to acquire task from pool during initialization")
-        }
-
+        TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire_wait(m_task_pool);
         task->completion_mutex = tl_mutex_create(m_allocator);
         task->completion_condition = tl_condition_create(m_allocator);
 

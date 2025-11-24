@@ -39,6 +39,7 @@ struct TLObjectPool {
     u8* memory;             // Contiguous memory block for all objects
     b8* in_use;             // Bitmap: true if object is acquired
     TLMutex* mutex;         // Thread-safety for acquire/release operations
+    TLCondition* not_empty; // Signals when objects are available
     TLAllocator* allocator; // Memory allocator for cleanup
     u32 object_size;        // Size of each object in bytes
     u32 mod_count;          // Modification counter for fail-fast iteration

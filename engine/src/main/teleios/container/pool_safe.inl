@@ -12,10 +12,26 @@ void* tl_pool_safe_acquire(TLObjectPool* pool) {
     TL_PROFILER_POP_WITH(result)
 }
 
+void* tl_pool_safe_acquire_wait(TLObjectPool* pool) {
+    TL_PROFILER_PUSH_WITH("0x%p", pool)
+    tl_mutex_lock(pool->mutex);
+
+    if (tl_pool_unsafe_available(pool) == 0) {
+        TLWARN("TLPool is exhausted, waiting for a object")
+        while (tl_pool_unsafe_available(pool) == 0) {
+            tl_condition_wait(pool->not_empty, pool->mutex);
+        }
+    }
+    void* result = tl_pool_unsafe_acquire(pool);
+    tl_mutex_unlock(pool->mutex);
+    TL_PROFILER_POP_WITH(result)
+}
+
 void tl_pool_safe_release(TLObjectPool* pool, void* object) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", pool, object)
     tl_mutex_lock(pool->mutex);
     tl_pool_unsafe_release(pool, object);
+    tl_condition_signal(pool->not_empty);
     tl_mutex_unlock(pool->mutex);
     TL_PROFILER_POP
 }

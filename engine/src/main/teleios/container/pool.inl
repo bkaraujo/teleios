@@ -44,6 +44,7 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
     pool->allocator = allocator;
     pool->thread_safe = thread_safe;
     pool->mutex = NULL;
+    pool->not_empty = NULL;
 
     // Zero-initialize memory and bitmap
     tl_memory_set(pool->memory, 0, object_size * capacity);
@@ -53,6 +54,16 @@ TLObjectPool* tl_pool_create(TLAllocator* allocator, const u32 object_size, cons
         pool->mutex = tl_mutex_create(allocator);
         if (!pool->mutex) {
             TLERROR("Failed to create mutex for pool")
+            tl_memory_free(allocator, pool->in_use);
+            tl_memory_free(allocator, pool->memory);
+            tl_memory_free(allocator, pool);
+            TL_PROFILER_POP_WITH(NULL)
+        }
+
+        pool->not_empty = tl_condition_create(allocator);
+        if (!pool->not_empty) {
+            TLERROR("Failed to create condition for pool")
+            tl_mutex_destroy(pool->mutex);
             tl_memory_free(allocator, pool->in_use);
             tl_memory_free(allocator, pool->memory);
             tl_memory_free(allocator, pool);
@@ -75,6 +86,7 @@ void tl_pool_destroy(TLObjectPool* pool) {
 
     TLTRACE("Destroying object pool 0x%p", pool)
 
+    if (pool->not_empty) tl_condition_destroy(pool->not_empty);
     if (pool->mutex) tl_mutex_destroy(pool->mutex);
     tl_memory_free(pool->allocator, pool->in_use);
     tl_memory_free(pool->allocator, pool->memory);
@@ -97,6 +109,21 @@ void* tl_pool_acquire(TLObjectPool* pool) {
 
     if (pool->thread_safe) TL_PROFILER_POP_WITH(tl_pool_safe_acquire(pool));
     TL_PROFILER_POP_WITH(tl_pool_unsafe_acquire(pool));
+}
+
+void* tl_pool_acquire_wait(TLObjectPool* pool) {
+    TL_PROFILER_PUSH_WITH("0x%p", pool)
+
+    if (pool == NULL) {
+        TLWARN("Attempted to use a NULL TLObjectPool")
+        TL_PROFILER_POP_WITH(NULL)
+    }
+
+    if (!pool->thread_safe) {
+        TLFATAL("tl_pool_acquire_wait requires thread_safe=true")
+    }
+
+    TL_PROFILER_POP_WITH(tl_pool_safe_acquire_wait(pool));
 }
 
 void tl_pool_release(TLObjectPool* pool, void* object) {

@@ -82,12 +82,7 @@ void* tl_graphics_submit_sync(void* (*func)(void)) {
     TL_PROFILER_PUSH_WITH("0x%p", func)
 
     // Acquire task from pool
-    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!task) {
-        TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
-    }
-
-    // Initialize task
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire_wait(m_task_pool);
     task->type = TL_GRAPHICS_JOB_NO_ARGS;
     task->func_no_args = func;
     task->args = NULL;
@@ -102,10 +97,7 @@ void* _tl_graphics_submit_sync_args(void* (*func)(void**), u32 count, ...) {
     TL_PROFILER_PUSH_WITH("0x%p, count=%u", func, count)
 
     // Acquire task from pool
-    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!task) {
-        TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
-    }
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire_wait(m_task_pool);
 
     // Stack-allocate argument array (safe because sync call blocks until completion)
     void* arg_array[16];  // Max 16 arguments
@@ -136,12 +128,7 @@ void* tl_graphics_submit_async(void* (*func)(void)) {
     TL_PROFILER_PUSH_WITH("0x%p", func)
 
     // Acquire task from pool
-    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!task) {
-        TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
-    }
-
-    // Initialize task
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire_wait(m_task_pool);
     task->type = TL_GRAPHICS_JOB_NO_ARGS;
     task->func_no_args = func;
     task->args = NULL;
@@ -156,10 +143,7 @@ void* _tl_graphics_submit_async_args(void* (*func)(void**), u32 count, ...) {
     TL_PROFILER_PUSH_WITH("0x%p, count=%u", func, count)
 
     // Acquire task from pool
-    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire(m_task_pool);
-    if (!task) {
-        TLFATAL("Graphics task pool exhausted (capacity=%u)", tl_pool_capacity(m_task_pool))
-    }
+    TLGraphicTask* task = (TLGraphicTask*)tl_pool_acquire_wait(m_task_pool);
 
     // Heap-allocate argument array (required because async call returns immediately)
     if (count > 16) {
