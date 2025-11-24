@@ -143,26 +143,29 @@ set(ENGINE_SOURCES
 
 # Collect engine header files
 set(ENGINE_HEADERS
-    src/main/glad/glad.h
-    src/main/glad/khrplatform.h
-    src/main/stb/stb_image.h
+    include/glad/glad.h
+    include/glad/khrplatform.h
+    include/stb/image.h
 
-    src/main/teleios/event.h
-    src/main/teleios/logger.h
-    src/main/teleios/memory.h
-    src/main/teleios/window.h
-    src/main/teleios/defines.h
-    src/main/teleios/teleios.h
-    src/main/teleios/platform.h
-    src/main/teleios/profiler.h
-    src/main/teleios/application.h
-    src/main/teleios/thread.h
-    src/main/teleios/graphics.h
-    src/main/teleios/number.h
-    src/main/teleios/renderer.h
-    src/main/teleios/strings.h
-    src/main/teleios/config.h
-    src/main/teleios/input.h
+    include/teleios/application.h
+    include/teleios/chrono.h
+    include/teleios/config.h
+    include/teleios/container.h
+    include/teleios/defines.h
+    include/teleios/event.h
+    include/teleios/filesystem.h
+    include/teleios/graphics.h
+    include/teleios/input.h
+    include/teleios/logger.h
+    include/teleios/memory.h
+    include/teleios/number.h
+    include/teleios/platform.h
+    include/teleios/profiler.h
+    include/teleios/renderer.h
+    include/teleios/strings.h
+    include/teleios/teleios.h
+    include/teleios/thread.h
+    include/teleios/window.h
 )
 
 # Create engine executable
@@ -182,6 +185,7 @@ set_target_properties(engine PROPERTIES
 # Include directories
 target_include_directories(engine
     PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/main>
         $<INSTALL_INTERFACE:include>
     PRIVATE

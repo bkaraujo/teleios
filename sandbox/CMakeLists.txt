@@ -23,6 +23,7 @@ set_target_properties(sandbox PROPERTIES
 # Include engine headers (for reference only, sandbox is standalone)
 target_include_directories(sandbox
     PRIVATE
+        ${CMAKE_SOURCE_DIR}/engine/include
         ${CMAKE_SOURCE_DIR}/engine/src/main
 )
 
