@@ -8,8 +8,6 @@
 
 static u64 frame_count = 0;
 static u64 update_count = 0;
-static b8 m_running = false;
-static b8 m_paused = false;
 
 // ---------------------------------
 // Event Handlers
@@ -34,7 +32,7 @@ static void tl_application_loop();
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
 
-    m_running = true;
+    global->running = true;
     glfwShowWindow(tl_window_handler());
     tl_application_loop();
     glfwHideWindow(tl_window_handler());
@@ -54,12 +52,12 @@ static void tl_application_loop() {
     f64 fps_timer = 0.0;
 
     TLDEBUG("Entering main loop")
-    while (m_running) {
+    while (global->running) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
 
-        if (!m_paused) {
+        if (!global->suspended) {
             // Cap frame time to prevent spiral of death
             if (delta_time > FRAME_CAP) {
                 TLWARN("Frame time %.2f ms exceeded, capping to %.2f ms", delta_time / 1000.0, FRAME_CAP / 1000.0);
@@ -102,19 +100,19 @@ static void tl_application_loop() {
 
 static TLEventStatus tl_application_handle_window_closed(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
-    m_running = false;
+    global->running = false;
     TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
 }
 
 static TLEventStatus tl_application_handle_window_restored(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
-    m_paused = false;
+    global->suspended = false;
     TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
 }
 
 static TLEventStatus tl_application_handle_window_minimized(const TLEvent *event) {
     TL_PROFILER_PUSH_WITH("0x%p", event)
-    m_paused = true;
+    global->suspended = true;
     frame_count = 0;
     update_count = 0;
     TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)

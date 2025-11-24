@@ -454,5 +454,12 @@ typedef struct {
     u8 uniforms_count;
 } TLShaderUniforms;
 
+typedef struct {
+    b8 running;
+    b8 suspended;
+} TLGlobal;
+
+extern TLGlobal* global;
+
 extern TLAllocator* g_allocator;
 #endif

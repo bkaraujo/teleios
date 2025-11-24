@@ -47,7 +47,7 @@ static void* tl_graphics_worker(void* _) {
     for ( ; ; ) {
 
         // Check shutdown flag before processing
-        if (m_shutdown) {
+        if (!global->running) {
             TLDEBUG("Graphics worker received shutdown signal")
             break;
         }
