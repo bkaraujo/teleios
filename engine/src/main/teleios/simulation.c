@@ -15,7 +15,7 @@ b8 tl_simulation_initialize(void) {
 
 static void* tl_simulation_thread(void* _) {
     (void) _;
-    
+    TLDEBUG("Initializing")
     const f64 FRAME_CAP = 250000.0;     // Cap at 250ms to prevent spiral of death
     
     TLString* sStep = tl_config_get("teleios.simulation.step");
@@ -34,12 +34,11 @@ static void* tl_simulation_thread(void* _) {
         if (!global->suspended) {
 
             tl_input_snapshot();
-            atomic_fetch_add(&global->update_count, 1);
+            global->update_count++;
 
             // Cap frame time to prevent spiral of death
             if (delta_time > FRAME_CAP) {
-                TLWARN("Frame time %.2f ms exceeded, capping to %.2f ms", 
-                       delta_time / 1000.0, FRAME_CAP / 1000.0);
+                TLWARN("Frame time %.2f ms exceeded, capping to %.2f ms",  delta_time / 1000.0, FRAME_CAP / 1000.0);
                 delta_time = FRAME_CAP;
             }
             
