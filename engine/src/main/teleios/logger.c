@@ -35,7 +35,7 @@ void tl_logger_write(const TLLogLevel level, const char *filename, const u32 lin
         colors[level],
         clock.year, clock.month, clock.day,
         clock.hour, clock.minute, clock.second, clock.millis,
-        tl_thread_id(),
+        tl_thread_current_id(),
         basename, 
         lineno, 
         strings[level], 
