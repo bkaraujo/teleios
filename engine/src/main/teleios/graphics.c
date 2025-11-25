@@ -43,7 +43,9 @@ static void* tl_graphics_thread(void* _) {
 
     TLDEBUG("Entering Main Loop")
     for ( ; global->running ; ) {
-
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        atomic_fetch_add(&global->frame_count, 1);
+        glfwSwapBuffers(tl_window_handler());
     }
 
     glfwMakeContextCurrent(NULL);

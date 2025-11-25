@@ -78,6 +78,11 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
+    if (!tl_input_initialize()) {
+        TLERROR("Input system failed to initialize")
+        TL_PROFILER_POP_WITH(false)
+    }
+
     // Create window
     if (!tl_window_create()) {
         TLERROR("GLFW failed to create window")
@@ -94,11 +99,6 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    if (!tl_input_initialize()) {
-        TLERROR("Input system failed to initialize")
-        TL_PROFILER_POP_WITH(false)
-    }
-
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -106,13 +106,18 @@ b8 tl_platform_initialize(void) {
  * @brief Terminate platform layer
  *
  * Cleanup order is reverse of initialization:
- * Graphics → Window → GLFW → Platform → Memory
+ * Graphics → Simulation → Input → Window → GLFW → Config → Memory → Platform
  */
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
 
     // Terminate window
     tl_window_terminate();
+
+    if (!tl_input_terminate()) {
+        TLERROR("Input system failed to terminate")
+        TL_PROFILER_POP_WITH(false)
+    }
 
     if (!tl_graphics_terminate()) {
         TLERROR("Graphics failed to terminate")

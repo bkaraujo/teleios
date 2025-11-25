@@ -423,6 +423,9 @@ typedef struct {
     _Atomic b8 running;
     /** @brief Indicates the simulation is suspended */
     _Atomic b8 suspended;
+    /** @brief Updates per second counter (written by simulation, read by main) */
+    _Atomic u64 update_count;
+    _Atomic u64 frame_count;
 } TLGlobal;
 
 extern TLGlobal* global;

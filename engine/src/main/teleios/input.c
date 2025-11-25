@@ -15,16 +15,28 @@ typedef struct {
     } cursor;
 } TLInput;
 
-/** @brief Current frame input state*/
-static TLInput current = { 0 };
+/** @brief Mutex for protecting current buffer */
+static TLMutex* m_mutex;
 
-/** @brief Previous frame input state*/
-static TLInput previous = { 0 };
+/** @brief Current frame input state (written by main thread, protected by mutex) */
+static TLInput m_current = { 0 };
 
-void tl_input_update() {
-    TL_PROFILER_PUSH
-    tl_memory_copy( &previous, &current, sizeof(TLInput) );
-    TL_PROFILER_POP
+/** @brief Snapshot for simulation thread (read by simulation thread, no mutex needed) */
+static TLInput m_snapshot = { 0 };
+
+/** @brief Previous frame snapshot (for pressed/released detection) */
+static TLInput m_previous = { 0 };
+
+void tl_input_snapshot(void) {
+    tl_mutex_lock(m_mutex);
+    
+    // Copy snapshot → previous (for pressed/released detection)
+    tl_memory_copy(&m_previous, &m_snapshot, sizeof(TLInput));
+    
+    // Create new snapshot from current
+    tl_memory_copy(&m_snapshot, &m_current, sizeof(TLInput));
+    
+    tl_mutex_unlock(m_mutex);
 }
 
 // ---------------------------------
@@ -32,23 +44,15 @@ void tl_input_update() {
 // ---------------------------------
 
 b8 tl_input_is_key_active(const i32 key) {
-    TL_PROFILER_PUSH_WITH("%d", key)
-    const b8 is_active = current.keyboard.key[key];
-    TL_PROFILER_POP_WITH(is_active)
+    return m_snapshot.keyboard.key[key];
 }
 
 b8 tl_input_is_key_pressed(const i32 key) {
-    TL_PROFILER_PUSH_WITH("%d", key)
-    const b8 is_active = current.keyboard.key[key];
-    const b8 were_active = previous.keyboard.key[key];
-    TL_PROFILER_POP_WITH(!were_active & is_active)
+    return !m_previous.keyboard.key[key] && m_snapshot.keyboard.key[key];
 }
 
 b8 tl_input_is_key_released(const i32 key) {
-    TL_PROFILER_PUSH_WITH("%d", key)
-    const b8 is_active = current.keyboard.key[key];
-    const b8 were_active = previous.keyboard.key[key];
-    TL_PROFILER_POP_WITH(were_active & !is_active)
+    return m_previous.keyboard.key[key] && !m_snapshot.keyboard.key[key];
 }
 
 // ---------------------------------
@@ -56,41 +60,27 @@ b8 tl_input_is_key_released(const i32 key) {
 // ---------------------------------
 
 ivec2s tl_input_get_cursor_scroll() {
-    TL_PROFILER_PUSH
-    const ivec2s scroll = { current.cursor.scroll_x, current.cursor.scroll_y };
-    TL_PROFILER_POP_WITH(scroll)
+    return (ivec2s){ m_snapshot.cursor.scroll_x, m_snapshot.cursor.scroll_y };
 }
 
 vec2s tl_input_get_cursor_position() {
-    TL_PROFILER_PUSH
-    const vec2s position = { current.cursor.position_x, current.cursor.position_y };
-    TL_PROFILER_POP_WITH(position)
+    return (vec2s){ m_snapshot.cursor.position_x, m_snapshot.cursor.position_y };
 }
 
 b8 tl_input_is_cursor_hovering() {
-    TL_PROFILER_PUSH
-    const b8 is_active = current.cursor.hoover;
-    TL_PROFILER_POP_WITH(is_active)
+    return m_snapshot.cursor.hoover;
 }
 
 b8 tl_input_is_cursor_button_active(const i32 key) {
-    TL_PROFILER_PUSH_WITH("%d", key)
-    const b8 is_active = current.cursor.button[key];
-    TL_PROFILER_POP_WITH(is_active)
+    return m_snapshot.cursor.button[key];
 }
 
 b8 tl_input_is_cursor_button_pressed(const i32 key) {
-    TL_PROFILER_PUSH_WITH("%d", key)
-    const b8 is_active = current.cursor.button[key];
-    const b8 were_active = previous.cursor.button[key];
-    TL_PROFILER_POP_WITH(!were_active & is_active)
+    return !m_previous.cursor.button[key] && m_snapshot.cursor.button[key];
 }
 
 b8 tl_input_is_cursor_button_released(const i32 key) {
-    TL_PROFILER_PUSH_WITH("%d", key)
-    const b8 is_active = current.cursor.button[key];
-    const b8 were_active = previous.cursor.button[key];
-    TL_PROFILER_POP_WITH(were_active & !is_active)
+    return m_previous.cursor.button[key] && !m_snapshot.cursor.button[key];
 }
 
 // ---------------------------------
@@ -98,57 +88,72 @@ b8 tl_input_is_cursor_button_released(const i32 key) {
 // ---------------------------------
 
 static TLEventStatus tl_input_handle_keyboard_pressed(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.keyboard.key[event->i32[0]] = true;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    tl_mutex_lock(m_mutex);
+    m_current.keyboard.key[event->i32[0]] = true;
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_keyboard_released(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.keyboard.key[event->i32[0]] = false;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    tl_mutex_lock(m_mutex);
+    m_current.keyboard.key[event->i32[0]] = false;
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_moved(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.cursor.position_x = event->f32[0];
-    current.cursor.position_y = event->f32[1];
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    tl_mutex_lock(m_mutex);
+    m_current.cursor.position_x = event->f32[0];
+    m_current.cursor.position_y = event->f32[1];
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_pressed(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.cursor.button[event->i32[0]] = true;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    tl_mutex_lock(m_mutex);
+    m_current.cursor.button[event->i32[0]] = true;
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_released(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.cursor.button[event->i32[0]] = false;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    tl_mutex_lock(m_mutex);
+    m_current.cursor.button[event->i32[0]] = false;
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_scrolled(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.cursor.scroll_x = event->i8[0];
-    current.cursor.scroll_y = event->i8[1];
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    tl_mutex_lock(m_mutex);
+    m_current.cursor.scroll_x = event->i8[0];
+    m_current.cursor.scroll_y = event->i8[1];
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_entered(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.cursor.hoover = true;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    (void)event;
+    tl_mutex_lock(m_mutex);
+    m_current.cursor.hoover = true;
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_exited(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    current.cursor.hoover = false;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
+    (void)event;
+    tl_mutex_lock(m_mutex);
+    m_current.cursor.hoover = false;
+    tl_mutex_unlock(m_mutex);
+    return TL_EVENT_AVAILABLE;
 }
 
 b8 tl_input_initialize(void) {
-    TL_PROFILER_PUSH
+    // Create mutex for protecting current buffer
+    m_mutex = tl_mutex_create(global->allocator);
+    if (!m_mutex) {
+        TLERROR("Failed to create input mutex")
+        return false;
+    }
 
     tl_event_subscribe(TL_EVENT_INPUT_KEY_PRESSED       , tl_input_handle_keyboard_pressed);
     tl_event_subscribe(TL_EVENT_INPUT_KEY_RELEASED      , tl_input_handle_keyboard_released);
@@ -160,5 +165,13 @@ b8 tl_input_initialize(void) {
     tl_event_subscribe(TL_EVENT_INPUT_CURSOR_ENTERED    , tl_input_handle_cursor_entered);
     tl_event_subscribe(TL_EVENT_INPUT_CURSOR_EXITED     , tl_input_handle_cursor_exited);
 
-    TL_PROFILER_POP_WITH(true)
+    return true;
+}
+
+b8 tl_input_terminate(void) {
+    if (m_mutex) {
+        tl_mutex_destroy(m_mutex);
+        m_mutex = NULL;
+    }
+    return true;
 }

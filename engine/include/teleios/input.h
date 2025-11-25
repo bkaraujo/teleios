@@ -4,7 +4,8 @@
 #include "teleios/defines.h"
 
 b8 tl_input_initialize(void);
-void tl_input_update(void);
+b8 tl_input_terminate(void);
+void tl_input_snapshot(void);
 
 b8 tl_input_is_key_active(i32 key);
 b8 tl_input_is_key_pressed(i32 key);
