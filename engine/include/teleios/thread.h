@@ -39,10 +39,16 @@ b8 tl_thread_join(TLThread* thread, void** result);
 b8 tl_thread_detach(TLThread* thread);
 
 /**
+ * Gets the thread's ID
+ * @return Thread ID as u64
+ */
+u64 tl_thread_id(TLThread* thread);
+
+/**
  * Gets the current thread's ID
  * @return Thread ID as u64
  */
-u64 tl_thread_id(void);
+u64 tl_thread_current_id(void);
 
 /**
  * Sleeps the current thread for specified milliseconds

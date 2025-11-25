@@ -11,7 +11,7 @@
 
 struct TLThread {
     HANDLE handle;
-    u32 thread_id;
+    u64 thread_id;
     TLThreadFunc func;
     void* arg;
     void* result;

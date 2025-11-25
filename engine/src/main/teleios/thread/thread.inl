@@ -129,7 +129,16 @@ b8 tl_thread_detach(TLThread* thread) {
     TL_PROFILER_POP_WITH(true)
 }
 
-u64 tl_thread_id(void) {
+u64 tl_thread_id(TLThread* thread) {
+    if (!thread) {
+        TLERROR("tl_thread_id: thread cannot be NULL");
+        TL_PROFILER_POP_WITH(0)
+    }
+
+    return thread->thread_id;
+}
+
+u64 tl_thread_current_id(void) {
 #if defined(TL_PLATFORM_UNIX)
     return (u64)pthread_self();
 #elif defined(TL_PLATFORM_WINDOWS)
