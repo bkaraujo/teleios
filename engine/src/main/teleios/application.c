@@ -64,8 +64,6 @@ static void tl_application_loop() {
                 delta_time = FRAME_CAP;
             }
 
-            tl_renderer_frame_begin();
-
             fps_timer += delta_time;
             accumulator += delta_time;
             while (accumulator >= STEP) {
@@ -79,7 +77,6 @@ static void tl_application_loop() {
             (void)alpha;  // Suppress unused variable warning until render is implemented
         }
 
-        tl_renderer_frame_end();    // Submit rendering work to graphics thread
         tl_input_update();          // Store input current/previous state
         glfwPollEvents();           // Poll events on main thread (GLFW requirement)
 

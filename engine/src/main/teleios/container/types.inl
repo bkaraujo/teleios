@@ -72,11 +72,11 @@ struct TLList {
 // HashMap Implementation (TLString -> TLList*)
 // ---------------------------------
 
-struct TLMapEntry {
+typedef struct TLMapEntry {
     TLString* key;          // String key (owned by this entry)
     TLList* value;          // List of void* (owned by this entry)
-    TLMapEntry* next; // Next entry in bucket (chaining for collision resolution)
-};
+    struct TLMapEntry* next; // Next entry in bucket (chaining for collision resolution)
+} TLMapEntry;
 
 struct TLMap {
     TLMapEntry** buckets;   // Array of bucket pointers (separate chaining)

@@ -86,12 +86,6 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Initialize graphics system
-    if (!tl_graphics_initialize()) {
-        TLERROR("Graphics system failed to initialize")
-        TL_PROFILER_POP_WITH(false)
-    }
-
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -103,12 +97,6 @@ b8 tl_platform_initialize(void) {
  */
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
-
-    // Terminate graphics
-    if (!tl_graphics_terminate()) {
-        TLERROR("Graphics failed to terminate")
-        TL_PROFILER_POP_WITH(false)
-    }
 
     // Terminate window
     tl_window_terminate();

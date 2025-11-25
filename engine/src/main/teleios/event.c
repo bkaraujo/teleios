@@ -29,7 +29,7 @@ static const char* tl_event_name(const TLEventCodes code) {
         case TL_EVENT_MAXIMUM               : TL_PROFILER_POP_WITH("TL_EVENT_MAXIMUM")
     }
 
-    const TLString* string = tl_number_i32_to_char(g_allocator, code, 10);
+    const TLString* string = tl_number_i32_to_char(global->allocator, code, 10);
     const char* cstr = tl_string_cstr(string);
 
     TL_PROFILER_POP_WITH(cstr);

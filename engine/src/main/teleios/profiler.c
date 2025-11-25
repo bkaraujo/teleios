@@ -29,21 +29,21 @@ void tl_profiler_frame_push(const char* filename, const u32 lineno, const char* 
         va_end(arg_ptr);
     }
 
-    tl_logger_write(TL_LOG_LEVEL_VERBOSE, filename, lineno, "[in ] %s(%s)",
-                    function, tl_profiler_frames[tl_profiler_frame_index].arguments);
+    // tl_logger_write(TL_LOG_LEVEL_VERBOSE, filename, lineno, "[in ] %s(%s)",
+    //                 function, tl_profiler_frames[tl_profiler_frame_index].arguments);
 }
 
 /**
  * @brief Pop current frame from call stack and log exit
  */
 void tl_profiler_frame_pop(void) {
-    tl_logger_write(TL_LOG_LEVEL_VERBOSE,
-                    tl_profiler_frames[tl_profiler_frame_index].filename,
-                    tl_profiler_frames[tl_profiler_frame_index].lineno,
-                    "[out] %s(%s)",
-                    tl_profiler_frames[tl_profiler_frame_index].function,
-                    tl_profiler_frames[tl_profiler_frame_index].arguments
-    );
+    // tl_logger_write(TL_LOG_LEVEL_VERBOSE,
+    //                 tl_profiler_frames[tl_profiler_frame_index].filename,
+    //                 tl_profiler_frames[tl_profiler_frame_index].lineno,
+    //                 "[out] %s(%s)",
+    //                 tl_profiler_frames[tl_profiler_frame_index].function,
+    //                 tl_profiler_frames[tl_profiler_frame_index].arguments
+    // );
     memset(&tl_profiler_frames[tl_profiler_frame_index], 0, sizeof(TLStackFrame));
     tl_profiler_frame_index--;
 }

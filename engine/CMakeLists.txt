@@ -130,11 +130,9 @@ set(ENGINE_SOURCES
     src/main/teleios/platform.c
     src/main/teleios/application.c
     src/main/teleios/thread.c
-    src/main/teleios/graphics.c
     src/main/teleios/event.c
     src/main/teleios/number.c
     src/main/teleios/container.c
-    src/main/teleios/renderer.c
     src/main/teleios/strings.c
     src/main/teleios/config.c
     src/main/teleios/input.c
@@ -154,14 +152,12 @@ set(ENGINE_HEADERS
     include/teleios/defines.h
     include/teleios/event.h
     include/teleios/filesystem.h
-    include/teleios/graphics.h
     include/teleios/input.h
     include/teleios/logger.h
     include/teleios/memory.h
     include/teleios/number.h
     include/teleios/platform.h
     include/teleios/profiler.h
-    include/teleios/renderer.h
     include/teleios/strings.h
     include/teleios/teleios.h
     include/teleios/thread.h

@@ -381,17 +381,7 @@ typedef struct TLListNode TLListNode;
 
 typedef struct TLList TLList;
 
-typedef struct TLMapEntry TLMapEntry;
-
 typedef struct TLMap TLMap;
-
-/**
- * @brief Iterator structure for snapshot-based iteration
- *
- * Iterator that creates a snapshot of a list at creation time.
- * Optimized for hot loops with contiguous memory layout and lock-free iteration.
- */
-typedef struct TLIterator TLIterator;
 
 /**
  * @brief Opaque object pool handle
@@ -401,10 +391,16 @@ typedef struct TLIterator TLIterator;
  */
 typedef struct TLObjectPool TLObjectPool;
 
+/**
+ * @brief Iterator structure for snapshot-based iteration
+ *
+ * Iterator that creates a snapshot of a list at creation time.
+ * Optimized for hot loops with contiguous memory layout and lock-free iteration.
+ */
+typedef struct TLIterator TLIterator;
+
 typedef struct TLThread TLThread;
-
 typedef struct TLMutex TLMutex;
-
 typedef struct TLCondition TLCondition;
 
 /**
@@ -418,48 +414,17 @@ typedef struct TLString TLString;
 
 typedef struct  TLStackTrace TLStackTrace;
 
-typedef struct TLShader TLShader;
-
 typedef struct {
-    u32 type;       // OpenGL specfic shader type
-    TLString* path; // Path of the glsl file, relative to PWD's asset folder
-} TLShaderSource;
-
-typedef enum {
-    TL_BUFFER_UBYTE1, TL_BUFFER_UBYTE2, TL_BUFFER_UBYTE3, TL_BUFFER_UBYTE4,
-    TL_BUFFER_USHORT1, TL_BUFFER_USHORT2, TL_BUFFER_USHORT3, TL_BUFFER_USHORT4,
-    TL_BUFFER_UINT1, TL_BUFFER_UINT2, TL_BUFFER_UINT3, TL_BUFFER_UINT4,
-    TL_BUFFER_ULONG1, TL_BUFFER_ULONG2, TL_BUFFER_ULONG3, TL_BUFFER_ULONG4,
-
-    TL_BUFFER_BYTE1, TL_BUFFER_BYTE2, TL_BUFFER_BYTE3, TL_BUFFER_BYTE4,
-    TL_BUFFER_SHORT1, TL_BUFFER_SHORT2, TL_BUFFER_SHORT3, TL_BUFFER_SHORT4,
-    TL_BUFFER_INT1, TL_BUFFER_INT2, TL_BUFFER_INT3, TL_BUFFER_INT4,
-    TL_BUFFER_LONG1, TL_BUFFER_LONG2, TL_BUFFER_LONG3, TL_BUFFER_LONG4,
-
-    TL_BUFFER_FLOAT1, TL_BUFFER_FLOAT2, TL_BUFFER_FLOAT3, TL_BUFFER_FLOAT4,
-    TL_BUFFER_DOUBLE1, TL_BUFFER_DOUBLE2, TL_BUFFER_DOUBLE3, TL_BUFFER_DOUBLE4
-} TLBufferType;
-
-typedef struct {
-    TLBufferType type;  // Uniform data type
-    union {
-        u64 u64[4];
-        i64 i64[4];
-        f64 f64[4];
-    } value;            // Uniform actual data
-} TLShaderUniform;
-
-typedef struct {
-    TLShaderUniform* uniforms;
-    u8 uniforms_count;
-} TLShaderUniforms;
-
-typedef struct {
-    b8 running;
-    b8 suspended;
+    /** @brief Dynamic allocator */
+    TLAllocator* allocator;
+    /** @brief Application-wide mutex */
+    TLMutex* mutex;
+    /** @brief Indicates the simulation is running */
+    _Atomic b8 running;
+    /** @brief Indicates the simulation is suspended */
+    _Atomic b8 suspended;
 } TLGlobal;
 
 extern TLGlobal* global;
 
-extern TLAllocator* g_allocator;
 #endif

@@ -1284,7 +1284,7 @@ b8 tl_list_is_empty(TLList* list);
 void tl_list_clear(TLList* list);
 
 // =================================
-// HASHMAP API (TLString -> TLList*)
+// HASHMAP API (TLString -> void*)
 // =================================
 
 /**
@@ -1448,7 +1448,7 @@ TLList* tl_map_get_or_create(TLMap* map, const TLString* key);
  * gets or creates the list for that key, and adds the value to it.
  *
  * @param map Map to modify
- * @param cstr_key C string key
+ * @param key String key
  * @param value Value to add (will be added to the list for this key)
  *
  * @note Thread-safe - uses internal mutex

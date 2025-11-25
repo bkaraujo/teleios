@@ -19,7 +19,5 @@
 #include "teleios/chrono.h"
 #include "teleios/logger.h"
 #include "teleios/filesystem.h"
-#include "teleios/graphics.h"
-#include "teleios/renderer.h"
 
 #endif
