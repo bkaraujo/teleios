@@ -12,7 +12,7 @@
 struct TLThread {
     HANDLE handle;
     u64 thread_id;
-    TLThreadFunc func;
+    TLThreadFunction func;
     void* arg;
     void* result;
     TLAllocator* allocator;
@@ -50,7 +50,7 @@ static DWORD WINAPI thread_wrapper(const LPVOID param) {
 
 struct TLThread {
     pthread_t handle;
-    TLThreadFunc func;
+    TLThreadFunction func;
     void* arg;
     void* result;
     b8 detached;

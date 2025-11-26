@@ -1,19 +1,17 @@
 #ifndef __TELEIOS_THREAD_THREAD__
 #define __TELEIOS_THREAD_THREAD__
+
 #include "teleios/teleios.h"
 #include "teleios/thread/types.inl"
 
-// ---------------------------------
-// Thread Management
-// ---------------------------------
-
-TLThread* tl_thread_create(TLAllocator* allocator, const TLThreadFunc func, void* arg) {
+TLThread* tl_thread_create(TLAllocator* allocator, const TLThreadFunction func, void* arg) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", func, arg)
     if (!func) {
-        TLERROR("tl_thread_create: func cannot be NULL");
+        TLERROR("Attempted to use a NULL TLThreadFunction");
         TL_PROFILER_POP_WITH(NULL)
     }
 
+    TLDEBUG("Creating thread for function %p", func)
     TLThread* thread = (TLThread*)tl_memory_alloc(allocator, TL_MEMORY_THREAD, sizeof(TLThread));
     thread->allocator = allocator;
     thread->func = func;
@@ -29,7 +27,7 @@ TLThread* tl_thread_create(TLAllocator* allocator, const TLThreadFunc func, void
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    TLDEBUG("Thread created: ID=%llu", (u64)thread->handle);
+    TLTRACE("Thread created: ID=%llu, Function=%p", (u64)thread->handle, thread->func);
 #elif defined(TL_PLATFORM_WINDOWS)
     thread->result = NULL;
 
@@ -50,7 +48,7 @@ TLThread* tl_thread_create(TLAllocator* allocator, const TLThreadFunc func, void
     }
 
     thread->thread_id = (u32)tid;
-    TLTRACE("Thread created: ID=%u, Handle=%p", thread->thread_id, thread->handle);
+    TLTRACE("Thread created: ID=%u, Handle=%p, Function=%p", thread->thread_id, thread->handle, thread->func);
 #endif
 
     TL_PROFILER_POP_WITH(thread)
@@ -59,10 +57,11 @@ TLThread* tl_thread_create(TLAllocator* allocator, const TLThreadFunc func, void
 b8 tl_thread_join(TLThread* thread, void** result) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", thread, result)
     if (!thread) {
-        TLERROR("tl_thread_join: thread cannot be NULL");
+        TLERROR("Attempted to join a NULL TLThread");
         TL_PROFILER_POP_WITH(false)
     }
 
+    TLDEBUG("Joining thread %llu", thread->thread_id)
 #if defined(TL_PLATFORM_UNIX)
     if (thread->detached) {
         TLERROR("tl_thread_join: Cannot join a detached thread");
@@ -80,7 +79,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
         *result = thread->result;
     }
 
-    TLDEBUG("Thread joined: ID=%llu", (u64)thread->handle);
+    TLTRACE("Thread joined: ID=%llu, Function=%p", (u64)thread->handle, thread->func);
 #elif defined(TL_PLATFORM_WINDOWS)
     const u32 wait_result = (u32)WaitForSingleObject(thread->handle, INFINITE);
     if (wait_result != WAIT_OBJECT_0) {
@@ -93,7 +92,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
     }
 
     CloseHandle(thread->handle);
-    TLTRACE("Thread joined: ID=%u", thread->thread_id);
+    TLTRACE("Thread joined: ID=%u, Handle=%p, Function=%p", thread->thread_id, thread->handle, thread->func);
 #endif
     tl_memory_free(thread->allocator, thread);
     TL_PROFILER_POP_WITH(true)
@@ -102,10 +101,11 @@ b8 tl_thread_join(TLThread* thread, void** result) {
 b8 tl_thread_detach(TLThread* thread) {
     TL_PROFILER_PUSH_WITH("0x%p", thread)
     if (!thread) {
-        TLERROR("tl_thread_detach: thread cannot be NULL");
+        TLERROR("Attempted to detach a NULL TLThread");
         TL_PROFILER_POP_WITH(false)
     }
 
+    TLDEBUG("Detaching thread %llu", thread->thread_id)
 #if defined(TL_PLATFORM_UNIX)
     if (thread->detached) {
         TLERROR("tl_thread_detach: Thread already detached");
@@ -119,10 +119,10 @@ b8 tl_thread_detach(TLThread* thread) {
     }
 
     thread->detached = true;
-    TLDEBUG("Thread detached: ID=%llu", (u64)thread->handle);
+    TLTRACE("Thread detached: ID=%llu, Function=%p", (u64)thread->handle, thread->func);
 #elif defined(TL_PLATFORM_WINDOWS)
-    TLTRACE("Thread detached: ID=%u", thread->thread_id);
     CloseHandle(thread->handle);
+    TLTRACE("Thread detached: ID=%u, Handle=%p, Function=%p", thread->thread_id, thread->handle, thread->func);
 #endif
 
     tl_memory_free(thread->allocator, thread);
@@ -131,7 +131,7 @@ b8 tl_thread_detach(TLThread* thread) {
 
 u64 tl_thread_id(TLThread* thread) {
     if (!thread) {
-        TLERROR("tl_thread_id: thread cannot be NULL");
+        TLERROR("Attempted to read a NULL TLThread id");
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -148,6 +148,7 @@ u64 tl_thread_current_id(void) {
 
 void tl_thread_sleep(const u32 milliseconds) {
     TL_PROFILER_PUSH
+    TLTRACE("Sleeping thread %u millis", milliseconds)
 #if defined(TL_PLATFORM_UNIX)
     usleep(milliseconds * 1000);  // usleep takes microseconds
 #elif defined(TL_PLATFORM_WINDOWS)

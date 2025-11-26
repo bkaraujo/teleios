@@ -50,8 +50,6 @@ b8 tl_event_subscribe(const u16 event, const TLEventHandler handler) {
 
     for (u8 i = 0; i < U8_MAX; ++i) {
         if (m_handlers[event][i] == NULL) {
-            TLTRACE("Subscribing to %s handler function 0x%p", tl_event_name(event), handler)
-            TLTRACE("Subscribing to %s has %d handlers", tl_event_name(event), i + 1)
             m_handlers[event][i] = handler;
             break;
         }

@@ -8,7 +8,7 @@
  * @param arg User-provided argument passed to the thread
  * @return Thread result (can be retrieved via tl_thread_join)
  */
-typedef void* (*TLThreadFunc)(void* arg);
+typedef void* (*TLThreadFunction)(void* arg);
 
 // ---------------------------------
 // Thread Management
@@ -21,7 +21,7 @@ typedef void* (*TLThreadFunc)(void* arg);
  * @param arg Argument to pass to the thread function
  * @return Pointer to TLThread on success, NULL on failure
  */
-TLThread* tl_thread_create(TLAllocator* allocator, TLThreadFunc func, void* arg);
+TLThread* tl_thread_create(TLAllocator* allocator, TLThreadFunction func, void* arg);
 
 /**
  * Waits for a thread to finish execution

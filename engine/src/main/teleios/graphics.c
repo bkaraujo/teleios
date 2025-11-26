@@ -41,12 +41,15 @@ static void* tl_graphics_thread(void* _) {
 
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
 
+    glfwShowWindow(tl_window_handler());
+
     TLDEBUG("Entering Main Loop")
     for ( ; global->running ; ) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         global->frame_count++;
         glfwSwapBuffers(tl_window_handler());
     }
+    TLDEBUG("Exiting Main Loop")
 
     glfwMakeContextCurrent(NULL);
     TLDEBUG("Finalizando")

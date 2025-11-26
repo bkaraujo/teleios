@@ -54,13 +54,11 @@ b8 tl_platform_initialize(void) {
 
     TLINFO("Iniciando %s", platform.get_current_directory())
 
-    // Initialize platform-specific subsystem
     if (!platform.initialize()) {
         TLERROR("Platform failed to initialize")
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Initialize memory system
     if (!tl_memory_initialize()) {
         TLERROR("Memory system failed to initialize")
         TL_PROFILER_POP_WITH(false)
@@ -71,21 +69,19 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Initialize GLFW
     TLDEBUG("GLFW %s", glfwGetVersionString())
     if (!glfwInit()) {
         TLERROR("GLFW failed to initialize")
         TL_PROFILER_POP_WITH(false)
     }
 
-    if (!tl_input_initialize()) {
-        TLERROR("Input system failed to initialize")
+    if (!tl_window_create()) {
+        TLERROR("GLFW failed to create window")
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Create window
-    if (!tl_window_create()) {
-        TLERROR("GLFW failed to create window")
+    if (!tl_input_initialize()) {
+        TLERROR("Input system failed to initialize")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -102,22 +98,8 @@ b8 tl_platform_initialize(void) {
     TL_PROFILER_POP_WITH(true)
 }
 
-/**
- * @brief Terminate platform layer
- *
- * Cleanup order is reverse of initialization:
- * Graphics → Simulation → Input → Window → GLFW → Config → Memory → Platform
- */
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
-
-    // Terminate window
-    tl_window_terminate();
-
-    if (!tl_input_terminate()) {
-        TLERROR("Input system failed to terminate")
-        TL_PROFILER_POP_WITH(false)
-    }
 
     if (!tl_graphics_terminate()) {
         TLERROR("Graphics failed to terminate")
@@ -129,7 +111,12 @@ b8 tl_platform_terminate(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Terminate GLFW
+    if (!tl_input_terminate()) {
+        TLERROR("Input system failed to terminate")
+        TL_PROFILER_POP_WITH(false)
+    }
+
+    tl_window_terminate();
     glfwTerminate();
 
     if (!tl_config_terminate()) {
@@ -137,13 +124,11 @@ b8 tl_platform_terminate(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Terminate memory system (last, as other systems may use it)
     if (!tl_memory_terminate()) {
         TLERROR("Memory system failed to terminate")
         TL_PROFILER_POP_WITH(false)
     }
 
-    // Terminate platform-specific subsystem
     if (!platform.terminate()) {
         TLERROR("Platform failed to terminate")
         TL_PROFILER_POP_WITH(false)

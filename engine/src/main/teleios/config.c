@@ -34,7 +34,7 @@ void* tl_config_get(const char* property) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    TLTRACE("Querying property %s", property);
+    TLTRACE("Querying %s", property);
     TLString* key = tl_string_create(m_allocator, property);
     TLList* list = tl_map_get(m_properties, key);
     tl_string_destroy(key);

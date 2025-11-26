@@ -53,6 +53,7 @@ static void* tl_simulation_thread(void* _) {
             (void)alpha;  // Suppress unused variable warning
         }
     }
+
     TLDEBUG("Finalizando")
     return NULL;
 }

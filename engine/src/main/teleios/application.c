@@ -20,21 +20,10 @@ b8 tl_application_initialize(void) {
     TL_PROFILER_POP_WITH(true)
 }
 
-static void tl_application_loop();
-
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
 
     global->running = true;
-    glfwShowWindow(tl_window_handler());
-    tl_application_loop();
-    glfwHideWindow(tl_window_handler());
-    TL_PROFILER_POP_WITH(true)
-}
-
-static void tl_application_loop() {
-    TL_PROFILER_PUSH
-    
     f64 fps_timer = 0.0;
     u64 last_time = tl_time_epoch_micros();
     u64 last_frame_count = 0;
@@ -48,7 +37,7 @@ static void tl_application_loop() {
 
         fps_timer += delta_time;
         
-        glfwPollEvents();           // Poll events on main thread (GLFW requirement)
+        glfwPollEvents(); // Poll events on main thread (GLFW requirement)
 
         if (fps_timer >= ONE_SECOND_MICROS) {
 
@@ -66,9 +55,10 @@ static void tl_application_loop() {
             fps_timer -= ONE_SECOND_MICROS;
         }
     }
-
     TLDEBUG("Exiting main loop")
-    TL_PROFILER_POP
+
+    TLDEBUG("Finalizando")
+    TL_PROFILER_POP_WITH(true)
 }
 
 static TLEventStatus tl_application_handle_window_closed(const TLEvent *event) {
