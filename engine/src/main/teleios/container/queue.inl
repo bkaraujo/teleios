@@ -87,7 +87,7 @@ void tl_queue_offer(TLQueue* queue, void* payload) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", queue, payload)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -108,7 +108,7 @@ void tl_queue_push(TLQueue* queue, void* payload) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", queue, payload)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 
@@ -130,7 +130,7 @@ void* tl_queue_pop(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -146,7 +146,7 @@ void* tl_queue_peek(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -162,7 +162,7 @@ u16 tl_queue_size(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -174,7 +174,7 @@ u16 tl_queue_capacity(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -186,7 +186,7 @@ b8 tl_queue_is_empty(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(true)
     }
 
@@ -198,7 +198,7 @@ b8 tl_queue_is_full(const TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -210,7 +210,7 @@ void tl_queue_clear(TLQueue* queue) {
     TL_PROFILER_PUSH_WITH("0x%p", queue)
 
     if (queue == NULL) {
-        TLWARN("Attempted to use a NULL TLQueue")
+        TLERROR("Attempted to use a NULL TLQueue")
         TL_PROFILER_POP
     }
 

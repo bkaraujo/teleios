@@ -204,6 +204,7 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  *
  * @note Always enabled, even in Release builds
  * @note Does not terminate the program
+ * @note In DEBUG builds, triggers a debugger break after logging
  *
  * @see TL_LOG_LEVEL_ERROR
  * @see TLWARN
@@ -220,7 +221,7 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  * }
  * @endcode
  */
-#define   TLERROR(m, ...) { tl_logger_write(TL_LOG_LEVEL_ERROR  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
+#define   TLERROR(m, ...) { tl_logger_write(TL_LOG_LEVEL_ERROR  , __FILE__, __LINE__, m, ##__VA_ARGS__); TL_DEBUG_BREAK(); }
 
 /**
  * @brief Log fatal errors and terminate program
@@ -233,6 +234,7 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  *
  * @note NEVER RETURNS - Calls exit(99) immediately after logging
  * @note Always enabled, even in Release builds
+ * @note In DEBUG builds, triggers a debugger break before exiting
  *
  * @see TL_LOG_LEVEL_FATAL
  * @see TLERROR
@@ -250,6 +252,6 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  * }
  * @endcode
  */
-#define   TLFATAL(m, ...) { tl_logger_write(TL_LOG_LEVEL_FATAL  , __FILE__, __LINE__, m, ##__VA_ARGS__); exit(99); }
+#define   TLFATAL(m, ...) { tl_logger_write(TL_LOG_LEVEL_FATAL  , __FILE__, __LINE__, m, ##__VA_ARGS__); TL_DEBUG_BREAK(); exit(99); }
 
 #endif

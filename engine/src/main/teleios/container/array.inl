@@ -89,7 +89,7 @@ b8 tl_array_push(TLArray* array, void* item) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", array, item)
 
     if (array == NULL) {
-        TLWARN("Attempted to push into a NULL TLArray")
+        TLERROR("Attempted to push into a NULL TLArray")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -101,7 +101,7 @@ void* tl_array_pop(TLArray* array) {
     TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
-        TLWARN("Attempted to pop from a NULL TLArray")
+        TLERROR("Attempted to pop from a NULL TLArray")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -117,7 +117,7 @@ void* tl_array_get(TLArray* array, const u32 index) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
 
     if (array == NULL) {
-        TLWARN("Attempted to get from a NULL TLArray")
+        TLERROR("Attempted to get from a NULL TLArray")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -134,7 +134,7 @@ b8 tl_array_set(TLArray* array, const u32 index, void* item) {
     TL_PROFILER_PUSH_WITH("0x%p, %u, 0x%p", array, index, item)
 
     if (array == NULL) {
-        TLWARN("Attempted to set on a NULL TLArray")
+        TLERROR("Attempted to set on a NULL TLArray")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -151,7 +151,7 @@ b8 tl_array_insert(TLArray* array, const u32 index, void* item) {
     TL_PROFILER_PUSH_WITH("0x%p, %u, 0x%p", array, index, item)
 
     if (array == NULL) {
-        TLWARN("Attempted to insert into a NULL TLArray")
+        TLERROR("Attempted to insert into a NULL TLArray")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -168,7 +168,7 @@ void* tl_array_remove(TLArray* array, const u32 index) {
     TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
 
     if (array == NULL) {
-        TLWARN("Attempted to remove from a NULL TLArray")
+        TLERROR("Attempted to remove from a NULL TLArray")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -185,7 +185,7 @@ u32 tl_array_size(const TLArray* array) {
     TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
-        TLWARN("Attempted to get size of a NULL TLArray")
+        TLERROR("Attempted to get size of a NULL TLArray")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -197,7 +197,7 @@ u32 tl_array_capacity(const TLArray* array) {
     TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
-        TLWARN("Attempted to get capacity of a NULL TLArray")
+        TLERROR("Attempted to get capacity of a NULL TLArray")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -209,7 +209,7 @@ b8 tl_array_is_empty(const TLArray* array) {
     TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
-        TLWARN("Attempted to check if NULL TLArray is empty")
+        TLERROR("Attempted to check if NULL TLArray is empty")
         TL_PROFILER_POP_WITH(true)
     }
 
@@ -221,7 +221,7 @@ void tl_array_clear(TLArray* array) {
     TL_PROFILER_PUSH_WITH("0x%p", array)
 
     if (array == NULL) {
-        TLWARN("Attempted to clear a NULL TLArray")
+        TLERROR("Attempted to clear a NULL TLArray")
         TL_PROFILER_POP
     }
 

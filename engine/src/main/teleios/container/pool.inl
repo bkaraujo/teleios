@@ -76,7 +76,7 @@ void tl_pool_destroy(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to destroy a NULL TLObjectPool")
+        TLERROR("Attempted to destroy a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
@@ -99,7 +99,7 @@ void* tl_pool_acquire(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -111,7 +111,7 @@ void* tl_pool_acquire_wait(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -126,12 +126,12 @@ void tl_pool_release(TLObjectPool* pool, void* object) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", pool, object)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 
     if (object == NULL) {
-        TLWARN("Attempted to release a NULL object")
+        TLERROR("Attempted to release a NULL object")
         TL_PROFILER_POP
     }
 
@@ -160,7 +160,7 @@ u16 tl_pool_available(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -172,7 +172,7 @@ u16 tl_pool_in_use(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -184,7 +184,7 @@ u16 tl_pool_capacity(const TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -196,7 +196,7 @@ void tl_pool_reset(TLObjectPool* pool) {
     TL_PROFILER_PUSH_WITH("0x%p", pool)
 
     if (pool == NULL) {
-        TLWARN("Attempted to use a NULL TLObjectPool")
+        TLERROR("Attempted to use a NULL TLObjectPool")
         TL_PROFILER_POP
     }
 

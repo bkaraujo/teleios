@@ -6,7 +6,7 @@
 TLMutex* tl_mutex_create(TLAllocator* allocator) {
     TL_PROFILER_PUSH_WITH("0x%p", allocator)
     if (allocator == NULL) {
-        TLWARN("Attempted to use a NULL TLAllocator")
+        TLERROR("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -31,7 +31,7 @@ TLMutex* tl_mutex_create(TLAllocator* allocator) {
 void tl_mutex_destroy(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLWARN("Attempted to destroy a NULL TLMutex")
+        TLERROR("Attempted to destroy a NULL TLMutex")
         TL_PROFILER_POP
     }
 
@@ -52,7 +52,7 @@ void tl_mutex_destroy(TLMutex* mutex) {
 b8 tl_mutex_lock(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLWARN("Attempted to lock a NULL TLMutex")
+        TLERROR("Attempted to lock a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -71,7 +71,7 @@ b8 tl_mutex_lock(TLMutex* mutex) {
 b8 tl_mutex_trylock(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLWARN("Attempted to try_lock a NULL TLMutex")
+        TLERROR("Attempted to try_lock a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -95,7 +95,7 @@ b8 tl_mutex_trylock(TLMutex* mutex) {
 b8 tl_mutex_unlock(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLWARN("Attempted to unlock a NULL TLMutex")
+        TLERROR("Attempted to unlock a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 

@@ -138,7 +138,7 @@ void tl_memory_free(TLAllocator* allocator, void* pointer){
 
     if (allocator == NULL) TLFATAL("allocator is NULL")
     if (pointer == NULL) {
-        TLWARN("Attempted to free NULL pointer");
+        TLERROR("Attempted to free NULL pointer");
         TL_PROFILER_POP
     }
 

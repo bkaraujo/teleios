@@ -18,7 +18,7 @@ b8 tl_config_initialize() {
 TLList* tl_config_list(TLString* property) {
     TL_PROFILER_PUSH_WITH("0x%p", property)
     if (property == NULL) {
-        TLWARN("Attempting to list a NULL property");
+        TLERROR("Attempted to  list a NULL property");
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -30,7 +30,7 @@ TLList* tl_config_list(TLString* property) {
 void* tl_config_get(const char* property) {
     TL_PROFILER_PUSH_WITH("0x%p", property)
     if (property == NULL) {
-        TLWARN("Attempting to get a NULL property");
+        TLERROR("Attempted to  get a NULL property");
         TL_PROFILER_POP_WITH(NULL)
     }
 

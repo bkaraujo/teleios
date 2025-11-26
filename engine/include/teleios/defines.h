@@ -223,8 +223,10 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 /** @brief Thread-local storage specifier (GCC/Clang) */
 #   define TL_THREADLOCAL _Thread_local
 #   if defined(TL_EXPORT)
-/** @brief Export symbol for dynamic library (GCC/Clang) */
 #       define TL_API __attribute__((visibility("default")))
+#   endif
+#   if defined(TELEIOS_BUILD_DEBUG)
+#       define TL_DEBUG_BREAK() __builtin_trap()
 #   endif
 #elif defined(_MSC_VER)
 /** @brief Force function to be inlined (MSVC) */
@@ -242,6 +244,13 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 /** @brief Import symbol from DLL (MSVC) */
 #       define TL_API __declspec(dllimport)
 #   endif
+#   if defined(TELEIOS_BUILD_DEBUG)
+#       define TL_DEBUG_BREAK() __debugbreak()
+#   endif
+#endif
+
+#if ! defined(TL_DEBUG_BREAK)
+#   define TL_DEBUG_BREAK()
 #endif
 
 #if ! defined(TL_LIKELY)

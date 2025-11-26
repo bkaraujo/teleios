@@ -6,7 +6,7 @@
 TLCondition* tl_condition_create(TLAllocator* allocator) {
     TL_PROFILER_PUSH_WITH("0x%p", allocator)
     if (allocator == NULL) {
-        TLWARN("Attempted to use a NULL TLAllocator")
+        TLERROR("Attempted to use a NULL TLAllocator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -31,7 +31,7 @@ TLCondition* tl_condition_create(TLAllocator* allocator) {
 void tl_condition_destroy(TLCondition* condition) {
     TL_PROFILER_PUSH_WITH("0x%p", condition)
     if (!condition) {
-        TLWARN("Attempted to destroy a NULL TLCondition")
+        TLERROR("Attempted to destroy a NULL TLCondition")
         TL_PROFILER_POP
     }
 
@@ -53,12 +53,12 @@ b8 tl_condition_wait(TLCondition* condition, TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", condition, mutex)
 
     if (!condition) {
-        TLWARN("Attempted to wait a NULL TLCondition")
+        TLERROR("Attempted to wait a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
 
     if (!mutex) {
-        TLWARN("Attempted to wait a NULL TLMutex")
+        TLERROR("Attempted to wait a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -84,12 +84,12 @@ b8 tl_condition_wait_timeout(TLCondition* condition, TLMutex* mutex, const u32 t
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, %u", condition, mutex, timeout_ms)
 
     if (!condition) {
-        TLWARN("Attempted to wait a NULL TLCondition")
+        TLERROR("Attempted to wait a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
 
     if (!mutex) {
-        TLWARN("Attempted to wait a NULL TLMutex")
+        TLERROR("Attempted to wait a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -130,7 +130,7 @@ b8 tl_condition_wait_timeout(TLCondition* condition, TLMutex* mutex, const u32 t
 b8 tl_condition_signal(TLCondition* condition) {
     TL_PROFILER_PUSH_WITH("0x%p", condition)
     if (!condition) {
-        TLWARN("Attempted to signal a NULL TLCondition")
+        TLERROR("Attempted to signal a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -150,7 +150,7 @@ b8 tl_condition_signal(TLCondition* condition) {
 b8 tl_condition_broadcast(TLCondition* condition) {
     TL_PROFILER_PUSH_WITH("0x%p", condition)
     if (!condition) {
-        TLWARN("Attempted to broadcast a NULL TLCondition")
+        TLERROR("Attempted to broadcast a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
 

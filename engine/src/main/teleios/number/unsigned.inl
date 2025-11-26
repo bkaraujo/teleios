@@ -27,7 +27,7 @@ TLString* tl_number_unsigned_to_char(TLAllocator* allocator, u64 value, const u8
 
     // Check that the base is valid
     if (base < 2 || base > 36) {
-        TLWARN("Attempting to convert invalid base");
+        TLERROR("Attempted to  convert invalid base");
         TL_PROFILER_POP_WITH(NULL)
     }
 

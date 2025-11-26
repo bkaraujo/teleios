@@ -49,7 +49,7 @@ TLList* tl_list_create(TLAllocator* allocator, const b8 thread_safe) {
 void tl_list_destroy(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
     if (list == NULL) {
-        TLWARN("Attempted to destroy a NULL TLList")
+        TLERROR("Attempted to destroy a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -66,7 +66,7 @@ void tl_list_destroy(TLList* list) {
 void tl_list_push_front(TLList* list, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", list, data)
     if (list == NULL) {
-        TLWARN("Attempted to push into a NULL TLList")
+        TLERROR("Attempted to push into a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -83,7 +83,7 @@ void tl_list_push_back(TLList* list, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", list, data)
 
     if (list == NULL) {
-        TLWARN("Attempted to push into a NULL TLList")
+        TLERROR("Attempted to push into a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -100,7 +100,7 @@ void tl_list_insert_after(TLList* list, TLListNode* node, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", list, node, data)
 
     if (list == NULL) {
-        TLWARN("Attempted to insert into a NULL TLList")
+        TLERROR("Attempted to insert into a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -122,7 +122,7 @@ void tl_list_insert_before(TLList* list, TLListNode* node, void* data) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, 0x%p", list, node, data)
 
     if (list == NULL) {
-        TLWARN("Attempted to insert into a NULL TLList")
+        TLERROR("Attempted to insert into a NULL TLList")
         TL_PROFILER_POP
     }
 
@@ -144,12 +144,12 @@ void* tl_list_pop_front(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to pop from a NULL TLList")
+        TLERROR("Attempted to pop from a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (list->head == NULL) {
-        TLWARN("Attempted to pop from empty TLList")
+        TLERROR("Attempted to pop from empty TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -161,12 +161,12 @@ void* tl_list_pop_back(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to pop from a NULL TLList")
+        TLERROR("Attempted to pop from a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (list->tail == NULL) {
-        TLWARN("Attempted to pop from empty TLList")
+        TLERROR("Attempted to pop from empty TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -178,12 +178,12 @@ void* tl_list_remove(TLList* list, TLListNode* node) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", list, node)
 
     if (list == NULL) {
-        TLWARN("Attempted to remove from a NULL TLList")
+        TLERROR("Attempted to remove from a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
     if (node == NULL) {
-        TLWARN("Attempted to remove a NULL TLListNode")
+        TLERROR("Attempted to remove a NULL TLListNode")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -195,7 +195,7 @@ void* tl_list_front(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to read from a NULL TLList")
+        TLERROR("Attempted to read from a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -211,7 +211,7 @@ void* tl_list_back(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to read from a NULL TLList")
+        TLERROR("Attempted to read from a NULL TLList")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -227,7 +227,7 @@ u32 tl_list_size(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to read from a NULL TLList")
+        TLERROR("Attempted to read from a NULL TLList")
         TL_PROFILER_POP_WITH(0)
     }
 
@@ -239,7 +239,7 @@ b8 tl_list_is_empty(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to read from a NULL TLList")
+        TLERROR("Attempted to read from a NULL TLList")
         TL_PROFILER_POP_WITH(true)
     }
 
@@ -251,7 +251,7 @@ void tl_list_clear(TLList* list) {
     TL_PROFILER_PUSH_WITH("0x%p", list)
 
     if (list == NULL) {
-        TLWARN("Attempted to clear a NULL TLList")
+        TLERROR("Attempted to clear a NULL TLList")
         TL_PROFILER_POP
     }
 

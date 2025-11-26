@@ -18,7 +18,7 @@ static i32 tl_script__is_key_pressed(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isKeyPressed(KEY)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [KEY] must be a valid key")
 
-    const i32 key = lua_tonumber(state, 1);
+    const i32 key = lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_key_pressed(key));
     return 1;
 }
@@ -27,7 +27,7 @@ static i32 tl_script__is_key_released(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isKeyReleased(KEY)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [KEY] must be a valid key")
 
-    const i32 key = lua_tonumber(state, 1);
+    const i32 key = lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_key_released(key));
     return 1;
 }

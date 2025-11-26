@@ -12,7 +12,7 @@
 void tl_iterator_destroy(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
     if (iterator == NULL) {
-        TLWARN("Attempted to destroy NULL iterator")
+        TLERROR("Attempted to destroy NULL iterator")
         TL_PROFILER_POP
     }
 
@@ -35,7 +35,7 @@ b8 tl_iterator_has_next(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
 
     if (iterator == NULL) {
-        TLWARN("Attempted to use NULL iterator")
+        TLERROR("Attempted to use NULL iterator")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -57,7 +57,7 @@ void* tl_iterator_next(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
 
     if (iterator == NULL) {
-        TLWARN("Attempted to use NULL iterator")
+        TLERROR("Attempted to use NULL iterator")
         TL_PROFILER_POP_WITH(NULL)
     }
 
@@ -79,7 +79,7 @@ void tl_iterator_rewind(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
 
     if (iterator == NULL) {
-        TLWARN("Attempted to rewind NULL iterator")
+        TLERROR("Attempted to rewind NULL iterator")
         TL_PROFILER_POP
     }
 
@@ -100,7 +100,7 @@ void tl_iterator_resync(TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
 
     if (iterator == NULL) {
-        TLWARN("Attempted to resync NULL iterator")
+        TLERROR("Attempted to resync NULL iterator")
         TL_PROFILER_POP
     }
 
@@ -120,7 +120,7 @@ u32 tl_iterator_size(const TLIterator* iterator) {
     TL_PROFILER_PUSH_WITH("0x%p", iterator)
 
     if (iterator == NULL) {
-        TLWARN("Attempted to get size of NULL iterator")
+        TLERROR("Attempted to get size of NULL iterator")
         TL_PROFILER_POP_WITH(0)
     }
 
