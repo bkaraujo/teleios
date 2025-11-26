@@ -4,7 +4,11 @@
 #   define TELEIOS_LOG_LENGTH 1024
 #endif
 
+#if defined(TELEIOS_BUILD_DEBUG)
+static TLLogLevel m_level = TL_LOG_LEVEL_TRACE;
+#else
 static TLLogLevel m_level = TL_LOG_LEVEL_INFO;
+#endif
 TLLogLevel tl_logger_get_level(void) {
     return m_level;
 }

@@ -80,7 +80,7 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  * TLVERBOSE("Pointer comparison:0x%p ==0x%p: %s", ptr1, ptr2, ptr1 == ptr2 ? "yes" : "no");
  * @endcode
  */
-#if ! defined(TELEIOS_BUILD_RELEASE)
+#if defined(TELEIOS_BUILD_DEBUG)
 #   define TLVERBOSE(m, ...) { tl_logger_write(TL_LOG_LEVEL_VERBOSE, __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #else
 #   define TLVERBOSE(m, ...)
@@ -110,7 +110,7 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  * }
  * @endcode
  */
-#if ! defined(TELEIOS_BUILD_RELEASE)
+#if defined(TELEIOS_BUILD_DEBUG)
 #   define   TLTRACE(m, ...) { tl_logger_write(TL_LOG_LEVEL_TRACE  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #else
 #   define   TLTRACE(m, ...)
@@ -137,7 +137,7 @@ void tl_logger_write(TLLogLevel level, const char *filename, u32 lineno, const c
  * TLDEBUG("Physics step: dt=%.4f, frame=%u", delta_time, frame_number);
  * @endcode
  */
-#if ! defined(TELEIOS_BUILD_RELEASE)
+#if defined(TELEIOS_BUILD_DEBUG)
 #   define   TLDEBUG(m, ...) { tl_logger_write(TL_LOG_LEVEL_DEBUG  , __FILE__, __LINE__, m, ##__VA_ARGS__); }
 #else
 #   define   TLDEBUG(m, ...)

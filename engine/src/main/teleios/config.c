@@ -34,7 +34,6 @@ void* tl_config_get(const char* property) {
         TL_PROFILER_POP_WITH(NULL)
     }
 
-    TLTRACE("Querying %s", property);
     TLString* key = tl_string_create(m_allocator, property);
     TLList* list = tl_map_get(m_properties, key);
     tl_string_destroy(key);
@@ -380,7 +379,6 @@ static void tl_serializer_walk() {
                 }
 
                 TLString* property = tl_string_builder_build(builder);
-                TLTRACE("property %s = %s", tl_string_cstr(property), (char*)token.data.scalar.value)
 
                 tl_map_put(
                     m_properties,

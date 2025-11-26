@@ -1,6 +1,6 @@
 teleios:
   logging:
-    level: debug
+    level: TRACE
   graphics:
     vsync: false
     wireframe: false

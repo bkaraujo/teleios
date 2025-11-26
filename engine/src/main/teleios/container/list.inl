@@ -43,7 +43,6 @@ TLList* tl_list_create(TLAllocator* allocator, const b8 thread_safe) {
         }
     }
 
-    TLTRACE("List created: thread_safe=%d", thread_safe);
     TL_PROFILER_POP_WITH(list)
 }
 
@@ -75,6 +74,7 @@ void tl_list_push_front(TLList* list, void* data) {
         tl_list_safe_push_front(list, data);
         TL_PROFILER_POP
     }
+
     tl_list_unsafe_push_front(list, data);
     TL_PROFILER_POP
 }
@@ -91,6 +91,7 @@ void tl_list_push_back(TLList* list, void* data) {
         tl_list_safe_push_back(list, data);
         TL_PROFILER_POP
     }
+
     tl_list_unsafe_push_back(list, data);
     TL_PROFILER_POP
 }
@@ -112,6 +113,7 @@ void tl_list_insert_after(TLList* list, TLListNode* node, void* data) {
         tl_list_safe_insert_after(list, node, data);
         TL_PROFILER_POP
     }
+
     tl_list_unsafe_insert_after(list, node, data);
     TL_PROFILER_POP
 }
@@ -133,6 +135,7 @@ void tl_list_insert_before(TLList* list, TLListNode* node, void* data) {
         tl_list_safe_insert_before(list, node, data);
         TL_PROFILER_POP
     }
+
     tl_list_unsafe_insert_before(list, node, data);
     TL_PROFILER_POP
 }
@@ -256,6 +259,7 @@ void tl_list_clear(TLList* list) {
         tl_list_safe_clear(list);
         TL_PROFILER_POP
     }
+
     tl_list_unsafe_clear(list);
     TL_PROFILER_POP
 }

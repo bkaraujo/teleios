@@ -49,7 +49,7 @@ static void tl_memory_linear_resize(TLAllocator* allocator) {
     allocator->linear.page = new_pages;
     allocator->linear.page_count = new_page_count;
 
-    TLVERBOSE("LINEAR allocator resized:0x%p (pages=%u)", allocator, new_page_count);
+    TLVERBOSE("LINEAR allocator resized:0x%p (pages=%u of %llu bytes)", allocator, new_page_count, new_page->size);
 
     TL_PROFILER_POP
 }
