@@ -79,13 +79,18 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
+    if (!tl_graphics_initialize()) {
+        TLERROR("Graphics failed to initialize")
+        TL_PROFILER_POP_WITH(false)
+    }
+
     if (!tl_input_initialize()) {
         TLERROR("Input system failed to initialize")
         TL_PROFILER_POP_WITH(false)
     }
 
-    if (!tl_graphics_initialize()) {
-        TLERROR("Graphics failed to initialize")
+    if (!tl_script_initialize()) {
+        TLERROR("Script system failed to initialize")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -95,13 +100,13 @@ b8 tl_platform_initialize(void) {
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
 
-    if (!tl_graphics_terminate()) {
-        TLERROR("Graphics failed to terminate")
+    if (!tl_script_terminate()) {
+        TLERROR("Script failed to terminate")
         TL_PROFILER_POP_WITH(false)
     }
 
-    if (!tl_input_terminate()) {
-        TLERROR("Input system failed to terminate")
+    if (!tl_graphics_terminate()) {
+        TLERROR("Graphics failed to terminate")
         TL_PROFILER_POP_WITH(false)
     }
 

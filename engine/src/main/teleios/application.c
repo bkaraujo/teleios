@@ -4,10 +4,6 @@
 
 #define FRAME_CAP 250000.0
 
-// ---------------------------------
-// Event Handlers
-// ---------------------------------
-
 static TLEventStatus tl_application_handle_window_closed(const TLEvent *event);
 static TLEventStatus tl_application_handle_window_restored(const TLEvent *event);
 static TLEventStatus tl_application_handle_window_minimized(const TLEvent *event);
@@ -21,6 +17,8 @@ b8 tl_application_initialize(void) {
     
     TL_PROFILER_POP_WITH(true)
 }
+
+
 
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
@@ -37,7 +35,10 @@ b8 tl_application_run(void) {
     u64 last_frame_count = 0;
     u64 last_update_count = 0;
 
+    // tl_scene_begin();
+
     TLDEBUG("Entering main loop")
+    TLString* script = tl_string_create(global->allocator, "assets/script/test.lua");
     for ( ; global->running ; ) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
@@ -54,16 +55,17 @@ b8 tl_application_run(void) {
 
             accumulator += delta_time;
             while (accumulator >= STEP) {
-                // update(STEP);
+                // tl_scene_step(scene, STEP);
                 accumulator -= STEP;
             }
 
-            const f64 alpha = accumulator / STEP;
-            // render(alpha);
-            (void)alpha;  // Suppress unused variable warning
+            // tl_scene_update(scene, delta_time);
         }
 
-        glfwPollEvents(); // Poll events on main thread (GLFW requirement)
+        tl_script_execute(script);
+
+        tl_input_update();
+        glfwPollEvents();
 
         fps_timer += delta_time;
         if (fps_timer >= ONE_SECOND_MICROS) {
@@ -80,9 +82,11 @@ b8 tl_application_run(void) {
             last_frame_count = global->frame_count;
             last_update_count = global->update_count;
             fps_timer -= ONE_SECOND_MICROS;
+
         }
     }
     TLDEBUG("Exiting main loop")
+    tl_string_destroy(script);
 
     TLDEBUG("Finalizando")
     TL_PROFILER_POP_WITH(true)

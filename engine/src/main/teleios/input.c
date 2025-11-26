@@ -15,14 +15,15 @@ typedef struct {
     } cursor;
 } TLInput;
 
-/** @brief Mutex for protecting current buffer */
-static TLMutex* m_mutex;
-
 /** @brief Current frame input state (written by main thread, protected by mutex) */
 static TLInput m_current = { 0 };
 
 /** @brief Previous frame snapshot (for pressed/released detection) */
 static TLInput m_previous = { 0 };
+
+void tl_input_update() {
+    tl_memory_copy( &m_previous, &m_current, sizeof(TLInput) );
+}
 
 // ---------------------------------
 // Keyboard Queries
@@ -73,73 +74,50 @@ b8 tl_input_is_cursor_button_released(const i32 key) {
 // ---------------------------------
 
 static TLEventStatus tl_input_handle_keyboard_pressed(const TLEvent *event) {
-    tl_mutex_lock(m_mutex);
     m_current.keyboard.key[event->i32[0]] = true;
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_keyboard_released(const TLEvent *event) {
-    tl_mutex_lock(m_mutex);
     m_current.keyboard.key[event->i32[0]] = false;
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_moved(const TLEvent *event) {
-    tl_mutex_lock(m_mutex);
     m_current.cursor.position_x = event->f32[0];
     m_current.cursor.position_y = event->f32[1];
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_pressed(const TLEvent *event) {
-    tl_mutex_lock(m_mutex);
     m_current.cursor.button[event->i32[0]] = true;
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_released(const TLEvent *event) {
-    tl_mutex_lock(m_mutex);
     m_current.cursor.button[event->i32[0]] = false;
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_scrolled(const TLEvent *event) {
-    tl_mutex_lock(m_mutex);
     m_current.cursor.scroll_x = event->i8[0];
     m_current.cursor.scroll_y = event->i8[1];
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_entered(const TLEvent *event) {
     (void)event;
-    tl_mutex_lock(m_mutex);
     m_current.cursor.hoover = true;
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 static TLEventStatus tl_input_handle_cursor_exited(const TLEvent *event) {
     (void)event;
-    tl_mutex_lock(m_mutex);
     m_current.cursor.hoover = false;
-    tl_mutex_unlock(m_mutex);
     return TL_EVENT_AVAILABLE;
 }
 
 b8 tl_input_initialize(void) {
-    // Create mutex for protecting current buffer
-    m_mutex = tl_mutex_create(global->allocator);
-    if (!m_mutex) {
-        TLERROR("Failed to create input mutex")
-        return false;
-    }
-
     tl_event_subscribe(TL_EVENT_INPUT_KEY_PRESSED       , tl_input_handle_keyboard_pressed);
     tl_event_subscribe(TL_EVENT_INPUT_KEY_RELEASED      , tl_input_handle_keyboard_released);
 
@@ -150,13 +128,5 @@ b8 tl_input_initialize(void) {
     tl_event_subscribe(TL_EVENT_INPUT_CURSOR_ENTERED    , tl_input_handle_cursor_entered);
     tl_event_subscribe(TL_EVENT_INPUT_CURSOR_EXITED     , tl_input_handle_cursor_exited);
 
-    return true;
-}
-
-b8 tl_input_terminate(void) {
-    if (m_mutex) {
-        tl_mutex_destroy(m_mutex);
-        m_mutex = NULL;
-    }
     return true;
 }
