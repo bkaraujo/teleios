@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 TELEIOS is a cross-platform game engine written in C11.
 
 ## Build Commands
@@ -32,9 +34,9 @@ sandbox/
 **Modules:**
 - `memory/` - linear.inl, dynamic.inl
 - `platform/` - windows.inl, linux.inl, glfw.inl
-- `thread/` - windows.inl, unix.inl
-- `graphics/` - queue.inl, thread.inl
-- `container/` - queue.inl, pool.inl, list.inl, map.inl, iterator.inl
+- `thread/` - thread.inl, mutex.inl, condition.inl, types.inl
+- `graphics/` - Dedicated rendering thread
+- `container/` - queue.inl, pool.inl, list.inl, map.inl, array.inl, iterator.inl
 
 ## Naming Conventions
 
