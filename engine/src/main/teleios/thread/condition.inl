@@ -24,14 +24,14 @@ TLCondition* tl_condition_create(TLAllocator* allocator) {
     InitializeConditionVariable(&condition->cv);
 #endif
 
-    TLTRACE("Condition variable created:0x%p", condition);
+    TLTRACE("Condition variable created 0x%p", condition);
     TL_PROFILER_POP_WITH(condition);
 }
 
 void tl_condition_destroy(TLCondition* condition) {
     TL_PROFILER_PUSH_WITH("0x%p", condition)
     if (!condition) {
-        TLERROR("tl_condition_destroy: condition cannot be NULL");
+        TLWARN("Attempted to destroy a NULL TLCondition")
         TL_PROFILER_POP
     }
 
@@ -42,7 +42,7 @@ void tl_condition_destroy(TLCondition* condition) {
     }
 #elif defined(TL_PLATFORM_WINDOWS)
     // Windows condition variables don't need explicit cleanup
-    TLTRACE("Condition variable destroyed:0x%p", condition);
+    TLTRACE("Condition variable destroyed 0x%p", condition);
 #endif
 
     tl_memory_free(condition->allocator, condition);
@@ -51,12 +51,14 @@ void tl_condition_destroy(TLCondition* condition) {
 
 b8 tl_condition_wait(TLCondition* condition, TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p", condition, mutex)
+
     if (!condition) {
-        TLERROR("tl_condition_wait: condition cannot be NULL");
+        TLWARN("Attempted to wait a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
+
     if (!mutex) {
-        TLERROR("tl_condition_wait: mutex cannot be NULL");
+        TLWARN("Attempted to wait a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -82,11 +84,12 @@ b8 tl_condition_wait_timeout(TLCondition* condition, TLMutex* mutex, const u32 t
     TL_PROFILER_PUSH_WITH("0x%p, 0x%p, %u", condition, mutex, timeout_ms)
 
     if (!condition) {
-        TLERROR("tl_condition_wait_timeout: condition cannot be NULL");
+        TLWARN("Attempted to wait a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
+
     if (!mutex) {
-        TLERROR("tl_condition_wait_timeout: mutex cannot be NULL");
+        TLWARN("Attempted to wait a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -127,7 +130,7 @@ b8 tl_condition_wait_timeout(TLCondition* condition, TLMutex* mutex, const u32 t
 b8 tl_condition_signal(TLCondition* condition) {
     TL_PROFILER_PUSH_WITH("0x%p", condition)
     if (!condition) {
-        TLERROR("tl_condition_signal: condition cannot be NULL");
+        TLWARN("Attempted to signal a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -147,7 +150,7 @@ b8 tl_condition_signal(TLCondition* condition) {
 b8 tl_condition_broadcast(TLCondition* condition) {
     TL_PROFILER_PUSH_WITH("0x%p", condition)
     if (!condition) {
-        TLERROR("tl_condition_broadcast: condition cannot be NULL");
+        TLWARN("Attempted to broadcast a NULL TLCondition")
         TL_PROFILER_POP_WITH(false)
     }
 

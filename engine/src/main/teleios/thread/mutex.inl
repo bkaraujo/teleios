@@ -24,14 +24,14 @@ TLMutex* tl_mutex_create(TLAllocator* allocator) {
     InitializeCriticalSection(&mutex->cs);
 #endif
 
-    TLTRACE("Mutex created:0x%p", mutex);
+    TLTRACE("Mutex created 0x%p", mutex);
     TL_PROFILER_POP_WITH(mutex)
 }
 
 void tl_mutex_destroy(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLERROR("tl_mutex_destroy: mutex cannot be NULL");
+        TLWARN("Attempted to destroy a NULL TLMutex")
         TL_PROFILER_POP
     }
 
@@ -44,7 +44,7 @@ void tl_mutex_destroy(TLMutex* mutex) {
     DeleteCriticalSection(&mutex->cs);
 #endif
 
-    TLTRACE("Mutex destroyed:0x%p", mutex);
+    TLTRACE("Mutex destroyed 0x%p", mutex);
     tl_memory_free(mutex->allocator, mutex);
     TL_PROFILER_POP
 }
@@ -52,7 +52,7 @@ void tl_mutex_destroy(TLMutex* mutex) {
 b8 tl_mutex_lock(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLERROR("tl_mutex_lock: mutex cannot be NULL");
+        TLWARN("Attempted to lock a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -71,7 +71,7 @@ b8 tl_mutex_lock(TLMutex* mutex) {
 b8 tl_mutex_trylock(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLERROR("tl_mutex_trylock: mutex cannot be NULL");
+        TLWARN("Attempted to try_lock a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -95,7 +95,7 @@ b8 tl_mutex_trylock(TLMutex* mutex) {
 b8 tl_mutex_unlock(TLMutex* mutex) {
     TL_PROFILER_PUSH_WITH("0x%p", mutex)
     if (!mutex) {
-        TLERROR("tl_mutex_unlock: mutex cannot be NULL");
+        TLWARN("Attempted to unlock a NULL TLMutex")
         TL_PROFILER_POP_WITH(false)
     }
 
