@@ -2,6 +2,8 @@
 #include "teleios/application.h"
 #include <GLFW/glfw3.h>
 
+#define FRAME_CAP 250000.0
+
 // ---------------------------------
 // Event Handlers
 // ---------------------------------
@@ -23,6 +25,12 @@ b8 tl_application_initialize(void) {
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
 
+    TLString* sStep = tl_config_get("teleios.simulation.step");
+    const f32 fStep = tl_number_f32_from_string(sStep);
+    const f64 STEP = 1000000.0 / (fStep == 0 ? 10 : fStep);
+
+    f64 accumulator = 0.0;
+
     global->running = true;
     f64 fps_timer = 0.0;
     u64 last_time = tl_time_epoch_micros();
@@ -32,13 +40,32 @@ b8 tl_application_run(void) {
     TLDEBUG("Entering main loop")
     for ( ; global->running ; ) {
         const u64 new_time = tl_time_epoch_micros();
-        const f64 delta_time = (f64)(new_time - last_time);
+        f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
 
-        fps_timer += delta_time;
-        
+        if (!global->suspended) {
+            global->update_count++;
+
+            // Cap frame time to prevent spiral of death
+            if (delta_time > FRAME_CAP) {
+                TLWARN("Frame time %.2f ms exceeded, capping to %.2f ms",  delta_time / 1000.0, FRAME_CAP / 1000.0);
+                delta_time = FRAME_CAP;
+            }
+
+            accumulator += delta_time;
+            while (accumulator >= STEP) {
+                // update(STEP);
+                accumulator -= STEP;
+            }
+
+            const f64 alpha = accumulator / STEP;
+            // render(alpha);
+            (void)alpha;  // Suppress unused variable warning
+        }
+
         glfwPollEvents(); // Poll events on main thread (GLFW requirement)
 
+        fps_timer += delta_time;
         if (fps_timer >= ONE_SECOND_MICROS) {
 
             static char buffer[60];

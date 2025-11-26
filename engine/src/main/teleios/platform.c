@@ -6,7 +6,6 @@
 #include <GLFW/glfw3.h>
 
 #include "teleios/graphics.h"
-#include "teleios/simulation.h"
 
 /**
  * @brief Platform dispatcher using function pointer table
@@ -85,11 +84,6 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    if (!tl_simulation_initialize()) {
-        TLERROR("Simulation failed to initialize")
-        TL_PROFILER_POP_WITH(false)
-    }
-
     if (!tl_graphics_initialize()) {
         TLERROR("Graphics failed to initialize")
         TL_PROFILER_POP_WITH(false)
@@ -103,11 +97,6 @@ b8 tl_platform_terminate(void) {
 
     if (!tl_graphics_terminate()) {
         TLERROR("Graphics failed to terminate")
-        TL_PROFILER_POP_WITH(false)
-    }
-
-    if (!tl_simulation_terminate()) {
-        TLERROR("Simulation failed to terminate")
         TL_PROFILER_POP_WITH(false)
     }
 

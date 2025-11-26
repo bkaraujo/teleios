@@ -21,38 +21,23 @@ static TLMutex* m_mutex;
 /** @brief Current frame input state (written by main thread, protected by mutex) */
 static TLInput m_current = { 0 };
 
-/** @brief Snapshot for simulation thread (read by simulation thread, no mutex needed) */
-static TLInput m_snapshot = { 0 };
-
 /** @brief Previous frame snapshot (for pressed/released detection) */
 static TLInput m_previous = { 0 };
-
-void tl_input_snapshot(void) {
-    tl_mutex_lock(m_mutex);
-    
-    // Copy snapshot → previous (for pressed/released detection)
-    tl_memory_copy(&m_previous, &m_snapshot, sizeof(TLInput));
-    
-    // Create new snapshot from current
-    tl_memory_copy(&m_snapshot, &m_current, sizeof(TLInput));
-    
-    tl_mutex_unlock(m_mutex);
-}
 
 // ---------------------------------
 // Keyboard Queries
 // ---------------------------------
 
 b8 tl_input_is_key_active(const i32 key) {
-    return m_snapshot.keyboard.key[key];
+    return m_current.keyboard.key[key];
 }
 
 b8 tl_input_is_key_pressed(const i32 key) {
-    return !m_previous.keyboard.key[key] && m_snapshot.keyboard.key[key];
+    return !m_previous.keyboard.key[key] && m_current.keyboard.key[key];
 }
 
 b8 tl_input_is_key_released(const i32 key) {
-    return m_previous.keyboard.key[key] && !m_snapshot.keyboard.key[key];
+    return m_previous.keyboard.key[key] && !m_current.keyboard.key[key];
 }
 
 // ---------------------------------
@@ -60,27 +45,27 @@ b8 tl_input_is_key_released(const i32 key) {
 // ---------------------------------
 
 ivec2s tl_input_get_cursor_scroll() {
-    return (ivec2s){ m_snapshot.cursor.scroll_x, m_snapshot.cursor.scroll_y };
+    return (ivec2s){ m_current.cursor.scroll_x, m_current.cursor.scroll_y };
 }
 
 vec2s tl_input_get_cursor_position() {
-    return (vec2s){ m_snapshot.cursor.position_x, m_snapshot.cursor.position_y };
+    return (vec2s){ m_current.cursor.position_x, m_current.cursor.position_y };
 }
 
 b8 tl_input_is_cursor_hovering() {
-    return m_snapshot.cursor.hoover;
+    return m_current.cursor.hoover;
 }
 
 b8 tl_input_is_cursor_button_active(const i32 key) {
-    return m_snapshot.cursor.button[key];
+    return m_current.cursor.button[key];
 }
 
 b8 tl_input_is_cursor_button_pressed(const i32 key) {
-    return !m_previous.cursor.button[key] && m_snapshot.cursor.button[key];
+    return !m_previous.cursor.button[key] && m_current.cursor.button[key];
 }
 
 b8 tl_input_is_cursor_button_released(const i32 key) {
-    return m_previous.cursor.button[key] && !m_snapshot.cursor.button[key];
+    return m_previous.cursor.button[key] && !m_current.cursor.button[key];
 }
 
 // ---------------------------------
