@@ -15,14 +15,23 @@ b8 tl_script_initialize(void) {
         return false;
     }
 
-    const luaL_Reg teleios_input[] = {
-        {"isKeyPressed", tl_script__is_key_pressed},
-        {"isKeyReleased", tl_script__is_key_released},
-        {"exit", tl_script__application_exit},
+    const luaL_Reg operations[] = {
+        {"isKeyActive", tl_script_is_key_active},
+        {"isKeyPressed", tl_script_is_key_pressed},
+        {"isKeyReleased", tl_script_is_key_released},
+
+        {"isCursorActive", tl_script_is_cursor_active},
+        {"isCursorPressed", tl_script_is_cursor_pressed},
+        {"isCursorReleased", tl_script_is_cursor_released},
+        {"isCursorHovering", tl_script_is_cursor_hovering},
+        {"getCursorScroll", tl_script_get_cursor_scroll},
+        {"getCursorPosition", tl_script_get_cursor_position},
+
+        {"exit", tl_script_application_exit},
         {NULL, NULL}
     };
 
-    luaL_newlib(m_state, teleios_input);
+    luaL_newlib(m_state, operations);
     lua_setglobal(m_state, "tl");
 
     luaL_openlibs(m_state);
