@@ -1,10 +1,7 @@
 #include "teleios/teleios.h"
 #include "teleios/graphics.h"
-#include "glad/glad.h"
-#include <GLFW/glfw3.h>
-#include <cglm/version.h>
+#include "teleios/graphics/thread.inl"
 
-static void* tl_graphics_thread(void*);
 static TLThread* m_thread;
 
 b8 tl_graphics_initialize(void) {
@@ -14,50 +11,6 @@ b8 tl_graphics_initialize(void) {
     if (m_thread == NULL) TLFATAL("Failed to create Graphics Thread")
 
     TL_PROFILER_POP_WITH(true)
-}
-
-static void* tl_graphics_thread(void* _) {
-    (void) _;
-    TLDEBUG("Initializing")
-    // #########################################
-    // Initialize OpenGL context
-    // #########################################
-    glfwMakeContextCurrent(tl_window_handler());
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        TLFATAL("GLAD failed to initialize on graphics thread")
-    }
-
-    TLDEBUG("OpenGL %s", glGetString(GL_VERSION))
-    TLDEBUG("CGLM %d.%d.%d", CGLM_VERSION_MAJOR, CGLM_VERSION_MINOR, CGLM_VERSION_PATCH)
-    // #########################################
-    // Process global application.yaml options
-    // #########################################
-    const b8 vsync = tl_config_get_b8("teleios.graphics.vsync");
-    glfwSwapInterval(vsync ? 1 : 0);
-
-    const b8 wireframe = tl_config_get_b8("teleios.graphics.wireframe");
-    if (wireframe)  { glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); }
-    else            { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
-
-    glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
-
-    glfwShowWindow(tl_window_handler());
-
-    TLDEBUG("Entering Main Loop")
-    for ( ; global->running ; ) {
-        global->frame_count++;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        // tl_command_execute()
-
-        glfwSwapBuffers(tl_window_handler());
-    }
-    TLDEBUG("Exiting Main Loop")
-
-    glfwMakeContextCurrent(NULL);
-    TLDEBUG("Finalizando")
-
-    return NULL;
 }
 
 b8 tl_graphics_terminate(void) {
