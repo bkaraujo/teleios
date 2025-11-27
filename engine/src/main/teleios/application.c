@@ -4,9 +4,7 @@
 
 #define FRAME_CAP 250000.0
 
-static TLEventStatus tl_application_handle_window_closed(const TLEvent *event);
-static TLEventStatus tl_application_handle_window_restored(const TLEvent *event);
-static TLEventStatus tl_application_handle_window_minimized(const TLEvent *event);
+#include "teleios/application/event.inl"
 
 b8 tl_application_initialize(void) {
     TL_PROFILER_PUSH
@@ -17,8 +15,6 @@ b8 tl_application_initialize(void) {
     
     TL_PROFILER_POP_WITH(true)
 }
-
-
 
 b8 tl_application_run(void) {
     TL_PROFILER_PUSH
@@ -90,24 +86,6 @@ b8 tl_application_run(void) {
 
     TLDEBUG("Finalizando")
     TL_PROFILER_POP_WITH(true)
-}
-
-static TLEventStatus tl_application_handle_window_closed(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    global->running = false;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
-}
-
-static TLEventStatus tl_application_handle_window_restored(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    global->suspended = false;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
-}
-
-static TLEventStatus tl_application_handle_window_minimized(const TLEvent *event) {
-    TL_PROFILER_PUSH_WITH("0x%p", event)
-    global->suspended = true;
-    TL_PROFILER_POP_WITH(TL_EVENT_AVAILABLE)
 }
 
 b8 tl_application_terminate(void) {
