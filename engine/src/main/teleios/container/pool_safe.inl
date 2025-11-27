@@ -17,11 +17,11 @@ void* tl_pool_safe_acquire_wait(TLObjectPool* pool) {
     tl_mutex_lock(pool->mutex);
 
     if (tl_pool_unsafe_available(pool) == 0) {
-        TLWARN("TLPool is exhausted, waiting for a object")
         while (tl_pool_unsafe_available(pool) == 0) {
             tl_condition_wait(pool->not_empty, pool->mutex);
         }
     }
+
     void* result = tl_pool_unsafe_acquire(pool);
     tl_mutex_unlock(pool->mutex);
     TL_PROFILER_POP_WITH(result)

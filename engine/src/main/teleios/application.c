@@ -31,15 +31,17 @@ b8 tl_application_run(void) {
     u64 last_frame_count = 0;
     u64 last_update_count = 0;
 
-    // tl_scene_begin();
+    tl_scene_load();
+
+    TLString* script = tl_string_create(global->allocator, "assets/script/test.lua");
 
     TLDEBUG("Entering main loop")
-    TLString* script = tl_string_create(global->allocator, "assets/script/test.lua");
+    glfwShowWindow(tl_window_handler());
     for ( ; global->running ; ) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
-
+        tl_scene_frame_begin();
         if (!global->suspended) {
             global->update_count++;
 
@@ -51,15 +53,15 @@ b8 tl_application_run(void) {
 
             accumulator += delta_time;
             while (accumulator >= STEP) {
-                // tl_scene_step(scene, STEP);
+                tl_scene_step(STEP);
                 accumulator -= STEP;
             }
 
-            // tl_scene_update(scene, delta_time);
+            tl_scene_update(delta_time);
         }
 
         tl_script_execute(script);
-
+        tl_scene_frame_end();
         tl_input_update();
         glfwPollEvents();
 

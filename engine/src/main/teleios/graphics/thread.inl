@@ -6,6 +6,11 @@
 #include <GLFW/glfw3.h>
 #include <cglm/version.h>
 
+typedef void* (*TLFunctionRWA)(u8 argc, void* argv);
+typedef void* (*TLFunctionRNA)(void);
+typedef void (*TLFunctionVWA)(u8 argc, void* argv);
+typedef void (*TLFunctionVNA)(void);
+
 static void* tl_graphics_thread(void* _) {
     (void) _;
     TLDEBUG("Initializing")
@@ -31,16 +36,43 @@ static void* tl_graphics_thread(void* _) {
 
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
 
-    glfwShowWindow(tl_window_handler());
-
     TLDEBUG("Entering Main Loop")
     for ( ; global->running ; ) {
-        global->frame_count++;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        TLGraphicsTask* task = NULL;
+        while ((task = (TLGraphicsTask*) tl_queue_pop(m_queue)) != NULL) {
 
-        // tl_command_execute()
+            switch (task->type) {
+                case TL_RETURN_WITH_NO_ARG: {
+                    task->result = task->function.rna();
+                } break;
 
-        glfwSwapBuffers(tl_window_handler());
+                case TL_RETURN_WITH_ARG: {
+                    task->result = task->function.rwa(task->argc, task->argv);
+                } break;
+
+                case TL_NORETURN_WITH_ARG: {
+                    task->function.vwa(task->argc, task->argv);
+                } break;
+
+                case TL_NORETURN_WITH_NO_ARG: {
+                    task->function.vna();
+                } break;
+            }
+
+            if (task->wait) {
+                task->is_complete = true;
+                tl_mutex_lock(task->mutex);
+                tl_condition_signal(task->condition);
+                tl_mutex_unlock(task->mutex);
+
+                // caller releases task into pool
+                // caller need the result
+                continue;
+            }
+
+            // Release async task
+            tl_pool_release(m_pool, task);
+        }
     }
     TLDEBUG("Exiting Main Loop")
 

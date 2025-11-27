@@ -21,7 +21,7 @@ void tl_queue_safe_push(TLQueue* queue, void* payload) {
 
     // Wait for space if queue is full (blocking)
     while (queue->count >= queue->capacity) {
-        TLWARN("Queue 0x%p waiting for available slot. Capacity %d", queue, queue->capacity);
+        // TLWARN("Queue 0x%p waiting for available slot. Capacity %d", queue, queue->capacity);
         tl_condition_wait(queue->not_full, queue->mutex);
     }
 

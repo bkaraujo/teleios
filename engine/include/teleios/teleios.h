@@ -21,4 +21,6 @@
 #include "teleios/logger.h"
 #include "teleios/filesystem.h"
 
+#include "teleios/scene.h"
+
 #endif

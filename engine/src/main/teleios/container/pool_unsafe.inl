@@ -17,12 +17,12 @@ void* tl_pool_unsafe_acquire(TLObjectPool* pool) {
 
             void* object = pool->memory + (index * pool->object_size);
 
-            TLTRACE("Acquired object from pool 0x%p: index=%u, ptr=0x%p", pool, index, object)
+            TLVERBOSE("Acquired object from pool 0x%p: index=%u, ptr=0x%p", pool, index, object)
             TL_PROFILER_POP_WITH(object)
         }
     }
 
-    TLWARN("Object pool 0x%p exhausted (capacity=%u)", pool, pool->capacity)
+    // TLWARN("Object pool 0x%p exhausted (capacity=%u)", pool, pool->capacity)
     TL_PROFILER_POP_WITH(NULL)
 }
 
@@ -40,7 +40,7 @@ void tl_pool_unsafe_release(TLObjectPool* pool, void* object) {
     pool->in_use[index] = false;
     pool->mod_count++;
 
-    TLTRACE("Released object to pool 0x%p: index=%u, ptr=0x%p", pool, index, object)
+    TLVERBOSE("Released object to pool 0x%p: index=%u, ptr=0x%p", pool, index, object)
 
     TL_PROFILER_POP
 }

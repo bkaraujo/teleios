@@ -139,6 +139,8 @@ set(ENGINE_SOURCES
     src/main/teleios/profiler.c
     src/main/teleios/graphics.c
     src/main/teleios/script.c
+
+    src/main/flappy/sandbox.c
 )
 
 # Collect engine header files
@@ -166,6 +168,7 @@ set(ENGINE_HEADERS
     include/teleios/window.h
     include/teleios/graphics.h
     include/teleios/script.h
+    include/teleios/scene.h
 )
 
 # Create engine executable
