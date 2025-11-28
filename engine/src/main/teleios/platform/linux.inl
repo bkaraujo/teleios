@@ -7,6 +7,8 @@
 
 #include "teleios/teleios.h"
 #include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 // ---------------------------------
 // Linux Platform - Initialization
@@ -34,21 +36,55 @@ static i8 tl_lnx_filesystem_path_separator(void) {
     return '/';
 }
 
-static const char* tl_lnx_filesystem_get_current_directory() {
-    char *buffer = NULL;
+static const char* tl_lnx_filesystem_get_current_directory(void) {
+    return getcwd(NULL, 0);
+}
 
-    long path_max = pathconf(".", _PC_PATH_MAX);
-    size_t size = (path_max > 0) ? (size_t)path_max : 4096;
+static b8 tl_lnx_filesystem_exists(const TLString* path) {
+    const char* cpath = tl_string_cstr(path);
+    struct stat st;
+    return (stat(cpath, &st) == 0 && S_ISREG(st.st_mode));
+}
 
-    buffer = malloc(size);
-    if (buffer != NULL) {
-        if (getcwd(buffer, size) == NULL) {
-            free(buffer);
-            buffer = NULL;
-        }
+static u64 tl_lnx_filesystem_size(const TLString* path) {
+    const char* cpath = tl_string_cstr(path);
+    struct stat st;
+    if (stat(cpath, &st) != 0) return 0;
+    return (u64)st.st_size;
+}
+
+static TLString* tl_lnx_filesystem_read(const TLString* path) {
+    const char* cpath = tl_string_cstr(path);
+    FILE* file = fopen(cpath, "rb");
+    if (!file) {
+        TLERROR("Failed to open file: %s", cpath);
+        return NULL;
     }
 
-    return buffer;
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if (length < 0) {
+        TLERROR("Failed to get file size: %s", cpath);
+        fclose(file);
+        return NULL;
+    }
+
+    char* buffer = malloc(length + 1);
+    if (!buffer) {
+        TLERROR("Failed to allocate memory for file: %s", cpath);
+        fclose(file);
+        return NULL;
+    }
+
+    size_t read_size = fread(buffer, 1, length, file);
+    buffer[read_size] = '\0';
+    fclose(file);
+
+    TLString* str = tl_string_create(global->allocator, buffer);
+    free(buffer);
+    return str;
 }
 
 // ---------------------------------

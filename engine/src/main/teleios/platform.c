@@ -35,23 +35,27 @@ b8 tl_platform_initialize(void) {
 #ifdef TL_PLATFORM_LINUX
     platform.initialize             = tl_lnx_initialize;
     platform.terminate              = tl_lnx_terminate;
-    platform.path_separator         = tl_lnx_filesystem_path_separator;
-    platform.get_current_directory  = tl_lnx_filesystem_get_current_directory;
     platform.time_clock             = tl_lnx_time_clock;
     platform.time_epoch_millis      = tl_lnx_time_epoch_millis;
     platform.time_epoch_micros      = tl_lnx_time_epoch_micros;
+    platform.fs_read                = tl_lnx_filesystem_read;
+    platform.fs_size                = tl_lnx_filesystem_size;
+    platform.fs_exists              = tl_lnx_filesystem_exists;
+    platform.fs_path_separator      = tl_lnx_filesystem_path_separator;
+    platform.fs_current_directory   = tl_lnx_filesystem_get_current_directory;
 #else
     platform.initialize             = tl_winapi_initialize;
     platform.terminate              = tl_winapi_terminate;
-    platform.path_separator         = tl_winapi_filesystem_path_separator;
-    platform.get_current_directory  = tl_winapi_filesystem_get_current_directory;
     platform.time_clock             = tl_winapi_time_clock;
     platform.time_epoch_millis      = tl_winapi_time_epoch_millis;
     platform.time_epoch_micros      = tl_winapi_time_epoch_micros;
+    platform.fs_read                = tl_winapi_filesystem_read;
+    platform.fs_size                = tl_winapi_filesystem_size;
+    platform.fs_exists              = tl_winapi_filesystem_exists;
+    platform.fs_path_separator      = tl_winapi_filesystem_path_separator;
+    platform.fs_current_directory   = tl_winapi_filesystem_get_current_directory;
 #endif
     TL_PROFILER_PUSH
-
-    TLINFO("Iniciando %s", platform.get_current_directory())
 
     if (!platform.initialize()) {
         TLERROR("Platform failed to initialize")
@@ -132,12 +136,8 @@ b8 tl_platform_terminate(void) {
 }
 
 // ---------------------------------
-// Platform API Dispatchers
+// Time API Dispatchers
 // ---------------------------------
-
-i8 tl_filesystem_path_separator(void) {
-    return platform.path_separator();
-}
 
 void tl_time_clock(TLDateTime* clock) {
     platform.time_clock(clock);
@@ -149,4 +149,31 @@ u64 tl_time_epoch_millis(void) {
 
 u64 tl_time_epoch_micros(void) {
     return platform.time_epoch_micros();
+}
+
+// ---------------------------------
+// Filesystem API Dispatchers
+// ---------------------------------
+
+i8 tl_filesystem_path_separator(void) {
+    return platform.fs_path_separator();
+}
+
+const char* tl_filesystem_get_current_directory(void) {
+    return platform.fs_current_directory();
+}
+
+TLString* tl_filesystem_read(const TLString* path) {
+    if (path == NULL) return NULL;
+    return platform.fs_read(path);
+}
+
+b8 tl_filesystem_exists(const TLString* path) {
+    if (path == NULL) return false;
+    return platform.fs_exists(path);
+}
+
+u64 tl_filesystem_size(const TLString* path) {
+    if (path == NULL) return 0;
+    return platform.fs_size(path);
 }

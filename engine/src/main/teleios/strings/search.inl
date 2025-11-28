@@ -114,5 +114,23 @@ b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_POP_WITH(true)
 }
 
+u32 tl_string_count_of_cstr(const TLString* str, const char* cstr) {
+    TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
+    if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(0)
+
+    const u32 cstr_len = (u32)strlen(cstr);
+    if (cstr_len == 0) TL_PROFILER_POP_WITH(0)
+
+    u32 count = 0;
+    const char* ptr = str->data;
+
+    while ((ptr = strstr(ptr, cstr)) != NULL) {
+        count++;
+        ptr += cstr_len;
+    }
+
+    TL_PROFILER_POP_WITH(count)
+}
+
 
 #endif

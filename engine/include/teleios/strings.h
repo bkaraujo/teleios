@@ -191,6 +191,14 @@ b8 tl_string_ends_with_cstr(const TLString* str, const char* cstr);
 
 b8 tl_string_cstr_ends_with(const char* cstr, const TLString* str);
 
+/**
+ * @brief Count occurrences of C string in string
+ * @param str The string to search
+ * @param cstr The C string to count
+ * @return Number of occurrences found
+ */
+u32 tl_string_count_of_cstr(const TLString* str, const char* cstr);
+
 // ============================================================================
 // String Transformation (returns new TLString)
 // ============================================================================

@@ -11,6 +11,8 @@ typedef void (*TLFunctionVWA)(u8 argc, void** argv);
 b8 tl_graphics_initialize(void);
 b8 tl_graphics_terminate(void);
 
+u32 tl_graphics_shader_load(const TLString* path);
+
 void* tl_graphics_submit_rna(b8 wait, TLFunctionRNA function);
 void tl_graphics_submit_vna(b8 wait, TLFunctionVNA function);
 void* tl_graphics_submit_rwa(b8 wait, TLFunctionRWA function, u8 argc, void** argv);

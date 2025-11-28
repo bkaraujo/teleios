@@ -120,11 +120,11 @@ set(CGLM_USE_TEST   OFF CACHE BOOL "" FORCE)
 # Make cglm available
 FetchContent_MakeAvailable(cglm)
 
-# Collect engine source files
-set(ENGINE_SOURCES
+# Collect engine library source files (without main.c)
+set(ENGINE_LIB_SOURCES
     src/main/glad/glad.c
 
-    src/main/main.c
+    src/main/teleios/globals.c
     src/main/teleios/logger.c
     src/main/teleios/memory.c
     src/main/teleios/platform.c
@@ -171,13 +171,26 @@ set(ENGINE_HEADERS
     include/teleios/scene.h
 )
 
-# Create engine executable
-add_executable(engine
-    ${ENGINE_SOURCES}
+# Create engine library (for tests to link against)
+add_library(engine_lib STATIC
+    ${ENGINE_LIB_SOURCES}
     ${ENGINE_HEADERS}
 )
 
-# Set target properties
+# Set library properties
+set_target_properties(engine_lib PROPERTIES
+    OUTPUT_NAME         "engine_lib"
+    C_STANDARD          11
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS        OFF
+)
+
+# Create engine executable
+add_executable(engine
+    src/main/main.c
+)
+
+# Set executable properties
 set_target_properties(engine PROPERTIES
     OUTPUT_NAME         "engine"
     C_STANDARD          11
@@ -185,7 +198,26 @@ set_target_properties(engine PROPERTIES
     C_EXTENSIONS        OFF
 )
 
-# Include directories
+# Include directories for library
+target_include_directories(engine_lib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/main>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/main/teleios
+)
+
+# Link libraries for engine_lib (GLFW, libyaml, Lua, cglm)
+target_link_libraries(engine_lib
+    PUBLIC
+        glfw
+        yaml
+        lua_static
+        cglm
+)
+
+# Include directories for executable
 target_include_directories(engine
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -195,23 +227,54 @@ target_include_directories(engine
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main/teleios
 )
 
-# Link libraries (GLFW, libyaml, Lua, cglm)
+# Link engine executable against engine_lib
 target_link_libraries(engine
-    PUBLIC
-        glfw
-        yaml
-        lua_static
-        cglm
+    PRIVATE
+        engine_lib
 )
 
-# Preprocessor definitions
+# Preprocessor definitions for library
+target_compile_definitions(engine_lib
+    PUBLIC
+        $<$<CONFIG:Debug>:TELEIOS_BUILD_DEBUG>
+        $<$<CONFIG:Release>:TELEIOS_BUILD_RELEASE>
+)
+
+# Compiler flags for library
+if(MSVC)
+    target_compile_options(engine_lib PUBLIC
+        /W4                      # Warning level 4
+        /std:c11                 # C11 standard
+        /experimental:c11atomics # Enable C11 atomics support
+        $<$<CONFIG:Debug>:/Od>   # No optimization in debug
+        $<$<CONFIG:Debug>:/Zi>   # Debug symbols
+        $<$<CONFIG:Release>:/O2> # Optimize for speed
+    )
+else()
+    target_compile_options(engine_lib PUBLIC
+        -Wall
+        -Wextra
+        -std=c11
+        $<$<CONFIG:Debug>:-O0>
+        $<$<CONFIG:Debug>:-g>
+        $<$<CONFIG:Release>:-O3>
+    )
+    # Add -gcodeview only for Clang (not supported by GCC)
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(engine_lib PUBLIC
+            $<$<CONFIG:Debug>:-gcodeview>
+        )
+    endif()
+endif()
+
+# Preprocessor definitions for executable
 target_compile_definitions(engine
     PRIVATE
         $<$<CONFIG:Debug>:TELEIOS_BUILD_DEBUG>
         $<$<CONFIG:Release>:TELEIOS_BUILD_RELEASE>
 )
 
-# Compiler flags
+# Compiler flags for executable
 if(MSVC)
     target_compile_options(engine PRIVATE
         /W4                      # Warning level 4
@@ -242,31 +305,31 @@ else()
     endif()
 endif()
 
-# Platform-specific libraries
+# Platform-specific libraries for library
 if(WIN32)
-    target_link_libraries(engine
-        PRIVATE
+    target_link_libraries(engine_lib
+        PUBLIC
             user32
             gdi32
             kernel32
             opengl32
     )
 elseif(UNIX AND NOT APPLE)
-    target_link_libraries(engine
-        PRIVATE
+    target_link_libraries(engine_lib
+        PUBLIC
             m
             pthread
             dl
     )
     find_package(OpenGL REQUIRED)
-    target_link_libraries(engine PRIVATE OpenGL::GL)
+    target_link_libraries(engine_lib PUBLIC OpenGL::GL)
 elseif(APPLE)
     find_library(COCOA_LIBRARY Cocoa REQUIRED)
     find_library(IOKIT_LIBRARY IOKit REQUIRED)
     find_library(COREVIDEO_LIBRARY CoreVideo REQUIRED)
     find_package(OpenGL REQUIRED)
-    target_link_libraries(engine
-        PRIVATE
+    target_link_libraries(engine_lib
+        PUBLIC
             ${COCOA_LIBRARY}
             ${IOKIT_LIBRARY}
             ${COREVIDEO_LIBRARY}
@@ -281,3 +344,8 @@ add_custom_command(TARGET engine POST_BUILD
     COMMENT "Copying engine.exe to dist directory"
 )
 
+
+
+# Testing
+enable_testing()
+add_subdirectory(src/test)

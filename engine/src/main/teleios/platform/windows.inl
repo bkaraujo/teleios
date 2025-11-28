@@ -67,6 +67,59 @@ static const char* tl_winapi_filesystem_get_current_directory(void) {
     return _getcwd(NULL, 0);
 }
 
+static b8 tl_winapi_filesystem_exists(const TLString* path) {
+    const char* cpath = tl_string_cstr(path);
+    DWORD attrib = GetFileAttributesA(cpath);
+    return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+static u64 tl_winapi_filesystem_size(const TLString* path) {
+    const char* cpath = tl_string_cstr(path);
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+    if (!GetFileAttributesExA(cpath, GetFileExInfoStandard, &fad))
+        return 0;
+    
+    LARGE_INTEGER size;
+    size.HighPart = fad.nFileSizeHigh;
+    size.LowPart = fad.nFileSizeLow;
+    return size.QuadPart;
+}
+
+static TLString* tl_winapi_filesystem_read(const TLString* path) {
+    const char* cpath = tl_string_cstr(path);
+    HANDLE hFile = CreateFileA(cpath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        TLERROR("Failed to open file: %s", cpath);
+        return NULL;
+    }
+
+    LARGE_INTEGER size;
+    if (!GetFileSizeEx(hFile, &size)) {
+        TLERROR("Failed to get file size: %s", cpath);
+        CloseHandle(hFile);
+        return NULL;
+    }
+
+    // Allocate buffer using malloc for raw read, then create TLString
+    // We use malloc here because we need a raw buffer to read into.
+    // TLString will copy it into its own managed memory using global->allocator.
+    char* buffer = (char*)tl_memory_alloc(global->allocator, TL_MEMORY_BLOCK, size.QuadPart + 1);
+    DWORD bytesRead;
+    if (!ReadFile(hFile, buffer, (DWORD)size.QuadPart, &bytesRead, NULL)) {
+        TLERROR("Failed to read file: %s", cpath);
+        tl_memory_free(global->allocator, buffer);
+        CloseHandle(hFile);
+        return NULL;
+    }
+
+    buffer[bytesRead] = '\0';
+    CloseHandle(hFile);
+
+    TLString* str = tl_string_create(global->allocator, buffer);
+    tl_memory_free(global->allocator, buffer);
+    return str;
+}
+
 // ---------------------------------
 // Windows Platform - Timing
 // ---------------------------------

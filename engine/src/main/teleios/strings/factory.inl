@@ -16,7 +16,7 @@ TLString* tl_string_create(TLAllocator* allocator, const char* cstr) {
     str->data = (char*)tl_memory_alloc(allocator, TL_MEMORY_STRING, length + 1);
     str->length = length;
     str->allocator = allocator;
-    tl_memory_copy(str->data, cstr, length + 1);
+    tl_memory_copy(str->data, cstr, length);
 
     TL_PROFILER_POP_WITH(str)
 }

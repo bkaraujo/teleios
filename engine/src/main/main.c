@@ -1,8 +1,6 @@
 #include "teleios/teleios.h"
 #include "teleios/application.h"
 
-TLGlobal* global;
-
 int main(const int argc, const char* argv[]) {
     (void)argc;  // Unused parameter
     (void)argv;  // Unused parameter
