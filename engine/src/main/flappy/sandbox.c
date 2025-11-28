@@ -1,7 +1,8 @@
 #include "teleios/teleios.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "teleios/graphics.h"
+
+#include "teleios/graphics/shader.inl"
 
 static u32 m_vao;
 static u32 m_shader;
@@ -40,59 +41,25 @@ static void tl_renderer_prepare(void) {
         glBindVertexArray(GL_NONE);
     }
 
-    m_shader = glCreateProgram(); {
 
-        const u32 vertexShader = glCreateShader(GL_VERTEX_SHADER); {
-            const char *vertexShaderSource = "#version 330 core\n"
-                "layout (location = 0) in vec3 aPos;\n"
-                "void main()\n"
-                "{\n"
-                "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-                "}\0";
-            glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    TLString* vertexShaderSource = tl_string_create(global->allocator, "#version 330 core\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "void main()\n"
+        "{\n"
+        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "}\0");
 
-            i32  success; i8 infoLog[512];
-            glCompileShader(vertexShader);
-            glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-            if(!success) {
-                glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-                TLFATAL("Failed to compile VertexShader\n\n%s", infoLog);
-            }
+    TLString* fragmentShaderSource = tl_string_create(global->allocator, "#version 330 core\n"
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{\n"
+        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "}\n\0");
 
-            glAttachShader(m_shader, vertexShader);
-        }
+    m_shader = tl_graphics_shader_create(vertexShaderSource, fragmentShaderSource);
 
-        const u32 fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); {
-            const char *fragmentShaderSource = "#version 330 core\n"
-                "out vec4 FragColor;\n"
-                "void main()\n"
-                "{\n"
-                "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-                "}\n\0";
-            glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-
-            i32 success; i8 infoLog[512];
-            glCompileShader(fragmentShader);
-            glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-            if(!success) {
-                glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-                TLFATAL("Failed to compile FragmentShader\n\n%s", infoLog);
-            }
-
-            glAttachShader(m_shader, fragmentShader);
-        }
-
-        i32 success; i8 infoLog[512];
-        glLinkProgram(m_shader);
-        glGetProgramiv(m_shader, GL_LINK_STATUS, &success);
-        if(!success) {
-            glGetProgramInfoLog(m_shader, 512, NULL, infoLog);
-            TLFATAL("Failed to link Shader PRogram\n\n%s", infoLog);
-        }
-
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-    }
+    tl_string_destroy(vertexShaderSource);
+    tl_string_destroy(fragmentShaderSource);
 }
 
 void tl_scene_load(void) {

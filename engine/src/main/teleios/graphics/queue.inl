@@ -39,14 +39,14 @@ TLGraphicsTask* tl_graphics_acquire_task(const b8 wait) {
     return task;
 }
 
-void* tl_graphics_submit_rna(b8 wait, TLFunctionRNA function) {
+void* tl_graphics_submit_rna(const b8 wait, const TLFunctionRNA function) {
     TLGraphicsTask* task = tl_graphics_acquire_task(wait);
     task->type = TL_RETURN_WITH_NO_ARG;
     task->function.rna = function;
     return tl_graphics_submit(task);
 }
 
-void tl_graphics_submit_vna(b8 wait, TLFunctionVNA function) {
+void tl_graphics_submit_vna(const b8 wait, const TLFunctionVNA function) {
     TLGraphicsTask* task = tl_graphics_acquire_task(wait);
 
     task->type = TL_NORETURN_WITH_NO_ARG;
@@ -54,7 +54,7 @@ void tl_graphics_submit_vna(b8 wait, TLFunctionVNA function) {
     tl_graphics_submit(task);
 }
 
-void* tl_graphics_submit_rwa(b8 wait, TLFunctionRWA function, u8 argc, void* argv) {
+void* tl_graphics_submit_rwa(const b8 wait, const TLFunctionRWA function, const u8 argc, void** argv) {
     TLGraphicsTask* task = tl_graphics_acquire_task(wait);
 
     task->type = TL_RETURN_WITH_ARG;
@@ -64,7 +64,7 @@ void* tl_graphics_submit_rwa(b8 wait, TLFunctionRWA function, u8 argc, void* arg
     return tl_graphics_submit(task);
 }
 
-void tl_graphics_submit_vwa(b8 wait, TLFunctionVWA function, u8 argc, void* argv) {
+void tl_graphics_submit_vwa(const b8 wait, const TLFunctionVWA function, const u8 argc, void** argv) {
     TLGraphicsTask* task = tl_graphics_acquire_task(wait);
 
     task->type = TL_NORETURN_WITH_ARG;

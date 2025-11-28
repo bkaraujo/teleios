@@ -38,7 +38,7 @@ typedef struct {
 } TLGraphicsTask;
 
 #include "teleios/graphics/thread.inl"
-
+#include "teleios/graphics/event.inl"
 #define TL_GRAPHICS_QUEUE_SIZE 256
 
 b8 tl_graphics_initialize(void) {
@@ -55,6 +55,8 @@ b8 tl_graphics_initialize(void) {
         task->condition = tl_condition_create(global->allocator);
         tl_pool_release(m_pool, task);
     }
+
+    tl_event_subscribe(TL_EVENT_WINDOW_RESIZED, tl_graphics_handle_window_resized);
 
     m_thread = tl_thread_create(global->allocator, tl_graphics_thread, NULL);
     if (m_thread == NULL) TLFATAL("Failed to create Graphics Thread")

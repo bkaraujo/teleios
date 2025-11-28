@@ -6,11 +6,6 @@
 #include <GLFW/glfw3.h>
 #include <cglm/version.h>
 
-typedef void* (*TLFunctionRWA)(u8 argc, void* argv);
-typedef void* (*TLFunctionRNA)(void);
-typedef void (*TLFunctionVWA)(u8 argc, void* argv);
-typedef void (*TLFunctionVNA)(void);
-
 static void* tl_graphics_thread(void* _) {
     (void) _;
     TLDEBUG("Initializing")
