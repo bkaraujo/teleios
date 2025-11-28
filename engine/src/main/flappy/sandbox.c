@@ -8,62 +8,45 @@ static u32 m_vao;
 static u32 m_shader;
 
 static void tl_renderer_prepare(void) {
-    glGenVertexArrays(1, &m_vao); {
-        glBindVertexArray(m_vao);
-
-        const f32 vertices[] = {
-            0.5f,  0.5f, 0.0f,  // top right
-            0.5f, -0.5f, 0.0f,  // bottom right
-           -0.5f, -0.5f, 0.0f,  // bottom left
-           -0.5f,  0.5f, 0.0f   // top left
-        };
+    glCreateVertexArrays(1, &m_vao); {
 
         u32 vbo; {
-            glGenBuffers(1, &vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray(0);
+            glCreateBuffers(1, &vbo);
+            glVertexArrayVertexBuffer(m_vao, 0, vbo, 0, 3 * sizeof(float));
+            glEnableVertexArrayAttrib(m_vao, 0);
+            glVertexArrayAttribFormat(m_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+            glVertexArrayAttribBinding(m_vao, 0, 0);
+
+            const f32 vertices[] = {
+                0.5f,  0.5f, 0.0f,  // top right
+                0.5f, -0.5f, 0.0f,  // bottom right
+               -0.5f, -0.5f, 0.0f,  // bottom left
+               -0.5f,  0.5f, 0.0f   // top left
+            };
+
+            glNamedBufferData(vbo, sizeof(vertices), vertices, GL_STATIC_DRAW);
         }
 
         u32 ebo; {
-            glGenBuffers(1, &ebo);
+            glCreateBuffers(1, &ebo);
+            glVertexArrayElementBuffer(m_vao, ebo);
 
             const u32 indices[] = {  // note that we start from 0!
                 0, 1, 3,  // first Triangle
                 1, 2, 3   // second Triangle
             };
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+            glNamedBufferData(ebo, sizeof(indices), indices, GL_STATIC_DRAW);
         }
-
-        glBindVertexArray(GL_NONE);
     }
 
-
-    TLString* vertexShaderSource = tl_string_create(global->allocator, "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0");
-
-    TLString* fragmentShaderSource = tl_string_create(global->allocator, "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\n\0");
-
-    m_shader = tl_graphics_shader_create(vertexShaderSource, fragmentShaderSource);
-
-    tl_string_destroy(vertexShaderSource);
-    tl_string_destroy(fragmentShaderSource);
+    TLString* source = tl_string_create(global->allocator, "assets/shader/basic.glsl");
+    m_shader = tl_graphics_shader_load(source);
+    tl_string_destroy(source);
 }
 
 void tl_scene_load(void) {
-    tl_graphics_submit_vna(false, tl_renderer_prepare);
+    tl_graphics_submit_vna(true, tl_renderer_prepare);
 }
 
 static void tl_renderer_clear(void) {
