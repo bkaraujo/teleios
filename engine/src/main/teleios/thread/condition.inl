@@ -42,9 +42,9 @@ void tl_condition_destroy(TLCondition* condition) {
     }
 #elif defined(TL_PLATFORM_WINDOWS)
     // Windows condition variables don't need explicit cleanup
-    TLTRACE("Condition variable destroyed 0x%p", condition);
 #endif
 
+    TLTRACE("Condition variable destroyed 0x%p", condition);
     tl_memory_free(condition->allocator, condition);
     TL_PROFILER_POP
 }

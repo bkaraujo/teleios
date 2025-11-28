@@ -26,28 +26,38 @@ static void* tl_graphics_submit(TLGraphicsTask* task) {
     return NULL;
 }
 
-void* tl_graphics_submit_rna(b8 wait, TLFunctionRNA function) {
+TLGraphicsTask* tl_graphics_acquire_task(const b8 wait) {
     TLGraphicsTask* task = tl_pool_acquire_wait(m_pool);
-    task->type = TL_RETURN_WITH_NO_ARG;
+    task->type = TL_TASK_UNKNOWN;
     task->wait = wait;
+    task->function.raw = NULL;
+    task->is_complete = false;
+    task->result = NULL;
+    task->argc = 0;
+    task->argv = NULL;
+
+    return task;
+}
+
+void* tl_graphics_submit_rna(b8 wait, TLFunctionRNA function) {
+    TLGraphicsTask* task = tl_graphics_acquire_task(wait);
+    task->type = TL_RETURN_WITH_NO_ARG;
     task->function.rna = function;
     return tl_graphics_submit(task);
 }
 
 void tl_graphics_submit_vna(b8 wait, TLFunctionVNA function) {
-    TLGraphicsTask* task = tl_pool_acquire_wait(m_pool);
+    TLGraphicsTask* task = tl_graphics_acquire_task(wait);
 
     task->type = TL_NORETURN_WITH_NO_ARG;
-    task->wait = wait;
     task->function.vna = function;
     tl_graphics_submit(task);
 }
 
 void* tl_graphics_submit_rwa(b8 wait, TLFunctionRWA function, u8 argc, void* argv) {
-    TLGraphicsTask* task = tl_pool_acquire_wait(m_pool);
+    TLGraphicsTask* task = tl_graphics_acquire_task(wait);
 
     task->type = TL_RETURN_WITH_ARG;
-    task->wait = wait;
     task->argv = argv;
     task->argc = argc;
     task->function.rwa = function;
@@ -55,10 +65,9 @@ void* tl_graphics_submit_rwa(b8 wait, TLFunctionRWA function, u8 argc, void* arg
 }
 
 void tl_graphics_submit_vwa(b8 wait, TLFunctionVWA function, u8 argc, void* argv) {
-    TLGraphicsTask* task = tl_pool_acquire_wait(m_pool);
+    TLGraphicsTask* task = tl_graphics_acquire_task(wait);
 
     task->type = TL_NORETURN_WITH_ARG;
-    task->wait = wait;
     task->argv = argv;
     task->argc = argc;
     task->function.vwa = function;

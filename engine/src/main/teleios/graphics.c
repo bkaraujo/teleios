@@ -6,6 +6,7 @@ static TLThread* m_thread;
 static TLObjectPool* m_pool;
 
 typedef enum {
+    TL_TASK_UNKNOWN,
     TL_RETURN_WITH_NO_ARG,
     TL_RETURN_WITH_ARG,
     TL_NORETURN_WITH_NO_ARG,
@@ -23,6 +24,8 @@ typedef struct {
         TLFunctionVWA vwa;
         /** @brief No Return witout arguments */
         TLFunctionVNA vna;
+
+        void* raw;
     } function;
 
     void* argv;
