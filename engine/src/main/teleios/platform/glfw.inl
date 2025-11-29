@@ -37,9 +37,15 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* window, int butto
 static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, double xoffset, double yoffset);
 static void tl_window_callback_input_cursor_entered(GLFWwindow* window, int entered);
 
+static void tl_glfw_error_callback(int error_code, const char* description) {
+    TLERROR("GLFW Error %d: %s", error_code, description);
+}
+
 static b8 tl_window_create(void) {
     TL_PROFILER_PUSH
-        
+
+    glfwSetErrorCallback(tl_glfw_error_callback);
+
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);

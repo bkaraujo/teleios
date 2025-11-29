@@ -61,7 +61,7 @@ b8 tl_thread_join(TLThread* thread, void** result) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    TLDEBUG("Joining thread %llu", thread->thread_id)
+    TLDEBUG("Joining thread %llu", (u64)thread->handle)
 #if defined(TL_PLATFORM_UNIX)
     if (thread->detached) {
         TLERROR("tl_thread_join: Cannot join a detached thread");
@@ -105,7 +105,7 @@ b8 tl_thread_detach(TLThread* thread) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    TLDEBUG("Detaching thread %llu", thread->thread_id)
+    TLDEBUG("Detaching thread %llu", (u64)thread->handle)
 #if defined(TL_PLATFORM_UNIX)
     if (thread->detached) {
         TLERROR("tl_thread_detach: Thread already detached");
@@ -135,7 +135,7 @@ u64 tl_thread_id(TLThread* thread) {
         TL_PROFILER_POP_WITH(0)
     }
 
-    return thread->thread_id;
+    return (u64)thread->handle;
 }
 
 u64 tl_thread_current_id(void) {

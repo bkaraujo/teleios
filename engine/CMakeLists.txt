@@ -18,6 +18,8 @@ set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_WAYLAND  OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_X11      ON  CACHE BOOL "" FORCE)
 
 # Make GLFW available
 FetchContent_MakeAvailable(glfw)
@@ -55,6 +57,11 @@ if(NOT libyaml_POPULATED)
     target_compile_definitions(yaml PUBLIC
         YAML_DECLARE_STATIC
     )
+
+    # Add _GNU_SOURCE for Linux (needed for strdup)
+    if(UNIX AND NOT APPLE)
+        target_compile_definitions(yaml PRIVATE _GNU_SOURCE)
+    endif()
     target_compile_definitions(yaml PRIVATE
         YAML_VERSION_MAJOR=0
         YAML_VERSION_MINOR=2
@@ -259,6 +266,8 @@ else()
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Release>:-O3>
     )
+    # Define _GNU_SOURCE for Linux extensions
+    target_compile_definitions(engine_lib PUBLIC _GNU_SOURCE)
     # Add -gcodeview only for Clang (not supported by GCC)
     if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
         target_compile_options(engine_lib PUBLIC
@@ -341,7 +350,7 @@ endif()
 add_custom_command(TARGET engine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:engine> ${CMAKE_SOURCE_DIR}/dist/
-    COMMENT "Copying engine.exe to dist directory"
+    COMMENT "Copying engine executable to dist directory"
 )
 
 

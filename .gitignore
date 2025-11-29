@@ -1,6 +1,6 @@
 .idea/
 build/
-dist/*.exe
-dist/*.dll
-cmake-build-msvc-debug
+dist/engine*
+dist/application*
+cmake-*
 .venv

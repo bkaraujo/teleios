@@ -29,4 +29,3 @@ enable_testing()
 
 # Add subdirectories
 add_subdirectory(engine)
-add_subdirectory(sandbox)

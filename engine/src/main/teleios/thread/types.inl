@@ -58,10 +58,12 @@ struct TLThread {
 };
 
 struct TLMutex {
+    TLAllocator* allocator;
     pthread_mutex_t mutex;
 };
 
 struct TLCondition {
+    TLAllocator* allocator;
     pthread_cond_t cond;
 };
 

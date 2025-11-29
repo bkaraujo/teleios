@@ -36,7 +36,7 @@ endif()
 # Copy application.yml to test directory
 add_custom_command(TARGET teleios_test POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_SOURCE_DIR}/dist/application.yml
+        ${CMAKE_SOURCE_DIR}/sandbox/application.yml
         $<TARGET_FILE_DIR:teleios_test>/application.yml
     COMMENT "Copying application.yml to test directory"
 )
