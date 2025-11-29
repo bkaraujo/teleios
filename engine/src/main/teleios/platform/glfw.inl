@@ -41,6 +41,37 @@ static void tl_glfw_error_callback(int error_code, const char* description) {
     TLERROR("GLFW Error %d: %s", error_code, description);
 }
 
+GLFWwindow* tl_glfw_create_window(int width, int height, const char* title) {
+    const struct glversion { u8 major; u8 minor; } versions[] = {
+        {4, 6}, {4, 5}, {4, 4}, {4, 3}, {4, 2}, {4, 1}, {4, 0},
+        {3, 3}, {3, 2}, {3, 1}, {3, 0}
+    };
+
+    const int version_count = sizeof(versions) / sizeof(versions[0]);
+
+    for (int i = 0; i < version_count; i++) {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, versions[i].major);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, versions[i].minor);
+
+        if (versions[i].major >= 3) {
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef TLPLATFORM_APPLE
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+        }
+
+        GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
+        if (window) {
+            printf("Created OpenGL context: %d.%d\n", versions[i].major, versions[i].minor);
+            return window;
+        }
+
+        TLDEBUG("OpenGL %d.%d not supported, trying lower version...\n", versions[i].major, versions[i].minor);
+    }
+
+    return NULL;
+}
+
 static b8 tl_window_create(void) {
     TL_PROFILER_PUSH
 
@@ -49,13 +80,8 @@ static b8 tl_window_create(void) {
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_RELEASE_BEHAVIOR_FLUSH);
-#ifdef TLPLATFORM_APPLE
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_true);
-#endif
 
     // --------------------------------------------------------------------------------------
     // Disable window framebuffer bits we don't need, because we render into offscreen FBO and blit to window.
@@ -72,7 +98,7 @@ static b8 tl_window_create(void) {
     m_window_size.y = resolution;
     m_window_title = tl_config_get("teleios.window.title");
 
-    m_window = glfwCreateWindow(m_window_size.x, m_window_size.y, tl_string_cstr(m_window_title), NULL, NULL);
+    m_window = tl_glfw_create_window(m_window_size.x, m_window_size.y, tl_string_cstr(m_window_title));
     if (TL_UNLIKELY(m_window == NULL)) {
         TLERROR("GLFW failed to create window")
         TL_PROFILER_POP_WITH(false)
