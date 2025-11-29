@@ -26,47 +26,36 @@ TLString* tl_window_title() {
 }
 
 static void tl_window_callback_window_closed(GLFWwindow* window);
-static void tl_window_callback_window_pos(GLFWwindow* window, int xPos, int yPos);
-static void tl_window_callback_window_size(GLFWwindow* window, int width, int height);
+static void tl_window_callback_window_pos(GLFWwindow* window, i32 xPos, i32 yPos);
+static void tl_window_callback_window_size(GLFWwindow* window, i32 width, i32 height);
 static void tl_window_callback_window_focus(GLFWwindow* window, i32 focused);
 static void tl_window_callback_window_minimized(GLFWwindow* window, i32 minimized);
 static void tl_window_callback_window_maximize(GLFWwindow* window, i32 maximized);
-static void tl_window_callback_input_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void tl_window_callback_input_cursor_position(GLFWwindow* window, double xpos, double ypos);
-static void tl_window_callback_input_cursor_button(GLFWwindow* window, int button, int action, int mods);
-static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, double xoffset, double yoffset);
-static void tl_window_callback_input_cursor_entered(GLFWwindow* window, int entered);
+static void tl_window_callback_input_keyboard(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
+static void tl_window_callback_input_cursor_position(GLFWwindow* window, f64 xpos, f64 ypos);
+static void tl_window_callback_input_cursor_button(GLFWwindow* window, i32 button, i32 action, i32 mods);
+static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, f64 xoffset, f64 yoffset);
+static void tl_window_callback_input_cursor_entered(GLFWwindow* window, i32 entered);
 
-static void tl_glfw_error_callback(int error_code, const char* description) {
-    TLERROR("GLFW Error %d: %s", error_code, description);
-}
-
-GLFWwindow* tl_glfw_create_window(int width, int height, const char* title) {
-    const struct glversion { u8 major; u8 minor; } versions[] = {
+GLFWwindow* tl_glfw_create_window(const i32 width, const i32 height, const char* title) {
+    // OpenGL versions to try, in descending order (major.minor)
+    const i32 gl_versions[][2] = {
         {4, 6}, {4, 5}, {4, 4}, {4, 3}, {4, 2}, {4, 1}, {4, 0},
         {3, 3}, {3, 2}, {3, 1}, {3, 0}
     };
+    const i32 num_versions = sizeof(gl_versions) / sizeof(gl_versions[0]);
 
-    const int version_count = sizeof(versions) / sizeof(versions[0]);
+    GLFWwindow* window = NULL;
 
-    for (int i = 0; i < version_count; i++) {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, versions[i].major);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, versions[i].minor);
+    for (i32 i = 0; i < num_versions; i++) {
+        const i32 major = gl_versions[i][0];
+        const i32 minor = gl_versions[i][1];
 
-        if (versions[i].major >= 3) {
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef TLPLATFORM_APPLE
-            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-        }
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
 
-        GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
-        if (window) {
-            printf("Created OpenGL context: %d.%d\n", versions[i].major, versions[i].minor);
-            return window;
-        }
-
-        TLDEBUG("OpenGL %d.%d not supported, trying lower version...\n", versions[i].major, versions[i].minor);
+        window = glfwCreateWindow(width, height, title, NULL, NULL);
+        if (window != NULL) { return window; }
     }
 
     return NULL;
@@ -75,14 +64,14 @@ GLFWwindow* tl_glfw_create_window(int width, int height, const char* title) {
 static b8 tl_window_create(void) {
     TL_PROFILER_PUSH
 
-    glfwSetErrorCallback(tl_glfw_error_callback);
-
     glfwDefaultWindowHints();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_RELEASE_BEHAVIOR_FLUSH);
-
+#ifdef TLPLATFORM_APPLE
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     // --------------------------------------------------------------------------------------
     // Disable window framebuffer bits we don't need, because we render into offscreen FBO and blit to window.
     // --------------------------------------------------------------------------------------
@@ -140,7 +129,7 @@ static void tl_window_callback_window_closed(GLFWwindow* window) {
     tl_event_submit(TL_EVENT_WINDOW_CLOSED, NULL);
 }
 
-static void tl_window_callback_window_pos(GLFWwindow* window, const int xPos, const int yPos) {
+static void tl_window_callback_window_pos(GLFWwindow* window, const i32 xPos, const i32 yPos) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.i32[0] = xPos;
@@ -149,7 +138,7 @@ static void tl_window_callback_window_pos(GLFWwindow* window, const int xPos, co
     tl_event_submit(TL_EVENT_WINDOW_MOVED, &event);
 }
 
-static void tl_window_callback_window_size(GLFWwindow* window, const int width, const int height) {
+static void tl_window_callback_window_size(GLFWwindow* window, const i32 width, const i32 height) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.i32[0] = width;
@@ -173,7 +162,7 @@ static void tl_window_callback_window_maximize(GLFWwindow* window, const i32 max
     tl_event_submit(maximized ? TL_EVENT_WINDOW_MAXIMIZED : TL_EVENT_WINDOW_RESTORED, NULL);
 }
 
-static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key, const int scancode, const int action, const int mods) {
+static void tl_window_callback_input_keyboard(GLFWwindow* window, const i32 key, const i32 scancode, const i32 action, const i32 mods) {
     (void) window;  // Unused parameter
     (void) scancode;  // Unused parameter
     (void) mods;  // Unused parameter
@@ -191,7 +180,7 @@ static void tl_window_callback_input_keyboard(GLFWwindow* window, const int key,
     tl_event_submit(type, &event);
 }
 
-static void tl_window_callback_input_cursor_position(GLFWwindow* window, const double xpos, const double ypos) {
+static void tl_window_callback_input_cursor_position(GLFWwindow* window, const f64 xpos, const f64 ypos) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.f32[0] = (f32) xpos;
@@ -200,7 +189,7 @@ static void tl_window_callback_input_cursor_position(GLFWwindow* window, const d
     tl_event_submit(TL_EVENT_INPUT_CURSOR_MOVED, &event);
 }
 
-static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int button, const int action, const int mods) {
+static void tl_window_callback_input_cursor_button(GLFWwindow* window, const i32 button, const i32 action, const i32 mods) {
     (void) window;  // Unused parameter
     (void) mods;  // Unused parameter
 
@@ -214,7 +203,7 @@ static void tl_window_callback_input_cursor_button(GLFWwindow* window, const int
     tl_event_submit(type, &event);
 }
 
-static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const double xoffset, const double yoffset) {
+static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const f64 xoffset, const f64 yoffset) {
     (void) window;  // Unused parameter
     TLEvent event = { 0 };
     event.i8[0] =  xoffset > 0 ? 1 : (i8)(xoffset < 0 ? -1 : 0);
@@ -223,7 +212,7 @@ static void tl_window_callback_input_cursor_scroll(GLFWwindow* window, const dou
     tl_event_submit(TL_EVENT_INPUT_CURSOR_SCROLLED, &event);
 }
 
-static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const int entered) {
+static void tl_window_callback_input_cursor_entered(GLFWwindow* window, const i32 entered) {
     (void) window;  // Unused parameter
     tl_event_submit(entered ? TL_EVENT_INPUT_CURSOR_ENTERED : TL_EVENT_INPUT_CURSOR_EXITED, NULL);
 }
