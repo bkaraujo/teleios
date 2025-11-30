@@ -43,11 +43,12 @@ GLFWwindow* tl_glfw_create_window(const i32 width, const i32 height, const char*
         {4, 6}, {4, 5}, {4, 4}, {4, 3}, {4, 2}, {4, 1}, {4, 0},
         {3, 3}, {3, 2}, {3, 1}, {3, 0}
     };
-    const i32 num_versions = sizeof(gl_versions) / sizeof(gl_versions[0]);
+
 
     GLFWwindow* window = NULL;
 
-    for (i32 i = 0; i < num_versions; i++) {
+    const i32 num_versions = TL_ARR_LENGTH(gl_versions);
+    for (u8 i = 0; i < num_versions; i++) {
         const i32 major = gl_versions[i][0];
         const i32 minor = gl_versions[i][1];
 

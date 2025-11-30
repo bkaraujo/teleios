@@ -3,11 +3,10 @@
 
 #include "teleios/teleios.h"
 #include "glad/glad.h"
-#include "teleios/graphics.h"
 
 static void tl_graphics_resize_viewport(const u8 argc, void** argv) {
     (void) argc; // Unsued
-    TLEvent* event = (TLEvent*) argv[0];
+    const TLEvent* event = (TLEvent*) argv[0];
     glViewport(0, 0, event->i32[0], event->i32[1]);
 }
 

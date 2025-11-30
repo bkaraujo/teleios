@@ -292,6 +292,9 @@ STATIC_ASSERT(sizeof(f64) == 8, "Expected f64 to be 8 bytes.");
 #define TL_MEGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL)
 /** @brief Convert amount to bytes using decimal giga (1000^3 bytes) */
 #define TL_GIGA_BYTES(amount) ((amount) * 1000ULL * 1000ULL * 1000ULL)
+
+#define TL_ARR_LENGTH(a) (sizeof(a) / sizeof(a[0]))
+
 // ---------------------------------
 // Varargs helper macros
 // ---------------------------------

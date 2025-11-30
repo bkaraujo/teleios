@@ -120,7 +120,7 @@ static u8 tl_graphics_shader_sources(const TLString* content, TLShaderSource* so
         }
         start++; // Skip newline
 
-        const i32 end = (i < section_count - 1) ? sections[i+1].file_index : (i32)tl_string_length(content);
+        const i32 end = (i < section_count - 1) ? sections[i+1].file_index : tl_string_length(content);
 
         if (start >= end) {
              // Empty section or malformed

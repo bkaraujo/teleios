@@ -39,17 +39,18 @@ typedef struct {
 
 #include "teleios/graphics/thread.inl"
 #include "teleios/graphics/event.inl"
-#define TL_GRAPHICS_QUEUE_SIZE 256
+
+#define TL_QUEUE_SIZE 256
 
 b8 tl_graphics_initialize(void) {
     TL_PROFILER_PUSH
 
-    m_queue = tl_queue_create(global->allocator, TL_GRAPHICS_QUEUE_SIZE, true);
+    m_queue = tl_queue_create(global->allocator, TL_QUEUE_SIZE, true);
     if (m_queue == NULL) TLFATAL("Failed to create Graphics Queue")
 
-    m_pool = tl_pool_create(global->allocator, sizeof(TLGraphicsTask),TL_GRAPHICS_QUEUE_SIZE, true);
+    m_pool = tl_pool_create(global->allocator, sizeof(TLGraphicsTask),TL_QUEUE_SIZE, true);
     if (m_pool == NULL) TLFATAL("Failed to create Graphics Task Pool")
-    for (u16 i = 0; i < TL_GRAPHICS_QUEUE_SIZE; ++i) {
+    for (u16 i = 0; i < TL_QUEUE_SIZE; ++i) {
         TLGraphicsTask* task = tl_pool_acquire(m_pool);
         task->mutex = tl_mutex_create(global->allocator);
         task->condition = tl_condition_create(global->allocator);
@@ -65,6 +66,8 @@ b8 tl_graphics_initialize(void) {
 }
 
 #include "teleios/graphics/queue.inl"
+#include "teleios/graphics/shader.inl"
+#include "teleios/graphics/geometry.inl"
 
 b8 tl_graphics_terminate(void) {
     TL_PROFILER_PUSH
@@ -80,7 +83,7 @@ b8 tl_graphics_terminate(void) {
     }
 
     if (m_pool) {
-        for (u16 i = 0; i < TL_GRAPHICS_QUEUE_SIZE; ++i) {
+        for (u16 i = 0; i < TL_QUEUE_SIZE; ++i) {
             TLGraphicsTask* task = tl_pool_acquire(m_pool);
             tl_mutex_destroy(task->mutex);
             tl_condition_destroy(task->condition);

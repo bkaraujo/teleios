@@ -17,7 +17,7 @@ static i32 tl_script_is_key_active(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isKeyActive(KEY)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [KEY] must be a valid key")
 
-    const i32 key = lua_tointeger(state, 1);
+    const i32 key = (i32) lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_key_active(key));
 
     return 1;
@@ -27,7 +27,7 @@ static i32 tl_script_is_key_pressed(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isKeyPressed(KEY)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [KEY] must be a valid key")
 
-    const i32 key = lua_tointeger(state, 1);
+    const i32 key = (i32) lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_key_pressed(key));
 
     return 1;
@@ -37,7 +37,7 @@ static i32 tl_script_is_key_released(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isKeyReleased(KEY)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [KEY] must be a valid key")
 
-    const i32 key = lua_tointeger(state, 1);
+    const i32 key = (i32) lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_key_released(key));
 
     return 1;
@@ -47,7 +47,7 @@ static i32 tl_script_is_cursor_active(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isCursorActive(BUTTON)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [BUTTON] must be a valid button")
 
-    const i32 button = lua_tointeger(state, 1);
+    const i32 button = (i32) lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_cursor_button_active(button));
 
     return 1;
@@ -57,7 +57,7 @@ static i32 tl_script_is_cursor_pressed(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isCursorPressed(BUTTON)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [BUTTON] must be a valid button")
 
-    const i32 button = lua_tointeger(state, 1);
+    const i32 button = (i32) lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_cursor_button_pressed(button));
 
     return 1;
@@ -67,7 +67,7 @@ static i32 tl_script_is_cursor_released(lua_State *state) {
     if (lua_gettop(state) != 1) TL_LUA_ERROR("Expected a single value: isCursorReleased(BUTTON)")
     if (!lua_isinteger(state, 1)) TL_LUA_ERROR("parameter [BUTTON] must be a valid button")
 
-    const i32 button = lua_tointeger(state, 1);
+    const i32 button = (i32) lua_tointeger(state, 1);
     lua_pushboolean(state, tl_input_is_cursor_button_released(button));
 
     return 1;

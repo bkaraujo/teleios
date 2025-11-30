@@ -2,43 +2,25 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "teleios/graphics/shader.inl"
-
-static u32 m_vao;
+static TLGeometry m_geometry = { 0 };
 static u32 m_shader;
 
 static void tl_renderer_prepare(void) {
-    glCreateVertexArrays(1, &m_vao); {
+    tl_graphics_geometry_create(&m_geometry);
 
-        u32 vbo; {
-            glCreateBuffers(1, &vbo);
-            glVertexArrayVertexBuffer(m_vao, 0, vbo, 0, 3 * sizeof(float));
-            glEnableVertexArrayAttrib(m_vao, 0);
-            glVertexArrayAttribFormat(m_vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
-            glVertexArrayAttribBinding(m_vao, 0, 0);
+    const u32 indices[] = {  // note that we start from 0!
+        0, 1, 3,  // first Triangle
+        1, 2, 3   // second Triangle
+    };
+    tl_graphics_geometry_upload_indices(&m_geometry, TL_ARR_LENGTH(indices), indices);
 
-            const f32 vertices[] = {
-                0.5f,  0.5f, 0.0f,  // top right
-                0.5f, -0.5f, 0.0f,  // bottom right
-               -0.5f, -0.5f, 0.0f,  // bottom left
-               -0.5f,  0.5f, 0.0f   // top left
-            };
-
-            glNamedBufferData(vbo, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        }
-
-        u32 ebo; {
-            glCreateBuffers(1, &ebo);
-            glVertexArrayElementBuffer(m_vao, ebo);
-
-            const u32 indices[] = {  // note that we start from 0!
-                0, 1, 3,  // first Triangle
-                1, 2, 3   // second Triangle
-            };
-
-            glNamedBufferData(ebo, sizeof(indices), indices, GL_STATIC_DRAW);
-        }
-    }
+    const f32 vertices[] = {
+        0.5f,  0.5f, 0.0f,  // top right
+        0.5f, -0.5f, 0.0f,  // bottom right
+       -0.5f, -0.5f, 0.0f,  // bottom left
+       -0.5f,  0.5f, 0.0f   // top left
+    };
+    tl_graphics_geometry_upload_vertices(&m_geometry, TL_ARR_LENGTH(vertices), vertices);
 
     TLString* source = tl_string_create(global->allocator, "assets/shader/basic.glsl");
     m_shader = tl_graphics_shader_load(source);
@@ -63,7 +45,7 @@ void tl_scene_step(const f64 step) {
 
 static void tl_renderer_draw(void) {
     glUseProgram(m_shader);
-    glBindVertexArray(m_vao);
+    tl_graphics_geometry_bind(&m_geometry);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 

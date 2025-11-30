@@ -169,7 +169,7 @@ TLLogLevel tl_config_get_log_level(const char* property) {
     TLString* upper = tl_string_to_upper(desired);
     tl_string_destroy(desired);
 
-    for (u8 i = 0; i < sizeof(logLevelTable)/sizeof(logLevelTable[0]); i++) {
+    for (u8 i = 0; i < TL_ARR_LENGTH(logLevelTable); i++) {
         if (tl_string_cstr_ends_with(logLevelTable[i].name, upper)) {
             tl_string_destroy(upper);
             TL_PROFILER_POP_WITH(logLevelTable[i].value);
@@ -198,7 +198,7 @@ TLDisplayResolution tl_config_get_display_resolution(const char* property) {
     TLString* upper = tl_string_to_upper(desired);
     tl_string_destroy(desired);
 
-    for (u8 i = 0; i < sizeof(resolutionTable)/sizeof(resolutionTable[0]); i++) {
+    for (u8 i = 0; i < TL_ARR_LENGTH(resolutionTable); i++) {
         if (tl_string_cstr_ends_with(resolutionTable[i].name, upper)) {
             tl_string_destroy(upper);
             TL_PROFILER_POP_WITH(resolutionTable[i].value);
@@ -230,8 +230,6 @@ b8 tl_config_terminate(void) {
 //
 // #####################################################################################################################
 #include <yaml.h>
-
-#define TL_YAML_PROPERTY_MAX_SIZE   1024
 
 #define EXPECT(t)                                   \
     yaml_token_delete(&token);                      \
