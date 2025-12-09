@@ -4,29 +4,84 @@
 #include "teleios/teleios.h"
 #include "glad/glad.h"
 
-static void tl_graphics_geometry_dsa_create(TLGeometry* geometry);
-static void tl_graphics_geometry_dsa_upload_indices(const TLGeometry* geometry, u8 count, const i32* indices);
-static void tl_graphics_geometry_dsa_upload_vertices(const TLGeometry* geometry, u8 count, const f32* vertices);
+struct TLGeometry {
+    u32 vao;
 
-static void tl_graphics_geometry_ndsa_create(TLGeometry* geometry);
-static void tl_graphics_geometry_ndsa_upload_indices(const TLGeometry* geometry, u8 count, const i32* indices);
-static void tl_graphics_geometry_ndsa_upload_vertices(const TLGeometry* geometry, u8 count, const f32* vertices);
+    u32 ebo;
+    u32 ebo_size;
+
+    u32 vbo;
+    u32 vbo_size;
+    u32 vbo_stride;
+    u8 vbo_att_count;
+    TLGeometryAttribute* vbo_att_nfo;
+
+    TLAllocator* allocator;
+} ;
+
+#include "teleios/graphics/geometry_dsa.inl"
+#include "teleios/graphics/geometry_ndsa.inl"
+
+// ---------------------------------
+// Public API
+// ---------------------------------
 
 void tl_graphics_geometry_bind(const TLGeometry* geometry) {
     glBindVertexArray(geometry->vao);
 }
 
-void tl_graphics_geometry_create(TLGeometry* geometry) {
-    if (GLVersion.major >= 4 && GLVersion.minor >= 5) {
-        tl_graphics_geometry_dsa_create(geometry);
-        return;
+TLGeometry* tl_graphics_geometry_create(TLAllocator* allocator, u8 attribute_count, const TLGeometryAttribute* attributes) {
+    TLGeometry* geometry = tl_memory_alloc(allocator, TL_MEMORY_GRAPHICS, sizeof(TLGeometry));
+    geometry->vbo_att_count = attribute_count;
+    geometry->ebo_size = 0;
+    geometry->vbo_size = 0;
+    geometry->allocator = allocator;
+
+    // Allocate and copy attributes array
+    geometry->vbo_att_nfo = tl_memory_alloc(allocator, TL_MEMORY_GRAPHICS, sizeof(TLGeometryAttribute) * attribute_count);
+    for (u8 i = 0; i < attribute_count; i++) {
+        geometry->vbo_att_nfo[i].type = attributes[i].type;
+        // Copy string name if present
+        if (attributes[i].name) {
+            geometry->vbo_att_nfo[i].name = tl_string_copy(attributes[i].name);
+        } else {
+            geometry->vbo_att_nfo[i].name = NULL;
+        }
     }
 
-    tl_graphics_geometry_ndsa_create(geometry);
+    if (GLVersion.major >= 4 && GLVersion.minor >= 5)   { tl_graphics_geometry_dsa_create(geometry); }
+    else                                                { tl_graphics_geometry_ndsa_create(geometry); }
+
+    return geometry;
 }
 
+void tl_graphics_geometry_destroy(TLGeometry* geometry) {
+    // Delete OpenGL objects
+    if (geometry->vao) {
+        glDeleteVertexArrays(1, &geometry->vao);
+    }
+    if (geometry->vbo) {
+        glDeleteBuffers(1, &geometry->vbo);
+    }
+    if (geometry->ebo) {
+        glDeleteBuffers(1, &geometry->ebo);
+    }
 
-void tl_graphics_geometry_upload_indices(const TLGeometry* geometry, const u8 count, const i32* indices) {
+    // Free attribute names
+    for (u8 i = 0 ; i < geometry->vbo_att_count; i++) {
+        if (geometry->vbo_att_nfo[i].name) {
+            tl_string_destroy(geometry->vbo_att_nfo[i].name);
+        }
+    }
+
+    // Free attributes array
+    tl_memory_free(geometry->allocator, geometry->vbo_att_nfo);
+
+    // Free geometry structure
+    tl_memory_free(geometry->allocator, geometry);
+}
+
+void tl_graphics_geometry_upload_indices(TLGeometry* geometry, const u8 count, const u32* indices) {
     if (GLVersion.major >= 4 && GLVersion.minor >= 5) {
         tl_graphics_geometry_dsa_upload_indices(geometry, count, indices);
         return;
@@ -36,7 +91,7 @@ void tl_graphics_geometry_upload_indices(const TLGeometry* geometry, const u8 co
     tl_graphics_geometry_ndsa_upload_indices(geometry, count, indices);
 }
 
-void tl_graphics_geometry_upload_vertices(const TLGeometry* geometry, const u8 count, const f32* vertices) {
+void tl_graphics_geometry_upload_vertices(TLGeometry* geometry, const u8 count, const f32* vertices) {
     if (GLVersion.major >= 4 && GLVersion.minor >= 5) {
         tl_graphics_geometry_dsa_upload_vertices(geometry, count, vertices);
         return;
@@ -44,67 +99,6 @@ void tl_graphics_geometry_upload_vertices(const TLGeometry* geometry, const u8 c
 
     tl_graphics_geometry_bind(geometry);
     tl_graphics_geometry_ndsa_upload_vertices(geometry, count, vertices);
-}
-
-// ---------------------------------
-// Direct State Access
-// ---------------------------------
-
-static void tl_graphics_geometry_dsa_create(TLGeometry* geometry) {
-    glCreateVertexArrays(1, &geometry->vao);
-    glCreateBuffers(1, &geometry->ibo);
-    glCreateBuffers(1, &geometry->vbo);
-}
-
-static void tl_graphics_geometry_dsa_upload_indices(const TLGeometry* geometry, const u8 count, const i32* indices) {
-    glNamedBufferData(geometry->ibo, count * sizeof(i32), indices, GL_STATIC_DRAW);
-    glVertexArrayElementBuffer(geometry->vao, geometry->ibo);
-}
-
-static void tl_graphics_geometry_dsa_upload_vertices(const TLGeometry* geometry, const u8 count, const f32* vertices) {
-    glNamedBufferData(geometry->vbo, count * sizeof(f32), vertices, GL_STATIC_DRAW);
-
-    // Bind VBO to binding point 0
-    glVertexArrayVertexBuffer(geometry->vao, 0, geometry->vbo, 0, sizeof(f32) * 3);
-
-    // Enable and configure vertex attribute 0 (position)
-    glEnableVertexArrayAttrib(geometry->vao, 0);
-    glVertexArrayAttribFormat(geometry->vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(geometry->vao, 0, 0);
-}
-
-// ---------------------------------
-// State Machine
-// ---------------------------------
-
-static void tl_graphics_geometry_ndsa_create(TLGeometry* geometry) {
-    glGenVertexArrays(1, &geometry->vao);
-    glGenBuffers(1, &geometry->ibo);
-    glGenBuffers(1, &geometry->vbo);
-}
-
-static void tl_graphics_geometry_ndsa_upload_indices(const TLGeometry* geometry, const u8 count, const i32* indices) {
-    u32 ebo; glGenBuffers(1, &ebo);
-
-    glBindVertexArray(geometry->vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(f32), indices, GL_STATIC_DRAW);
-    glBindVertexArray(0);
-}
-
-static void tl_graphics_geometry_ndsa_upload_vertices(const TLGeometry* geometry, const u8 count, const f32* vertices) {
-    u32 vbo; glGenBuffers(1, &vbo);
-
-    glBindVertexArray(geometry->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(f32), vertices, GL_STATIC_DRAW);
-
-    // Configure vertex attribute 0 (position: 3 floats)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 #endif

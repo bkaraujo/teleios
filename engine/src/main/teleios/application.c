@@ -84,6 +84,7 @@ b8 tl_application_run(void) {
         }
     }
     TLDEBUG("Exiting main loop")
+    tl_scene_unload();
     tl_string_destroy(script);
 
     TLDEBUG("Finalizando")

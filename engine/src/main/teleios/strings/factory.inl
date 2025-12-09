@@ -48,7 +48,7 @@ TLString* tl_string_reserve(TLAllocator* allocator, const u32 capacity) {
 void tl_string_destroy(TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     if (str->data != NULL) {
         tl_memory_free(str->allocator, str->data);
     }

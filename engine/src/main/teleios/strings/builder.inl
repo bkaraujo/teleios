@@ -47,7 +47,7 @@ void tl_string_builder_append(TLStringBuilder* builder, const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p, %p", builder, str)
 
     if (builder == NULL) TLFATAL("builder is NULL")
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
 
     tl_string_builder_ensure_capacity(builder, builder->length + str->length + 1);
 

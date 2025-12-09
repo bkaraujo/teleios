@@ -160,4 +160,9 @@ u32 tl_graphics_shader_load(const TLString* path) {
     return program;
 }
 
+void tl_graphics_shader_unload(const u32 shader) {
+    if (shader == GL_NONE) return;
+    glDeleteProgram(shader);
+}
+
 #endif

@@ -7,7 +7,7 @@
 TLString** tl_string_split(const TLString* str, const char delimiter, u32* out_count) {
     TL_PROFILER_PUSH_WITH("%p, '%c', %p", str, delimiter, out_count)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     if (out_count == NULL) TLFATAL("out_count is NULL")
 
     // Count delimiters

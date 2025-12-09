@@ -6,14 +6,14 @@
 
 TLString* tl_string_copy(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     TLString* copy = tl_string_create(str->allocator, str->data);
     TL_PROFILER_POP_WITH(copy)
 }
 
 TLString* tl_string_substring(const TLString* str, u32 start, u32 end) {
     TL_PROFILER_PUSH_WITH("%p, %u, %u", str, start, end)
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
 
     if (start > str->length) start = str->length;
     if (end > str->length) end = str->length;
@@ -35,7 +35,7 @@ TLString* tl_string_substring(const TLString* str, u32 start, u32 end) {
 TLString* tl_string_to_lower(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, str->length + 1);
@@ -54,7 +54,7 @@ TLString* tl_string_to_lower(const TLString* str) {
 TLString* tl_string_to_upper(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, str->length + 1);
@@ -72,7 +72,7 @@ TLString* tl_string_to_upper(const TLString* str) {
 TLString* tl_string_trim(const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p", str)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
 
     const char* start = str->data;
     const char* end = str->data + str->length - 1;
@@ -108,7 +108,7 @@ TLString* tl_string_trim(const TLString* str) {
 TLString* tl_string_replace_char(const TLString* str, const char old_char, const char new_char) {
     TL_PROFILER_PUSH_WITH("%p, '%c', '%c'", str, old_char, new_char)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
 
     TLString* result = (TLString*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, sizeof(TLString));
     result->data = (char*)tl_memory_alloc(str->allocator, TL_MEMORY_STRING, str->length + 1);
@@ -126,7 +126,7 @@ TLString* tl_string_replace_char(const TLString* str, const char old_char, const
 TLString* tl_string_replace_first(const TLString* str, const TLString* old_str, const TLString* new_str) {
     TL_PROFILER_PUSH_WITH("%p, %p, %p", str, old_str, new_str)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     if (old_str == NULL) TLFATAL("old_str is NULL")
     if (new_str == NULL) TLFATAL("new_str is NULL")
 
@@ -153,7 +153,7 @@ TLString* tl_string_replace_first(const TLString* str, const TLString* old_str, 
 TLString* tl_string_replace_all(const TLString* str, const TLString* old_str, const TLString* new_str) {
     TL_PROFILER_PUSH_WITH("%p, %p, %p", str, old_str, new_str)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     if (old_str == NULL) TLFATAL("old_str is NULL")
     if (new_str == NULL) TLFATAL("new_str is NULL")
 
@@ -224,7 +224,7 @@ TLString* tl_string_concat(const TLString* str1, const TLString* str2) {
 TLString* tl_string_concat_cstr(const TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     if (cstr == NULL) TLFATAL("cstr is NULL")
 
     const u32 cstr_len = (u32)strlen(cstr);
@@ -245,7 +245,7 @@ TLString* tl_string_concat_cstr(const TLString* str, const char* cstr) {
 void tl_string_append(TLString* str, const char* cstr) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
 
-    if (str == NULL) TLFATAL("str is NULL")
+    if (str == NULL) TLFATAL("Attempted to usa a NULL TLString")
     if (cstr == NULL) TLFATAL("cstr is NULL")
 
     const u32 cstr_len = (u32)strlen(cstr);
