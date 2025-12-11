@@ -32,6 +32,7 @@ static void* tl_graphics_thread(void* _) {
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
 
     TLDEBUG("Entering Graphics Loop")
+    b8 was_running = false;  // Track if the main loop has started
     for ( ; ; ) {
         TLGraphicsTask* task = NULL;
         while ((task = (TLGraphicsTask*) tl_queue_pop(m_queue)) != NULL) {
@@ -69,7 +70,13 @@ static void* tl_graphics_thread(void* _) {
             tl_pool_release(m_pool, task);
         }
 
-        if (!global->running) {
+        // Track when the main loop starts
+        if (global->running) {
+            was_running = true;
+        }
+
+        // Only exit when the main loop has started AND has stopped
+        if (was_running && !global->running) {
             //TODO: unload the current activated scene
             break;
         }

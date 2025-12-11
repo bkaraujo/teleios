@@ -28,7 +28,12 @@ engine/src/main/teleios/
 
 sandbox/
 ├── application.yml        # Runtime configuration
-└── sandbox.c              # Game callbacks implementation
+└── scripts/               # Lua scripts per scene
+    └── <scene>/
+        ├── load.lua       # Executed on scene activation
+        ├── unload.lua     # Executed on scene deactivation
+        ├── frame_begin.lua # Executed AFTER engine frame_begin
+        └── frame_end.lua   # Executed BEFORE swap buffers
 ```
 
 **Modules:**
@@ -128,6 +133,8 @@ Main Thread                Graphics Thread
 | **Event** | Subscriber pattern (`tl_event_subscribe`, `tl_event_submit`) |
 | **Container** | Queue, Pool, List, Map, Iterator (all optionally thread-safe) |
 | **String** | Immutable `TLString`, `TLStringBuilder` |
+| **Scene** | Scene management with Lua scripting and YAML configuration |
+| **Config** | YAML configuration parser with scene support |
 
 ## Adding New Modules
 
@@ -146,3 +153,63 @@ Main Thread                Graphics Thread
 - **cglm 0.9.4**: Math (`<cglm/cglm.h>`)
 - **GLAD**: OpenGL loader (`<glad/glad.h>`) - vendored
 - **STB Image**: Image loading (`<stb/stb_image.h>`) - vendored
+
+## Scene System
+
+Scenes are configured in `application.yml` and use Lua scripts for lifecycle management.
+
+### YAML Configuration
+
+```yaml
+application:
+  scene:
+    - name: main
+      script:
+        load: scripts/main/load.lua       # REQUIRED
+        unload: scripts/main/unload.lua   # REQUIRED
+        frame_begin: scripts/main/frame_begin.lua  # REQUIRED
+        frame_end: scripts/main/frame_end.lua      # REQUIRED
+      graphics:
+        clear_color: .7, .2, .7, 1
+        depth:
+          enabled: true
+          function: LEQUAL  # NEVER, LESS, EQUAL, LEQUAL, GREATER, NOTEQUAL, GEQUAL, ALWAYS
+        blend:
+          enabled: true
+          equation: FUNC_ADD  # FUNC_ADD, FUNC_SUBTRACT, FUNC_REVERSE_SUBTRACT, MIN, MAX
+          function:
+            source: SRC_ALPHA
+            target: ONE_MINUS_SRC_ALPHA
+      camera:
+        property:
+          - name: "depth"
+            value: "-1.0, 1.0"
+```
+
+### Scene Lifecycle
+
+```
+activate → init_lua → apply_graphics → apply_camera → load.lua
+         ↓
+    ┌────────────────────────────────────────────┐
+    │                  GAME LOOP                 │
+    │  engine clear → frame_begin.lua → step →  │
+    │  update → frame_end.lua → swap            │
+    └────────────────────────────────────────────┘
+         ↓
+    unload.lua → close_lua → destroy
+```
+
+### Script Responsibilities
+
+| Script | When Called | Purpose |
+|--------|-------------|---------|
+| `load.lua` | Scene activation | Initialize scene resources |
+| `unload.lua` | Scene deactivation | Cleanup scene resources |
+| `frame_begin.lua` | After engine frame setup | Client rendering setup |
+| `frame_end.lua` | Before swap buffers | UI, debug overlays |
+
+### Engine Fixed Functions (Not Lua)
+
+- `tl_scene_step(dt)` - Fixed timestep physics (future)
+- `tl_scene_update(dt)` - Frame update logic (future)

@@ -15,11 +15,17 @@ teleios:
 application:
   scene:
     - name: main
+      script:
+        load: scripts/main/load.lua
+#        unload: scripts/main/unload.lua
+        frame_begin: scripts/main/frame_begin.lua
+        frame_end: scripts/main/frame_end.lua
       graphics:
         clear_color: .7, .2, .7, 1
         depth:
           enabled: true
           function: LEQUAL
+
         blend:
           enabled: true
           equation: FUNC_REVERSE_SUBTRACT
@@ -32,13 +38,3 @@ application:
             value: "-1.0, 1.0"
           - name: "rectangle"
             value: "-21.0, 21.0, -21.0, 21.0"
-      actor:
-        - name: "Environment"
-          component:
-            - name: "COMPONENT_SCRIPT"
-              property:
-                - name: "path"
-                  value: "scripts/environment.lua"
-        - name: "Ball"
-        - name: "Paddle Left"
-        - name: "Paddle Right"

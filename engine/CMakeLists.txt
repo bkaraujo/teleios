@@ -146,9 +146,7 @@ set(ENGINE_LIB_SOURCES
     src/main/teleios/profiler.c
     src/main/teleios/graphics.c
     src/main/teleios/script.c
-
-    src/main/flappy/sandbox.c
-        src/main/teleios/scene.c
+    src/main/teleios/scene.c
 )
 
 # Collect engine header files

@@ -428,14 +428,16 @@ typedef struct  TLStackTrace TLStackTrace;
 
 typedef struct {
     TLString* name;
+    u8 index;            // Index in application.scene array
+    TLAllocator* allocator;
 
-    void (*load)(void);
-    void (*unload)(void);
+    // Scripts Lua (OBRIGATÓRIOS - fornecidos via YAML)
+    TLString* script_load;       // Executado na criação/ativação
+    TLString* script_unload;     // Executado na exclusão/desativação
+    TLString* script_frame_begin;// Executado APÓS frame_begin do engine
+    TLString* script_frame_end;  // Executado ANTES do swap buffers
 
-    void (*frame_begin)(void);
-    void (*step)(f64);
-    void (*update)(f64);
-    void (*frame_end)(void);
+    void* lua_state;             // Estado Lua da cena
 } TLScene;
 
 typedef struct {

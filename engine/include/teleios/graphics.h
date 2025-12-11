@@ -22,4 +22,18 @@ void tl_graphics_submit_vwa(b8 wait, TLFunctionVWA function, u8 argc, void** arg
 void tl_graphics_clear(void);
 void tl_graphics_update(void);
 
+// ============================================================
+// Funções de configuração de estado gráfico
+// ============================================================
+void tl_graphics_set_clear_color(f32 r, f32 g, f32 b, f32 a);
+
+void tl_graphics_enable_depth(void);
+void tl_graphics_disable_depth(void);
+void tl_graphics_set_depth_function(const TLString* function);
+
+void tl_graphics_enable_blend(void);
+void tl_graphics_disable_blend(void);
+void tl_graphics_set_blend_equation(const TLString* equation);
+void tl_graphics_set_blend_function(const TLString* source, const TLString* target);
+
 #endif
