@@ -164,21 +164,16 @@ b8 tl_array_insert(TLArray* array, const u32 index, void* item) {
     TL_PROFILER_POP_WITH(tl_array_unsafe_insert(array, index, item));
 }
 
-void* tl_array_remove(TLArray* array, const u32 index) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
+b8 tl_array_remove(TLArray* array, void* element) {
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", array, element)
 
     if (array == NULL) {
         TLERROR("Attempted to remove from a NULL TLArray")
-        TL_PROFILER_POP_WITH(NULL)
+        TL_PROFILER_POP_WITH(false)
     }
 
-    if (index >= array->count) {
-        TLWARN("Array index %u out of bounds (count=%u)", index, array->count)
-        TL_PROFILER_POP_WITH(NULL)
-    }
-
-    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_remove(array, index));
-    TL_PROFILER_POP_WITH(tl_array_unsafe_remove(array, index));
+    if (array->thread_safe) TL_PROFILER_POP_WITH(tl_array_safe_remove(array, element));
+    TL_PROFILER_POP_WITH(tl_array_unsafe_remove(array, element));
 }
 
 u32 tl_array_size(const TLArray* array) {

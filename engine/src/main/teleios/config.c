@@ -208,6 +208,14 @@ TLDisplayResolution tl_config_get_display_resolution(const char* property) {
     TL_PROFILER_POP_WITH(TL_DISPLAY_RESOLUTION_SD);
 }
 
+TLScene* tl_config_get_scene(const TLString* name) {
+    TL_PROFILER_PUSH_WITH("name=%x%p", name)
+
+
+
+    TL_PROFILER_POP_WITH(NULL)
+}
+
 b8 tl_config_terminate(void) {
     TL_PROFILER_PUSH
 

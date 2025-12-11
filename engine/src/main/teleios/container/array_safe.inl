@@ -54,14 +54,14 @@ b8 tl_array_safe_insert(TLArray* array, const u32 index, void* item) {
     TL_PROFILER_POP_WITH(result)
 }
 
-void* tl_array_safe_remove(TLArray* array, const u32 index) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
+b8 tl_array_safe_remove(TLArray* array, void* element) {
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", array, element)
     tl_mutex_lock(array->mutex);
 
-    void* result = tl_array_unsafe_remove(array, index);
+    const b8 reult = tl_array_unsafe_remove(array, element);
 
     tl_mutex_unlock(array->mutex);
-    TL_PROFILER_POP_WITH(result)
+    TL_PROFILER_POP_WITH(reult)
 }
 
 u32 tl_array_safe_size(const TLArray* array) {

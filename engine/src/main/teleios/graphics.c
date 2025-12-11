@@ -39,6 +39,7 @@ typedef struct {
 
 #include "teleios/graphics/thread.inl"
 #include "teleios/graphics/event.inl"
+#include "teleios/graphics/utils.inl"
 
 #define TL_QUEUE_SIZE 256
 

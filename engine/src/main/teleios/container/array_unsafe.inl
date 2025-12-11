@@ -87,11 +87,23 @@ b8 tl_array_unsafe_insert(TLArray* array, const u32 index, void* item) {
     TL_PROFILER_POP_WITH(true)
 }
 
-void* tl_array_unsafe_remove(TLArray* array, const u32 index) {
-    TL_PROFILER_PUSH_WITH("0x%p, %u", array, index)
+b8 tl_array_unsafe_remove(TLArray* array, void* element) {
+    TL_PROFILER_PUSH_WITH("0x%p, 0x%p", array, element)
 
-    // Get pointer to remove
-    void* item = array->items[index];
+    // Find the element in the array
+    u32 index = 0;
+    b8 found = false;
+    for (index = 0; index < array->count; index++) {
+        if (array->items[index] == element) {
+            found = true;
+            break;
+        }
+    }
+
+    // Element not found
+    if (!found) {
+        TL_PROFILER_POP_WITH(false)
+    }
 
     // Shift pointers to fill gap
     if (index < array->count - 1) {
@@ -101,7 +113,7 @@ void* tl_array_unsafe_remove(TLArray* array, const u32 index) {
     array->count--;
     array->mod_count++;
 
-    TL_PROFILER_POP_WITH(item)
+    TL_PROFILER_POP_WITH(true)
 }
 
 u32 tl_array_unsafe_size(const TLArray* array) {

@@ -427,6 +427,18 @@ typedef struct TLString TLString;
 typedef struct  TLStackTrace TLStackTrace;
 
 typedef struct {
+    TLString* name;
+
+    void (*load)(void);
+    void (*unload)(void);
+
+    void (*frame_begin)(void);
+    void (*step)(f64);
+    void (*update)(f64);
+    void (*frame_end)(void);
+} TLScene;
+
+typedef struct {
     /** @brief Dynamic allocator */
     TLAllocator* allocator;
     /** @brief Application-wide mutex */
@@ -438,6 +450,9 @@ typedef struct {
     /** @brief Updates per second counter (written by simulation, read by main) */
     u64 update_count;
     u64 frame_count;
+
+    TLScene* scene;
+
 } TLGlobal;
 
 extern TLGlobal* global;

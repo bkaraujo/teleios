@@ -1,6 +1,6 @@
 teleios:
   logging:
-    level: TRACE
+    level: debug
   graphics:
     vsync: false
     wireframe: false
@@ -15,16 +15,17 @@ teleios:
 application:
   scene:
     - name: main
-      clear_color: .7, .2, .7, 1
-      depth:
-        enabled: true
-        function: LEQUAL
-      blend:
-        enabled: true
-        equation: FUNC_REVERSE_SUBTRACT
-        function:
-          source: SRC_ALPHA
-          target: ONE_MINUS_SRC_ALPHA
+      graphics:
+        clear_color: .7, .2, .7, 1
+        depth:
+          enabled: true
+          function: LEQUAL
+        blend:
+          enabled: true
+          equation: FUNC_REVERSE_SUBTRACT
+          function:
+            source: SRC_ALPHA
+            target: ONE_MINUS_SRC_ALPHA
       camera:
         property:
           - name: "depth"

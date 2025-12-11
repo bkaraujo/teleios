@@ -20,6 +20,7 @@ f32 tl_config_get_f32(const char* property);
 f64 tl_config_get_f64(const char* property);
 TLLogLevel tl_config_get_log_level(const char* property);
 TLDisplayResolution tl_config_get_display_resolution(const char* property);
+TLScene* tl_config_get_scene(const TLString* name);
 
 b8 tl_config_terminate(void);
 

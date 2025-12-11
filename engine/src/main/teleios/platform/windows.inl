@@ -69,7 +69,7 @@ static const char* tl_winapi_filesystem_get_current_directory(void) {
 
 static b8 tl_winapi_filesystem_exists(const TLString* path) {
     const char* cpath = tl_string_cstr(path);
-    DWORD attrib = GetFileAttributesA(cpath);
+    const DWORD attrib = GetFileAttributesA(cpath);
     return (attrib != INVALID_FILE_ATTRIBUTES && !(attrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
@@ -87,7 +87,7 @@ static u64 tl_winapi_filesystem_size(const TLString* path) {
 
 static TLString* tl_winapi_filesystem_read(const TLString* path) {
     const char* cpath = tl_string_cstr(path);
-    HANDLE hFile = CreateFileA(cpath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    const HANDLE hFile = CreateFileA(cpath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
         TLERROR("Failed to open file: %s", cpath);
         return NULL;

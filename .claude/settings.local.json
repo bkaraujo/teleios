@@ -10,7 +10,6 @@
       "Bash(timeout:*)",
       "Bash(engine.exe:*)",
       "Bash(taskkill:*)",
-      "Bash(./engine.exe:*)",
       "Bash(test:*)",
       "Bash(cat:*)",
       "Bash(Select-String:*)",
@@ -18,16 +17,12 @@
       "Bash(move:*)",
       "Bash(mv:*)",
       "Bash(gcc:*)",
-      "Bash(test_number_digits.exe)",
-      "Bash(cl test_number_digits.c /Fe:test_number_digits.exe)",
       "Bash(del:*)",
       "Bash(./dist/engine.exe)",
-      "Bash(./test_count_function.exe:*)",
       "Bash(cl:*)",
-      "Bash(test_count_function.exe)",
-      "Bash(./teleios_test.exe)",
       "Bash(ctest:*)",
-      "Bash(./build/bin/Debug/teleios_test.exe:*)"
+      "Bash(echo:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

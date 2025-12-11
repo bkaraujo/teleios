@@ -19,4 +19,7 @@ void tl_graphics_submit_vna(b8 wait, TLFunctionVNA function);
 void* tl_graphics_submit_rwa(b8 wait, TLFunctionRWA function, u8 argc, void** argv);
 void tl_graphics_submit_vwa(b8 wait, TLFunctionVWA function, u8 argc, void** argv);
 
+void tl_graphics_clear(void);
+void tl_graphics_update(void);
+
 #endif

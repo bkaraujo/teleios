@@ -12,7 +12,19 @@ b8 tl_application_initialize(void) {
     tl_event_subscribe(TL_EVENT_WINDOW_CLOSED, tl_application_handle_window_closed);
     tl_event_subscribe(TL_EVENT_WINDOW_RESTORED, tl_application_handle_window_restored);
     tl_event_subscribe(TL_EVENT_WINDOW_MINIMIZED, tl_application_handle_window_minimized);
-    
+
+    if (!tl_scene_initialize()) {
+        TL_PROFILER_POP_WITH(false)
+    }
+
+    TLString* initial_scene_name = tl_string_create(global->allocator, "main");
+    if (!tl_scene_activate(initial_scene_name)) {
+        tl_string_destroy(initial_scene_name);
+        TLERROR("Failed to activate main scene")
+        TL_PROFILER_POP_WITH(false)
+    }
+
+    tl_string_destroy(initial_scene_name);
     TL_PROFILER_POP_WITH(true)
 }
 
@@ -30,18 +42,17 @@ b8 tl_application_run(void) {
     u64 last_time = tl_time_epoch_micros();
     u64 last_frame_count = 0;
     u64 last_update_count = 0;
-
-    tl_scene_load();
-
     TLString* script = tl_string_create(global->allocator, "assets/script/test.lua");
 
-    TLDEBUG("Entering main loop")
+    TLDEBUG("Entering Simulation loop")
     glfwShowWindow(tl_window_handler());
     for ( ; global->running ; ) {
         const u64 new_time = tl_time_epoch_micros();
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
-        tl_scene_frame_begin();
+
+        tl_graphics_clear();
+        global->scene->frame_begin();
         if (!global->suspended) {
             global->update_count++;
 
@@ -53,15 +64,16 @@ b8 tl_application_run(void) {
 
             accumulator += delta_time;
             while (accumulator >= STEP) {
-                tl_scene_step(STEP);
+                global->scene->step(STEP);
                 accumulator -= STEP;
             }
 
-            tl_scene_update(delta_time);
+            global->scene->update(delta_time);
         }
 
         tl_script_execute(script);
-        tl_scene_frame_end();
+        global->scene->frame_end();
+        tl_graphics_update();
         tl_input_update();
         glfwPollEvents();
 
@@ -83,16 +95,19 @@ b8 tl_application_run(void) {
 
         }
     }
-    TLDEBUG("Exiting main loop")
-    tl_scene_unload();
+    TLDEBUG("Exiting Simulation loop")
     tl_string_destroy(script);
 
-    TLDEBUG("Finalizando")
+    TLDEBUG("Simulation Terminated")
     TL_PROFILER_POP_WITH(true)
 }
 
 b8 tl_application_terminate(void) {
     TL_PROFILER_PUSH
-    
+
+    if (!tl_scene_terminate()) {
+        TL_PROFILER_POP_WITH(false)
+    }
+
     TL_PROFILER_POP_WITH(true)
 }

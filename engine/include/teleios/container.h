@@ -180,29 +180,31 @@ b8 tl_array_set(TLArray* array, u32 index, void* item);
 b8 tl_array_insert(TLArray* array, u32 index, void* item);
 
 /**
- * @brief Remove and return the pointer at the specified index
+ * @brief Remove the element matching the given pointer
  *
- * Removes the pointer at the given index, shifting subsequent pointers backward.
+ * Searches for the given pointer in the array and removes it, shifting subsequent pointers backward.
  *
  * @param array Array to modify
- * @param index Index to remove (0-based, must be < count)
- * @return The removed pointer, or NULL if index is out of bounds
+ * @param element Pointer to element to remove (must be in array)
  *
  * @note Thread-safe if created with thread_safe=true
- * @note O(n) time complexity (due to shifting)
+ * @note O(n) time complexity (due to search and shifting)
  * @note Caller is responsible for freeing the pointed-to data if needed
+ * @note Removes first occurrence if multiple identical pointers exist
  *
  * @see tl_array_insert
  * @see tl_array_pop
  *
  * @code
- * MyStruct* removed = tl_array_remove(array, 3);
- * if (removed != NULL) {
- *     free(removed);
+ * MyStruct* obj = create_object();
+ * tl_array_push(array, obj);
+ * b8 removed = tl_array_remove(array, obj);
+ * if (!removed){
+ *    TLWARN("Item not in erray")
  * }
  * @endcode
  */
-void* tl_array_remove(TLArray* array, u32 index);
+b8 tl_array_remove(TLArray* array, void* element);
 
 /**
  * @brief Get current number of elements in array

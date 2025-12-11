@@ -148,6 +148,7 @@ set(ENGINE_LIB_SOURCES
     src/main/teleios/script.c
 
     src/main/flappy/sandbox.c
+        src/main/teleios/scene.c
 )
 
 # Collect engine header files

@@ -42,7 +42,8 @@ static void tl_renderer_cleanup(void) {
 
 void tl_scene_unload(void) {
     tl_graphics_shader_unload(m_shader);
-    tl_graphics_submit_vna(true, tl_renderer_cleanup);
+    tl_graphics_geometry_destroy(m_geometry);
+    // tl_graphics_submit_vna(true, tl_renderer_cleanup);
 }
 
 static void tl_renderer_clear(void) {

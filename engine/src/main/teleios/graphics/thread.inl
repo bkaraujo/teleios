@@ -8,7 +8,7 @@
 
 static void* tl_graphics_thread(void* _) {
     (void) _;
-    TLDEBUG("Initializing")
+    TLDEBUG("Graphics Initializing")
     // #########################################
     // Initialize OpenGL context
     // #########################################
@@ -31,8 +31,8 @@ static void* tl_graphics_thread(void* _) {
 
     glClearColor(0.126f, 0.48f, 1.0f, 1.0f);
 
-    TLDEBUG("Entering Main Loop")
-    for ( ; global->running ; ) {
+    TLDEBUG("Entering Graphics Loop")
+    for ( ; ; ) {
         TLGraphicsTask* task = NULL;
         while ((task = (TLGraphicsTask*) tl_queue_pop(m_queue)) != NULL) {
 
@@ -68,11 +68,16 @@ static void* tl_graphics_thread(void* _) {
             // Release async task
             tl_pool_release(m_pool, task);
         }
-    }
-    TLDEBUG("Exiting Main Loop")
 
+        if (!global->running) {
+            //TODO: unload the current activated scene
+            break;
+        }
+    }
+
+    TLDEBUG("Exiting Graphics Loop")
     glfwMakeContextCurrent(NULL);
-    TLDEBUG("Finalizando")
+    TLDEBUG("Graphics Terminated")
 
     return NULL;
 }
