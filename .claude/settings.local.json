@@ -22,7 +22,8 @@
       "Bash(cl:*)",
       "Bash(ctest:*)",
       "Bash(echo:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
