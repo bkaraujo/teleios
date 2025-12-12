@@ -17,14 +17,14 @@ b8 tl_application_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    TLString* initial_scene_name = tl_string_create(global->allocator, "main");
-    if (!tl_scene_activate(initial_scene_name)) {
-        tl_string_destroy(initial_scene_name);
+    TLString* scene_name = tl_string_create(global->allocator, "main");
+    if (!tl_scene_activate(scene_name)) {
+        tl_string_destroy(scene_name);
         TLERROR("Failed to activate main scene")
         TL_PROFILER_POP_WITH(false)
     }
 
-    tl_string_destroy(initial_scene_name);
+    tl_string_destroy(scene_name);
     TL_PROFILER_POP_WITH(true)
 }
 

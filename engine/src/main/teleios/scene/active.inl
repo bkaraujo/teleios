@@ -3,11 +3,10 @@
 
 #include "teleios/teleios.h"
 
-void tl_scene_load(TLScene* scene) {
-    TL_PROFILER_PUSH
-    tl_scene_execute_script(scene, scene->script_load);
-
-    TL_PROFILER_POP
+void tl_scene_frame_begin() {
+    tl_graphics_clear();
+    const TLScene* scene = global->scene;
+    tl_scene_execute_script(scene, scene->script_frame_begin);
 }
 
 void tl_scene_step(const f64 step) {
@@ -28,31 +27,10 @@ void tl_scene_update(const f64 delta) {
     (void)delta;
 }
 
-void tl_scene_frame_begin() {
-    tl_graphics_clear();
-    const TLScene* scene = global->scene;
-    tl_scene_execute_script(scene, scene->script_frame_begin);
-}
-
 void tl_scene_frame_end() {
     const TLScene* scene = global->scene;
     tl_scene_execute_script(scene, scene->script_frame_end);
     tl_graphics_update();
-}
-
-void tl_scene_unload(TLScene* scene) {
-    TL_PROFILER_PUSH
-
-    tl_scene_execute_script(scene, scene->script_unload);
-
-    // Fechar estado Lua após unload
-    if (scene->lua_state != NULL) {
-        lua_close((lua_State*)scene->lua_state);
-        scene->lua_state = NULL;
-        TLDEBUG("Closed Lua state for scene '%s'", tl_string_cstr(scene->name));
-    }
-
-    TL_PROFILER_POP
 }
 
 #endif

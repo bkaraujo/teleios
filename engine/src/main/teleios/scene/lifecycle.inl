@@ -12,6 +12,18 @@ TLScene* tl_scene_create(void) {
 
 #include "teleios/scene/private.inl"
 
+void tl_scene_load(TLScene* scene) {
+    TL_PROFILER_PUSH
+
+    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
+    tl_scene_apply_graphics_config(allocator, scene);
+    tl_memory_allocator_destroy(allocator);
+
+    tl_scene_execute_script(scene, scene->script_load);
+
+    TL_PROFILER_POP
+}
+
 b8 tl_scene_activate(const TLString* name) {
     TL_PROFILER_PUSH_WITH("name=0x%p", name);
     TLINFO("Activating scene '%s'", tl_string_cstr(name))
@@ -21,7 +33,6 @@ b8 tl_scene_activate(const TLString* name) {
         global->scene = NULL;
     }
 
-
     // 1. Verificar se cena já está carregada
     tl_iterator_resync(m_iterator);
     tl_iterator_rewind(m_iterator);
@@ -29,9 +40,6 @@ b8 tl_scene_activate(const TLString* name) {
         TLScene* scene = tl_iterator_next(m_iterator);
         if (tl_string_equals_ignore_case(name, scene->name)) {
             tl_scene_load(scene);
-            TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-            tl_scene_apply_graphics_config(allocator, scene);
-            tl_memory_allocator_destroy(allocator);
             TL_PROFILER_POP_WITH(true)
         }
     }
@@ -39,16 +47,27 @@ b8 tl_scene_activate(const TLString* name) {
     TLScene* scene = tl_config_get_scene(name);
     if (scene == NULL) TL_PROFILER_POP_WITH(false)
 
-    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
-    tl_scene_apply_graphics_config(allocator, scene);
-    tl_memory_allocator_destroy(allocator);
-
     tl_array_push(m_scenes, scene);
     tl_scene_load(scene);
     global->scene = scene;
 
     TLDEBUG("Scene '%s' activated", tl_string_cstr(name));
     TL_PROFILER_POP_WITH(true)
+}
+
+void tl_scene_unload(TLScene* scene) {
+    TL_PROFILER_PUSH
+
+    tl_scene_execute_script(scene, scene->script_unload);
+
+    // Fechar estado Lua após unload
+    if (scene->lua_state != NULL) {
+        lua_close((lua_State*)scene->lua_state);
+        scene->lua_state = NULL;
+        TLDEBUG("Closed Lua state for scene '%s'", tl_string_cstr(scene->name));
+    }
+
+    TL_PROFILER_POP
 }
 
 void tl_scene_destroy(const TLScene* scene) {
