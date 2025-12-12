@@ -208,21 +208,44 @@ TLString* tl_number_i64_to_char(TLAllocator* allocator, i64 value, const u8 base
 vec4s tl_number_vec4s_from_string(const TLString* str) {
     TL_PROFILER_PUSH_WITH("0x%p", str)
 
-    vec4s vector = { 0.0f, 0.0f, 0.0f, 0.0f };
+    vec4s vector = { 0.0f, 0.0f, 0.0f, 1.0f };
     if (str == NULL || tl_string_is_empty(str)) {
         TLWARN("Cannot convert NULL or empty string to vec4s");
         TL_PROFILER_POP_WITH(vector)
     }
 
-    const char* cstr = tl_string_cstr(str);
-    const i32 parsed_count = sscanf(cstr, "%f, %f, %f, %f", &vector.r, &vector.g, &vector.b, &vector.a);
+    const char* ptr = tl_string_cstr(str);
+    char* endptr;
 
-    if (parsed_count != 4) {
-        TLWARN("Failed to parse vec4s from string: '%s'. Expected format 'f, f, f, f'", cstr);
-        vector = (vec4s){ 0.0f, 0.0f, 0.0f, 0.0f };
-    }
+    // Parse R
+    vector.r = strtof(ptr, &endptr);
+    if (ptr == endptr) goto error; // Nenhum número encontrado
+    ptr = endptr; // Avança o ponteiro
+
+    // Pula delimitadores (vírgula ou espaço) manualmente para ser flexível
+    while (*ptr == ' ' || *ptr == ',') ptr++;
+
+    // Parse G
+    vector.g = strtof(ptr, &endptr);
+    if (ptr == endptr) goto error;
+    ptr = endptr;
+    while (*ptr == ' ' || *ptr == ',') ptr++;
+
+    // Parse B
+    vector.b = strtof(ptr, &endptr);
+    if (ptr == endptr) goto error;
+    ptr = endptr;
+    while (*ptr == ' ' || *ptr == ',') ptr++;
+
+    // Parse A
+    vector.a = strtof(ptr, &endptr);
+    if (ptr == endptr) goto error;
 
     TL_PROFILER_POP_WITH(vector)
+
+error:
+    TLWARN("Failed to parse complete vec4s from string: '%s'", tl_string_cstr(str));
+    TL_PROFILER_POP_WITH((vec4s){ 0 })
 }
 
 #endif
