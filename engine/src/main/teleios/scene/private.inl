@@ -36,6 +36,10 @@ static b8 tl_scene_execute_script(const TLScene* scene, const TLString* script_p
         TL_PROFILER_POP_WITH(false)
     }
 
+    if (!tl_filesystem_exists(script_path)) {
+        TL_PROFILER_POP_WITH(false)
+    }
+
     lua_State* L = (lua_State*)scene->lua_state;
     if (luaL_dofile(L, tl_string_cstr(script_path)) != LUA_OK) {
         const char* error = lua_tostring(L, -1);

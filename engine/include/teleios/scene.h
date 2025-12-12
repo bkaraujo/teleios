@@ -15,10 +15,10 @@ void tl_scene_destroy(const TLScene* scene);
 // ============================================================
 // SCRIPTS DO CLIENTE (fornecidos via YAML - OBRIGATÓRIOS)
 // ============================================================
-void tl_scene_load();        // Executa script_load
-void tl_scene_unload();      // Executa script_unload
-void tl_scene_frame_begin(); // Executa script_frame_begin (APÓS engine)
-void tl_scene_frame_end();   // Executa script_frame_end (ANTES swap)
+void tl_scene_load(TLScene* scene);        // Executa script_load
+void tl_scene_unload(TLScene* scene);      // Executa script_unload
+void tl_scene_frame_begin(TLScene* scene); // Executa script_frame_begin (APÓS engine)
+void tl_scene_frame_end(TLScene* scene);   // Executa script_frame_end (ANTES swap)
 
 // ============================================================
 // IMPLEMENTAÇÕES FIXAS DO ENGINE (futuro)

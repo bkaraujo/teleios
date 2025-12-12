@@ -12,6 +12,11 @@ cmake --build build --config Debug
 ./dist/engine.exe  # Windows | ./dist/engine (Linux/macOS)
 ```
 
+**Testing:**
+```bash
+ctest --test-dir build --output-on-failure  # Run all tests
+```
+
 ## File Structure
 
 ```
@@ -119,6 +124,36 @@ Main Thread                Graphics Thread
 4. Sync jobs: stack-allocated args OK
 5. Async jobs: heap/static args required
 
+## Global State
+
+The engine uses a single global state struct (`TLGlobal`) initialized in `main.c`:
+
+```c
+TLGlobal g = { 0 };
+global = &g;
+tl_platform_initialize();    // Sets up global allocators
+tl_application_initialize(); // Game setup
+tl_application_run();        // Main loop
+tl_application_terminate();  // Cleanup
+tl_platform_terminate();     // Platform cleanup
+```
+
+Access via `global->allocator`, `global->scene`, `global->running`, etc.
+
+## Memory System
+
+**LINEAR (Arena Allocator):**
+- Fast bump allocation, no individual deallocation
+- Auto-grows by ~1.75x when exhausted
+- Use for frame/scene-level transient data
+
+**DYNAMIC (Heap Allocator):**
+- Individual allocation/deallocation
+- Leak detection in Debug builds (with stack traces)
+- Warns on dangling allocators at shutdown
+
+**Memory Tags** (17 categories for profiling): `TL_MEMORY_GRAPHICS`, `TL_MEMORY_CONTAINER_*`, `TL_MEMORY_STRING`, `TL_MEMORY_SCENE`, etc.
+
 ## Core Modules
 
 | Module | Description |
@@ -131,7 +166,7 @@ Main Thread                Graphics Thread
 | **Thread** | Threads, mutexes, condition variables |
 | **Graphics** | Dedicated rendering thread with work queue |
 | **Event** | Subscriber pattern (`tl_event_subscribe`, `tl_event_submit`) |
-| **Container** | Queue, Pool, List, Map, Iterator (all optionally thread-safe) |
+| **Container** | Queue, Pool, List, Map, Array, Iterator (all optionally thread-safe) |
 | **String** | Immutable `TLString`, `TLStringBuilder` |
 | **Scene** | Scene management with Lua scripting and YAML configuration |
 | **Config** | YAML configuration parser with scene support |

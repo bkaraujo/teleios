@@ -33,7 +33,7 @@ b8 tl_application_run(void) {
 
     TLString* sStep = tl_config_get("teleios.simulation.step");
     const f32 fStep = tl_number_f32_from_string(sStep);
-    const f64 STEP = 1000000.0 / (fStep == 0 ? 10 : fStep);
+    const f64 STEP = TL_CHRONO_ONE_SECOND_IN_MICROS / (fStep == 0 ? 10 : fStep);
 
     f64 accumulator = 0.0;
 
@@ -51,7 +51,7 @@ b8 tl_application_run(void) {
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
 
-        tl_scene_frame_begin();
+        tl_scene_frame_begin(global->scene);
 
         if (!global->suspended) {
             global->update_count++;
@@ -72,12 +72,12 @@ b8 tl_application_run(void) {
         }
 
         tl_script_execute(script);
-        tl_scene_frame_end();
+        tl_scene_frame_end(global->scene);
         tl_input_update();
         glfwPollEvents();
 
         fps_timer += delta_time;
-        if (fps_timer >= ONE_SECOND_MICROS) {
+        if (fps_timer >= TL_CHRONO_ONE_SECOND_IN_MICROS) {
 
             static char buffer[60];
             snprintf(buffer, sizeof(buffer), "%s FPS: %llu | UPS: %llu",
@@ -90,8 +90,7 @@ b8 tl_application_run(void) {
 
             last_frame_count = global->frame_count;
             last_update_count = global->update_count;
-            fps_timer -= ONE_SECOND_MICROS;
-
+            fps_timer -= TL_CHRONO_ONE_SECOND_IN_MICROS;
         }
     }
     TLDEBUG("Exiting Simulation loop")

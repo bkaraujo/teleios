@@ -10,9 +10,9 @@
  *
  * @example
  * u64 micros = tl_time_epoch_micros();
- * f64 seconds = micros / ONE_SECOND_MICROS;
+ * f64 seconds = micros / TL_CHRONO_ONE_SECOND_IN_MICROS;
  */
-static const f64 ONE_SECOND_MICROS = 1000000.0;     ///< 1 second in microseconds
+static const f64 TL_CHRONO_ONE_SECOND_IN_MICROS = 1000000.0;     ///< 1 second in microseconds
 
 /**
  * @brief Get current date and time

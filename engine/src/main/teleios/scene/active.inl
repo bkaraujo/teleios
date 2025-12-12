@@ -3,9 +3,8 @@
 
 #include "teleios/teleios.h"
 
-void tl_scene_load() {
+void tl_scene_load(TLScene* scene) {
     TL_PROFILER_PUSH
-    const TLScene* scene = global->scene;
     tl_scene_execute_script(scene, scene->script_load);
 
     TL_PROFILER_POP
@@ -29,22 +28,19 @@ void tl_scene_update(f64 delta) {
     (void)delta;
 }
 
-void tl_scene_frame_begin() {
+void tl_scene_frame_begin(TLScene* scene) {
     tl_graphics_clear();
-    const TLScene* scene = global->scene;
     tl_scene_execute_script(scene, scene->script_frame_begin);
 }
 
-void tl_scene_frame_end() {
-    const TLScene* scene = global->scene;
+void tl_scene_frame_end(TLScene* scene) {
     tl_scene_execute_script(scene, scene->script_frame_end);
     tl_graphics_update();
 }
 
-void tl_scene_unload() {
+void tl_scene_unload(TLScene* scene) {
     TL_PROFILER_PUSH
 
-    TLScene* scene = global->scene;
     tl_scene_execute_script(scene, scene->script_unload);
 
     // Fechar estado Lua após unload

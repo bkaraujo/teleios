@@ -30,7 +30,6 @@ TLScene* tl_config_get_scene(const TLString* name) {
         sizeof(TLScene)
     );
 
-
     // ==========================================
     // 2. Buscar índice da cena no array
     // ==========================================
