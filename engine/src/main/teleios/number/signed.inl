@@ -206,13 +206,23 @@ TLString* tl_number_i64_to_char(TLAllocator* allocator, i64 value, const u8 base
 }
 
 vec4s tl_number_vec4s_from_string(const TLString* str) {
-    vec4s vector = { 0 };
-    if (str == NULL) return vector;
+    TL_PROFILER_PUSH_WITH("0x%p", str)
 
-    if (sscanf(tl_string_cstr(str), "%f, %f, %f, %f", &vector.r, &vector.g, &vector.b, &vector.a) == 4) {
-        TLTRACE("Setting clear color: (%.2f, %.2f, %.2f, %.2f)", vector.r, vector.g, vector.b, vector.a);
-        return vector;
+    vec4s vector = { 0.0f, 0.0f, 0.0f, 0.0f };
+    if (str == NULL || tl_string_is_empty(str)) {
+        TLWARN("Cannot convert NULL or empty string to vec4s");
+        TL_PROFILER_POP_WITH(vector)
     }
+
+    const char* cstr = tl_string_cstr(str);
+    const i32 parsed_count = sscanf(cstr, "%f, %f, %f, %f", &vector.r, &vector.g, &vector.b, &vector.a);
+
+    if (parsed_count != 4) {
+        TLWARN("Failed to parse vec4s from string: '%s'. Expected format 'f, f, f, f'", cstr);
+        vector = (vec4s){ 0.0f, 0.0f, 0.0f, 0.0f };
+    }
+
+    TL_PROFILER_POP_WITH(vector)
 }
 
 #endif
