@@ -151,30 +151,30 @@ set(ENGINE_LIB_SOURCES
 
 # Collect engine header files
 set(ENGINE_HEADERS
-    include/glad/glad.h
-    include/glad/khrplatform.h
-    include/stb/image.h
+    src/include/glad/glad.h
+    src/include/glad/khrplatform.h
+    src/include/stb/image.h
 
-    include/teleios/application.h
-    include/teleios/chrono.h
-    include/teleios/config.h
-    include/teleios/container.h
-    include/teleios/defines.h
-    include/teleios/event.h
-    include/teleios/filesystem.h
-    include/teleios/input.h
-    include/teleios/logger.h
-    include/teleios/memory.h
-    include/teleios/number.h
-    include/teleios/platform.h
-    include/teleios/profiler.h
-    include/teleios/strings.h
-    include/teleios/teleios.h
-    include/teleios/thread.h
-    include/teleios/window.h
-    include/teleios/graphics.h
-    include/teleios/script.h
-    include/teleios/scene.h
+    src/include/teleios/application.h
+    src/include/teleios/chrono.h
+    src/include/teleios/config.h
+    src/include/teleios/container.h
+    src/include/teleios/defines.h
+    src/include/teleios/event.h
+    src/include/teleios/filesystem.h
+    src/include/teleios/input.h
+    src/include/teleios/logger.h
+    src/include/teleios/memory.h
+    src/include/teleios/number.h
+    src/include/teleios/platform.h
+    src/include/teleios/profiler.h
+    src/include/teleios/strings.h
+    src/include/teleios/teleios.h
+    src/include/teleios/thread.h
+    src/include/teleios/window.h
+    src/include/teleios/graphics.h
+    src/include/teleios/script.h
+    src/include/teleios/scene.h
 )
 
 # Create engine library (for tests to link against)
@@ -207,7 +207,7 @@ set_target_properties(engine PROPERTIES
 # Include directories for library
 target_include_directories(engine_lib
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/main>
         $<INSTALL_INTERFACE:include>
     PRIVATE
@@ -226,7 +226,7 @@ target_link_libraries(engine_lib
 # Include directories for executable
 target_include_directories(engine
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/main>
         $<INSTALL_INTERFACE:include>
     PRIVATE
