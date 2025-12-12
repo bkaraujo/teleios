@@ -1,9 +1,19 @@
+#include "test_framework.h"
 #include "teleios/teleios.h"
 #include <stdio.h>
 #include <string.h>
 
+// Forward declarations of test functions
+extern void test_strings(void);
+extern void test_memory(void);
+extern void test_container(void);
+extern void test_number(void);
+extern void test_event(void);
+extern void test_logger(void);
+
+// Legacy test - can be removed if desired
 void test_filesystem(void) {
-    printf("Testing Filesystem...\n");
+    TEST_SUITE_BEGIN("Filesystem");
 
     // Create a temporary test file
     const char* test_filename = "test_file.txt";
@@ -19,46 +29,46 @@ void test_filesystem(void) {
 
     TLString* path = tl_string_create(global->allocator, test_filename);
 
-    // Test Exists
-    if (tl_filesystem_exists(path)) {
-        printf("  [PASS] tl_filesystem_exists\n");
-    } else {
-        fprintf(stderr, "  [FAIL] tl_filesystem_exists\n");
+    TEST_BEGIN("tl_filesystem_exists");
+    {
+        ASSERT_TRUE(tl_filesystem_exists(path));
     }
+    TEST_END();
 
-    // Test Size
-    u64 size = tl_filesystem_size(path);
-    if (size == strlen(test_content)) {
-        printf("  [PASS] tl_filesystem_size (expected %llu, got %llu)\n", strlen(test_content), size);
-    } else {
-        fprintf(stderr, "  [FAIL] tl_filesystem_size (expected %llu, got %llu)\n", strlen(test_content), size);
+    TEST_BEGIN("tl_filesystem_size");
+    {
+        u64 size = tl_filesystem_size(path);
+        ASSERT_EQ(strlen(test_content), size);
     }
+    TEST_END();
 
-    // Test Read
-    TLString* content = tl_filesystem_read(path);
-    if (content) {
-        if (strcmp(tl_string_cstr(content), test_content) == 0) {
-            printf("  [PASS] tl_filesystem_read\n");
-        } else {
-            fprintf(stderr, "  [FAIL] tl_filesystem_read (content mismatch)\n");
-            fprintf(stderr, "    Expected: %s\n", test_content);
-            fprintf(stderr, "    Got:      %s\n", tl_string_cstr(content));
-        }
+    TEST_BEGIN("tl_filesystem_read");
+    {
+        TLString* content = tl_filesystem_read(path);
+        ASSERT_NOT_NULL(content);
+        ASSERT_STR_EQ(test_content, tl_string_cstr(content));
         tl_string_destroy(content);
-    } else {
-        fprintf(stderr, "  [FAIL] tl_filesystem_read (returned NULL)\n");
     }
+    TEST_END();
 
     // Cleanup
     tl_string_destroy(path);
     remove(test_filename);
+
+    TEST_SUITE_END();
 }
 
 int main(void) {
-    printf("Running Teleios Unit Tests...\n");
+    // Disable output buffering for crash debugging
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+
+    printf("========================================\n");
+    printf("   TELEIOS Engine Unit Tests\n");
+    printf("========================================\n");
 
     // Initialize global state
-    TLGlobal g = { 0 };
+    TLGlobal g = {0};
     global = &g;
 
     // Initialize platform
@@ -67,10 +77,20 @@ int main(void) {
         return 1;
     }
 
+    // Run all test suites
+    test_logger();
+    test_memory();
+    test_strings();
+    test_number();
+    test_container();
+    test_event();
     test_filesystem();
 
+    // Print summary
+    test_print_summary();
+
+    // Cleanup
     tl_platform_terminate();
 
-    printf("All tests passed!\n");
-    return 0;
+    return test_get_exit_code();
 }

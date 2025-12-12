@@ -62,6 +62,8 @@ void tl_scene_destroy(const TLScene* scene) {
     if (scene->script_unload) tl_string_destroy(scene->script_unload);
     if (scene->script_frame_begin) tl_string_destroy(scene->script_frame_begin);
     if (scene->script_frame_end) tl_string_destroy(scene->script_frame_end);
+    
+    // Destruir o allocador da cena
     if (scene->allocator) tl_memory_allocator_destroy(scene->allocator);
 
     tl_memory_free(global->allocator, (TLScene*)scene);

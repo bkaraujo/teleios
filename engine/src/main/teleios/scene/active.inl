@@ -10,7 +10,7 @@ void tl_scene_load(TLScene* scene) {
     TL_PROFILER_POP
 }
 
-void tl_scene_step(f64 step) {
+void tl_scene_step(const f64 step) {
     // TODO: Implementação futura - lógica de física com timestep fixo
     // Esta função NÃO executa scripts Lua
     // Será uma implementação fixa do engine
@@ -19,7 +19,7 @@ void tl_scene_step(f64 step) {
     (void)step;
 }
 
-void tl_scene_update(f64 delta) {
+void tl_scene_update(const f64 delta) {
     // TODO: Implementação futura - lógica de atualização por frame
     // Esta função NÃO executa scripts Lua
     // Será uma implementação fixa do engine
@@ -28,12 +28,14 @@ void tl_scene_update(f64 delta) {
     (void)delta;
 }
 
-void tl_scene_frame_begin(TLScene* scene) {
+void tl_scene_frame_begin() {
     tl_graphics_clear();
+    const TLScene* scene = global->scene;
     tl_scene_execute_script(scene, scene->script_frame_begin);
 }
 
-void tl_scene_frame_end(TLScene* scene) {
+void tl_scene_frame_end() {
+    const TLScene* scene = global->scene;
     tl_scene_execute_script(scene, scene->script_frame_end);
     tl_graphics_update();
 }

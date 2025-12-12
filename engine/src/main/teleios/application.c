@@ -51,7 +51,7 @@ b8 tl_application_run(void) {
         f64 delta_time = (f64)(new_time - last_time);
         last_time = new_time;
 
-        tl_scene_frame_begin(global->scene);
+        tl_scene_frame_begin();
 
         if (!global->suspended) {
             global->update_count++;
@@ -72,7 +72,7 @@ b8 tl_application_run(void) {
         }
 
         tl_script_execute(script);
-        tl_scene_frame_end(global->scene);
+        tl_scene_frame_end();
         tl_input_update();
         glfwPollEvents();
 

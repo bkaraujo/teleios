@@ -1,6 +1,5 @@
 .idea/
 build/
-dist/engine*
-dist/application*
+dist/*
 cmake-*
 .venv
