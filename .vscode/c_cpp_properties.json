@@ -6,7 +6,6 @@
             "includePath": [
                 "${workspaceFolder}/engine/src/main",
                 "${workspaceFolder}/engine/include",
-                "${workspaceFolder}/sandbox/src/main",
                 "${workspaceFolder}/build/_deps/glfw-src/include",
                 "${workspaceFolder}/build/_deps/libyaml-src/include",
                 "${workspaceFolder}/build/_deps/lua-src",
