@@ -4,6 +4,13 @@
 #include "teleios/teleios.h"
 #include "teleios/strings/type.inl"
 
+u32 tl_string_length_cstr(const char* cstr) {
+    TL_PROFILER_PUSH_WITH("%p", cstr)
+    if (cstr == NULL) TL_PROFILER_POP_WITH(0)
+    const unsigned length = strlen(cstr);
+    TL_PROFILER_POP_WITH(length)
+}
+
 b8 tl_string_cstr_ends_with(const char* cstr, const TLString* str) {
     TL_PROFILER_PUSH_WITH("%p, %p", str, cstr)
     if (str == NULL || cstr == NULL) TL_PROFILER_POP_WITH(false)

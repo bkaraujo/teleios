@@ -205,4 +205,14 @@ TLString* tl_number_i64_to_char(TLAllocator* allocator, i64 value, const u8 base
     return tl_number_signed_to_char(allocator, value, base);
 }
 
+vec4s tl_number_vec4s_from_string(const TLString* str) {
+    vec4s vector = { 0 };
+    if (str == NULL) return vector;
+
+    if (sscanf(tl_string_cstr(str), "%f, %f, %f, %f", &vector.r, &vector.g, &vector.b, &vector.a) == 4) {
+        TLTRACE("Setting clear color: (%.2f, %.2f, %.2f, %.2f)", vector.r, vector.g, vector.b, vector.a);
+        return vector;
+    }
+}
+
 #endif

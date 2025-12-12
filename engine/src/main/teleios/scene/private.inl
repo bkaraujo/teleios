@@ -12,6 +12,9 @@
 
 #include "teleios/script/input.inl"
 
+// ============================================================================
+
+// ============================================================================
 static void tl_scene_init_lua(TLScene* scene) {
     TL_PROFILER_PUSH_WITH("scene=%s", tl_string_cstr(scene->name));
 
@@ -25,7 +28,9 @@ static void tl_scene_init_lua(TLScene* scene) {
 
     TL_PROFILER_POP
 }
+// ============================================================================
 
+// ============================================================================
 static b8 tl_scene_execute_script(const TLScene* scene, const TLString* script_path) {
     TL_PROFILER_PUSH_WITH("scene=%s, script=%s", tl_string_cstr(scene->name), tl_string_cstr(script_path));
 
@@ -48,136 +53,88 @@ static b8 tl_scene_execute_script(const TLScene* scene, const TLString* script_p
 
     TL_PROFILER_POP_WITH(true)
 }
+// ============================================================================
+// Helper para ler script path do YAML
+// ============================================================================
+static TLString* tl_config_read_script_path(TLAllocator* allocator, const TLString* path_prefix, const char* script_name) {
+    TLStringBuilder* builder = tl_string_builder_create(allocator, tl_string_length(path_prefix) + 20);
+    tl_string_builder_append(builder, path_prefix);
+    tl_string_builder_append_cstr(builder, ".script.");
+    tl_string_builder_append_cstr(builder, script_name);
 
+    return tl_config_get(tl_string_cstr(tl_string_builder_build(builder)));
+}
 // ============================================================================
 // Funções Internas - Configuração de Graphics
 // ============================================================================
+static const char* tl_scene_config(TLAllocator* allocator, const TLScene* scene, const char* suffix) {
+    const unsigned size_prefix = tl_string_length(scene->config);
+    const unsigned size_suffix = tl_string_length_cstr(suffix);
+    TLStringBuilder* builder = tl_string_builder_create(allocator,  size_prefix + size_suffix);
 
-static TLString* tl_scene_build_config_path(TLAllocator* allocator, const u32 index, const char* suffix) {
-    TLStringBuilder* builder = tl_string_builder_create(allocator, 128);
-    tl_string_builder_append_cstr(builder, "application.scene.");
-
-    const TLString* idx_str = tl_number_u32_to_char(allocator, index, 10);
-    tl_string_builder_append(builder, idx_str);
-
+    tl_string_builder_append_cstr(builder, tl_string_cstr(scene->config));
     tl_string_builder_append_cstr(builder, ".");
     tl_string_builder_append_cstr(builder, suffix);
 
-    return tl_string_builder_build(builder);
+    return tl_string_cstr(tl_string_builder_build(builder));
 }
+// ============================================================================
 
-static void tl_scene_apply_graphics_config(TLScene* scene) {
-    TL_PROFILER_PUSH_WITH("scene=0x%p", scene);
-
-    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(2), TL_ALLOCATOR_LINEAR);
-
+// ============================================================================
+static void tl_scene_apply_graphics_config(TLAllocator* allocator, TLScene* scene) {
+    TL_PROFILER_PUSH_WITH("allocator=0x%p, scene=0x%p", allocator, scene);
+    // ============================================================================
     // Clear Color
-    TLString* path = tl_scene_build_config_path(allocator, scene->index, "graphics.clear_color");
-    TLString* clear_color_str = tl_config_get(tl_string_cstr(path));
-    tl_string_destroy(path);
-
+    // ============================================================================
+    const TLString* clear_color_str = tl_config_get(tl_scene_config(allocator, scene, "graphics.clear_color"));
     if (clear_color_str != NULL) {
-        f32 r, g, b, a;
-        if (sscanf(tl_string_cstr(clear_color_str), "%f, %f, %f, %f", &r, &g, &b, &a) == 4) {
-            TLDEBUG("Setting clear color: (%.2f, %.2f, %.2f, %.2f)", r, g, b, a);
-            tl_graphics_set_clear_color(r, g, b, a);
-        }
-        tl_string_destroy(clear_color_str);
+        const vec4s vector = tl_number_vec4s_from_string(clear_color_str);
+        tl_graphics_set_clear_color(vector.r, vector.g, vector.b, vector.a);
     }
-
+    // ============================================================================
     // Depth Test
-    path = tl_scene_build_config_path(allocator, scene->index, "graphics.depth.enabled");
-    TLString* depth_enabled_str = tl_config_get(tl_string_cstr(path));
-    tl_string_destroy(path);
+    // ============================================================================
+    if (tl_config_get_b8(tl_scene_config(allocator, scene, "graphics.depth.enabled"))) {
+        TLTRACE("Depth: enabled");
+        tl_graphics_enable_depth();
 
-    if (depth_enabled_str != NULL) {
-        TLString* upper = tl_string_to_upper(depth_enabled_str);
-        b8 enabled = tl_string_equals_cstr(upper, "TRUE");
-        tl_string_destroy(upper);
-        tl_string_destroy(depth_enabled_str);
-
-        TLDEBUG("Depth test: %s", enabled ? "enabled" : "disabled");
-
-        if (enabled) {
-            tl_graphics_enable_depth();
-
-            // Depth function
-            path = tl_scene_build_config_path(allocator, scene->index, "graphics.depth.function");
-            TLString* depth_func_str = tl_config_get(tl_string_cstr(path));
-            tl_string_destroy(path);
-
-            if (depth_func_str != NULL) {
-                TLDEBUG("Depth function: %s", tl_string_cstr(depth_func_str));
-                tl_graphics_set_depth_function(depth_func_str);
-                tl_string_destroy(depth_func_str);
-            }
-        } else {
-            tl_graphics_disable_depth();
+        // Depth function
+        const TLString* depth_func_str = tl_config_get(tl_scene_config(allocator, scene, "graphics.depth.function"));
+        if (depth_func_str != NULL) {
+            TLTRACE("Depth function: %s", tl_string_cstr(depth_func_str));
+            tl_graphics_set_depth_function(depth_func_str);
         }
+    } else {
+        TLTRACE("Depth: disabled");
+        tl_graphics_disable_depth();
     }
-
+    // ============================================================================
     // Blend
-    path = tl_scene_build_config_path(allocator, scene->index, "graphics.blend.enabled");
-    TLString* blend_enabled_str = tl_config_get(tl_string_cstr(path));
-    tl_string_destroy(path);
-
-    b8 blend_enabled = false;
-    if (blend_enabled_str != NULL) {
-        TLString* upper = tl_string_to_upper(blend_enabled_str);
-        blend_enabled = tl_string_equals_cstr(upper, "TRUE");
-        tl_string_destroy(upper);
-        tl_string_destroy(blend_enabled_str);
-    }
-
-    if (blend_enabled) {
-        TLDEBUG("Blend: enabled");
+    // ============================================================================
+    if (tl_config_get_b8(tl_scene_config(allocator, scene, "graphics.blend.enabled"))) {
+        TLTRACE("Blend: enabled");
         tl_graphics_enable_blend();
 
         // Blend equation
-        path = tl_scene_build_config_path(allocator, scene->index, "graphics.blend.equation");
-        TLString* blend_eq_str = tl_config_get(tl_string_cstr(path));
-        tl_string_destroy(path);
-
+        const TLString* blend_eq_str = tl_config_get(tl_scene_config(allocator, scene, "graphics.blend.equation"));
         if (blend_eq_str != NULL) {
-            TLDEBUG("Blend equation: %s", tl_string_cstr(blend_eq_str));
+            TLTRACE("Blend equation: %s", tl_string_cstr(blend_eq_str));
             tl_graphics_set_blend_equation(blend_eq_str);
-            tl_string_destroy(blend_eq_str);
         }
 
         // Blend function (source, target)
-        path = tl_scene_build_config_path(allocator, scene->index, "graphics.blend.function.source");
-        TLString* blend_src_str = tl_config_get(tl_string_cstr(path));
-        tl_string_destroy(path);
-
-        path = tl_scene_build_config_path(allocator, scene->index, "graphics.blend.function.target");
-        TLString* blend_dst_str = tl_config_get(tl_string_cstr(path));
-        tl_string_destroy(path);
-
+        const TLString* blend_src_str = tl_config_get(tl_scene_config(allocator, scene, "graphics.blend.source"));
+        const TLString* blend_dst_str = tl_config_get(tl_scene_config(allocator, scene, "graphics.blend.target"));
         if (blend_src_str != NULL && blend_dst_str != NULL) {
-            TLDEBUG("Blend function: src=%s, dst=%s",
-                    tl_string_cstr(blend_src_str), tl_string_cstr(blend_dst_str));
+            TLTRACE("Blend function: src=%s, dst=%s", tl_string_cstr(blend_src_str), tl_string_cstr(blend_dst_str));
             tl_graphics_set_blend_function(blend_src_str, blend_dst_str);
         }
-
-        if (blend_src_str != NULL) tl_string_destroy(blend_src_str);
-        if (blend_dst_str != NULL) tl_string_destroy(blend_dst_str);
     } else {
-        TLDEBUG("Blend: disabled");
+        TLTRACE("Blend: disabled");
         tl_graphics_disable_blend();
     }
 
-    tl_memory_allocator_destroy(allocator);
     TL_PROFILER_POP
 }
-
-static void tl_scene_apply_camera_config(TLScene* scene) {
-    TL_PROFILER_PUSH_WITH("scene=0x%p", scene);
-
-    // TODO: Implementar configuração de câmera quando o sistema de câmera estiver pronto
-    TLDEBUG("Camera configuration for scene '%s' (not yet implemented)", tl_string_cstr(scene->name));
-
-    TL_PROFILER_POP
-}
-
 
 #endif

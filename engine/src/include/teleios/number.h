@@ -35,4 +35,6 @@ i64 tl_number_i64_from_string(TLString* str);
 f32 tl_number_f32_from_string(TLString* str);
 f64 tl_number_f64_from_string(TLString* str);
 
+vec4s tl_number_vec4s_from_string(const TLString* str);
+
 #endif

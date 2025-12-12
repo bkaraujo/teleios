@@ -47,6 +47,8 @@ void tl_string_destroy(TLString* str);
  */
 u32 tl_string_length(const TLString* str);
 
+u32 tl_string_length_cstr(const char* str);
+
 /**
  * @brief Get character at specified index
  * @param str The string

@@ -428,10 +428,9 @@ typedef struct  TLStackTrace TLStackTrace;
 
 typedef struct {
     TLString* name;
-    u8 index;            // Index in application.scene array
+    TLString* config;           // YAML root path
     TLAllocator* allocator;
 
-    // Scripts Lua (OBRIGATÓRIOS - fornecidos via YAML)
     TLString* script_load;       // Executado na criação/ativação
     TLString* script_unload;     // Executado na exclusão/desativação
     TLString* script_frame_begin;// Executado APÓS frame_begin do engine

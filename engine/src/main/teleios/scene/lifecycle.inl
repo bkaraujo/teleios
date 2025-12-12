@@ -10,6 +10,8 @@ TLScene* tl_scene_create(void) {
     TL_PROFILER_POP_WITH(scene)
 }
 
+#include "teleios/scene/private.inl"
+
 b8 tl_scene_activate(const TLString* name) {
     TL_PROFILER_PUSH_WITH("name=0x%p", name);
     TLINFO("Activating scene '%s'", tl_string_cstr(name))
@@ -19,14 +21,17 @@ b8 tl_scene_activate(const TLString* name) {
         global->scene = NULL;
     }
 
+
     // 1. Verificar se cena já está carregada
     tl_iterator_resync(m_iterator);
     tl_iterator_rewind(m_iterator);
     while (tl_iterator_has_next(m_iterator)) {
         TLScene* scene = tl_iterator_next(m_iterator);
         if (tl_string_equals_ignore_case(name, scene->name)) {
-            tl_scene_apply_graphics_config(scene);
             tl_scene_load(scene);
+            TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
+            tl_scene_apply_graphics_config(allocator, scene);
+            tl_memory_allocator_destroy(allocator);
             TL_PROFILER_POP_WITH(true)
         }
     }
@@ -34,9 +39,10 @@ b8 tl_scene_activate(const TLString* name) {
     TLScene* scene = tl_config_get_scene(name);
     if (scene == NULL) TL_PROFILER_POP_WITH(false)
 
-    tl_scene_init_lua(scene);
-    tl_scene_apply_graphics_config(scene);
-    tl_scene_apply_camera_config(scene);
+    TLAllocator* allocator = tl_memory_allocator_create(TL_KIBI_BYTES(4), TL_ALLOCATOR_LINEAR);
+    tl_scene_apply_graphics_config(allocator, scene);
+    tl_memory_allocator_destroy(allocator);
+
     tl_array_push(m_scenes, scene);
     tl_scene_load(scene);
     global->scene = scene;
@@ -58,6 +64,7 @@ void tl_scene_destroy(const TLScene* scene) {
 
     // Liberar strings
     if (scene->name) tl_string_destroy(scene->name);
+    if (scene->config) tl_string_destroy(scene->config);
     if (scene->script_load) tl_string_destroy(scene->script_load);
     if (scene->script_unload) tl_string_destroy(scene->script_unload);
     if (scene->script_frame_begin) tl_string_destroy(scene->script_frame_begin);

@@ -1,6 +1,6 @@
 teleios:
   logging:
-    level: debug
+    level: DEBUG
   graphics:
     vsync: false
     wireframe: false
@@ -17,7 +17,7 @@ application:
     - name: main
       script:
         load: scripts/main/load.lua
-#        unload: scripts/main/unload.lua
+        unload: scripts/main/unload.lua
         frame_begin: scripts/main/frame_begin.lua
         frame_end: scripts/main/frame_end.lua
       graphics:
