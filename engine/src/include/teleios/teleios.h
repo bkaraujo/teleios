@@ -13,7 +13,6 @@
 #include "teleios/thread.h"
 #include "teleios/strings.h"
 #include "teleios/input.h"
-#include "teleios/script.h"
 
 #include "teleios/number.h"
 #include "teleios/event.h"

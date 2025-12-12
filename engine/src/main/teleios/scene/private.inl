@@ -10,21 +10,19 @@
 // Funções Internas - Inicialização Lua e Execução de Scripts
 // ============================================================================
 
+#include "teleios/script/input.inl"
+
 static void tl_scene_init_lua(TLScene* scene) {
     TL_PROFILER_PUSH_WITH("scene=%s", tl_string_cstr(scene->name));
 
-    // Criar novo estado Lua para esta cena
-    lua_State* L = luaL_newstate();
-    if (L == NULL) TLFATAL("Failed to create Lua state for scene '%s'", tl_string_cstr(scene->name));
-    luaL_openlibs(L);  // Carregar bibliotecas padrão Lua
+    lua_State* state = luaL_newstate();
+    if (state == NULL) TLFATAL("Failed to create Lua state for scene '%s'", tl_string_cstr(scene->name));
 
-    // TODO: Registrar funções do engine disponíveis para Lua
-    // tl_script_register_engine_functions(L);
+    luaL_openlibs(state);               // Registra funções padrão LUA
+    tl_script_input_register(state);    // Registra API interna
 
-    // Armazenar estado Lua na cena
-    scene->lua_state = (void*)L;
+    scene->lua_state = (void*)state;
 
-    TLINFO("Initialized Lua state for scene '%s'", tl_string_cstr(scene->name));
     TL_PROFILER_POP
 }
 
@@ -40,11 +38,11 @@ static b8 tl_scene_execute_script(const TLScene* scene, const TLString* script_p
         TL_PROFILER_POP_WITH(false)
     }
 
-    lua_State* L = (lua_State*)scene->lua_state;
-    if (luaL_dofile(L, tl_string_cstr(script_path)) != LUA_OK) {
-        const char* error = lua_tostring(L, -1);
+    lua_State* state = (lua_State*)scene->lua_state;
+    if (luaL_dofile(state, tl_string_cstr(script_path)) != LUA_OK) {
+        const char* error = lua_tostring(state, -1);
         TLERROR("Lua error in '%s': %s", tl_string_cstr(script_path), error);
-        lua_pop(L, 1);
+        lua_pop(state, 1);
         TL_PROFILER_POP_WITH(false)
     }
 
@@ -55,18 +53,17 @@ static b8 tl_scene_execute_script(const TLScene* scene, const TLString* script_p
 // Funções Internas - Configuração de Graphics
 // ============================================================================
 
-static TLString* tl_scene_build_config_path(TLAllocator* allocator, const u32 scene_index, const char* suffix) {
+static TLString* tl_scene_build_config_path(TLAllocator* allocator, const u32 index, const char* suffix) {
     TLStringBuilder* builder = tl_string_builder_create(allocator, 128);
     tl_string_builder_append_cstr(builder, "application.scene.");
-    TLString* idx_str = tl_number_u32_to_char(allocator, scene_index, 10);
+
+    const TLString* idx_str = tl_number_u32_to_char(allocator, index, 10);
     tl_string_builder_append(builder, idx_str);
+
     tl_string_builder_append_cstr(builder, ".");
     tl_string_builder_append_cstr(builder, suffix);
-    TLString* path = tl_string_builder_build(builder);
-    tl_string_builder_destroy(builder);
-    tl_string_destroy(idx_str);
 
-    return path;
+    return tl_string_builder_build(builder);
 }
 
 static void tl_scene_apply_graphics_config(TLScene* scene) {

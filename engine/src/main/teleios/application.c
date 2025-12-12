@@ -42,7 +42,6 @@ b8 tl_application_run(void) {
     u64 last_time = tl_time_epoch_micros();
     u64 last_frame_count = 0;
     u64 last_update_count = 0;
-    TLString* script = tl_string_create(global->allocator, "assets/script/test.lua");
 
     TLDEBUG("Entering Simulation loop")
     glfwShowWindow(tl_window_handler());
@@ -71,7 +70,6 @@ b8 tl_application_run(void) {
             tl_scene_update(delta_time);
         }
 
-        tl_script_execute(script);
         tl_scene_frame_end();
         tl_input_update();
         glfwPollEvents();
@@ -94,7 +92,6 @@ b8 tl_application_run(void) {
         }
     }
     TLDEBUG("Exiting Simulation loop")
-    tl_string_destroy(script);
 
     TLDEBUG("Simulation Terminated")
     TL_PROFILER_POP_WITH(true)

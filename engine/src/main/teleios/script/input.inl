@@ -101,7 +101,7 @@ static i32 tl_script_get_cursor_position(lua_State *state) {
     return 2;  // Retorna 2 valores (x, y)
 }
 
-static void tl_script_input_register() {
+static void tl_script_input_register(lua_State* state) {
     const luaL_Reg operations[] = {
         {"isKeyActive", tl_script_is_key_active},
         {"isKeyPressed", tl_script_is_key_pressed},
@@ -118,7 +118,8 @@ static void tl_script_input_register() {
         {NULL, NULL}
     };
 
-    tl_script_register("tl", operations);
+    luaL_newlib(state, operations);
+    lua_setglobal(state, "tl");
 }
 
 #endif

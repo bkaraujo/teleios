@@ -93,21 +93,11 @@ b8 tl_platform_initialize(void) {
         TL_PROFILER_POP_WITH(false)
     }
 
-    if (!tl_script_initialize()) {
-        TLERROR("Script system failed to initialize")
-        TL_PROFILER_POP_WITH(false)
-    }
-
     TL_PROFILER_POP_WITH(true)
 }
 
 b8 tl_platform_terminate(void) {
     TL_PROFILER_PUSH
-
-    if (!tl_script_terminate()) {
-        TLERROR("Script failed to terminate")
-        TL_PROFILER_POP_WITH(false)
-    }
 
     if (!tl_graphics_terminate()) {
         TLERROR("Graphics failed to terminate")

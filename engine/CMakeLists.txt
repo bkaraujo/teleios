@@ -145,7 +145,6 @@ set(ENGINE_LIB_SOURCES
     src/main/teleios/input.c
     src/main/teleios/profiler.c
     src/main/teleios/graphics.c
-    src/main/teleios/script.c
     src/main/teleios/scene.c
 )
 
@@ -173,7 +172,6 @@ set(ENGINE_HEADERS
     src/include/teleios/thread.h
     src/include/teleios/window.h
     src/include/teleios/graphics.h
-    src/include/teleios/script.h
     src/include/teleios/scene.h
 )
 
